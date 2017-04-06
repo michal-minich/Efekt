@@ -23,19 +23,25 @@ namespace Efekt
                     new Fn(new ElementList<Ident>(new List<Ident>()), body),
                     new ElementList<ExpElement>(new List<ExpElement>()));
 
+            var w = new ConsoleWriter();
+            var cw = new CodeTextWriter(w);
+
             Console.WriteLine("TOKENS");
             var tr = new Tokenizer();
-            var ts = tr.Tokenize("fn { var x = fn { return 1_2_3 } return x() }()").ToList();
+            var ts = tr.Tokenize("fn { var x = fn { return 1_2_3 } return x }").ToList(); // fn { var x = fn { return 1_2_3 } return x() }()
             foreach (var t in ts)
             {
                 Console.Write(t.Type);
                 Console.WriteLine(": '" + t.Text + "'");
             }
 
+            Console.WriteLine("PARSE");
+            var p = new Parser();
+            var pse = p.Parse(ts);
+            CodeWriter.Write(pse, cw);
+
             Console.WriteLine();
             Console.WriteLine("CODE");
-            var w = new ConsoleWriter();
-            var cw = new CodeTextWriter(w);
             CodeWriter.Write(se, cw);
 
             var i = new Interpreter();

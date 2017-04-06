@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Efekt
 {
     public sealed class Tokenizer
     {
+        private string[] keywords = {"var", "fn", "if", "else", "return", "loop", "break", "continue", "label", "goto" };
+
         public IEnumerable<Token> Tokenize(string code)
         {
             var ix = -1;
@@ -78,7 +81,10 @@ namespace Efekt
 
                 if (startIx != ix)
                 {
-                    var t = new Token(tokType, code.Substring(startIx, ix - startIx));
+                    var text = code.Substring(startIx, ix - startIx);
+                    if (tokType == TokenType.Ident && keywords.Contains(text))
+                        tokType = TokenType.Key;
+                    var t = new Token(tokType, text);
                     yield return t;
                 }
 
@@ -109,6 +115,7 @@ namespace Efekt
         TypeIdent,
         Num,
         Markup,
-        Op
+        Op,
+        Key
     }
 }

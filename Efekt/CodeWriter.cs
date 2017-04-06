@@ -9,14 +9,14 @@ namespace Efekt
             switch (se)
             {
                 case When w:
-                    ctw.WriteKey("if ").WriteSpace();
+                    ctw.WriteKey("if").WriteSpace();
                     Write(w.Test, ctw);
-                    ctw.WriteMarkup(" {");
+                    ctw.WriteSpace().WriteMarkup("{");
                     Write(w.Then, ctw);
                     ctw.WriteMarkup("}");
                     if (w.Otherwise != null)
                     {
-                        ctw.WriteMarkup(" else {");
+                        ctw.WriteSpace().WriteMarkup("else").WriteSpace().WriteMarkup("{");
                         Write(w.Otherwise, ctw);
                         ctw.WriteMarkup("}");
                     }
@@ -41,7 +41,7 @@ namespace Efekt
                     ctw.WriteMarkup(")");
                     return;
                 case Fn f:
-                    ctw.WriteKey("fn ").WriteSpace();
+                    ctw.WriteKey("fn").WriteSpace();
                     c = 0;
                     foreach (var p in f.Parameters.Items)
                     {
@@ -68,16 +68,23 @@ namespace Efekt
                     }
                     break;
                 case Loop l:
-                    ctw.WriteKey("loop ").WriteSpace();
+                    ctw.WriteKey("loop").WriteSpace();
                     ctw.WriteMarkup("{");
                     Write(l.Body, ctw);
                     ctw.WriteMarkup("}");
                     break;
                 case Var v:
-                    ctw.WriteKey("var ").WriteSpace();
+                    ctw.WriteKey("var").WriteSpace();
                     Write(v.Ident, ctw);
                     ctw.WriteSpace().WriteOp("=").WriteSpace();
                     Write(v.Exp, ctw);
+                    break;
+                case ElementList<SyntaxElement> sel:
+                    foreach (var se2 in sel.Items)
+                    {
+                        Write(se2, ctw);
+                        ctw.WriteLine();
+                    }
                     break;
                 default:
                     ctw.WriteMarkup("<" + se.GetType().Name + ">");
