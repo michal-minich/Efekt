@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Efekt
 {
@@ -22,6 +23,16 @@ namespace Efekt
                     new Fn(new ElementList<Ident>(new List<Ident>()), body),
                     new ElementList<ExpElement>(new List<ExpElement>()));
 
+            Console.WriteLine("TOKENS");
+            var tr = new Tokenizer();
+            var ts = tr.Tokenize("fn { var x = fn { return 1_2_3 } return x() }()").ToList();
+            foreach (var t in ts)
+            {
+                Console.Write(t.Type);
+                Console.WriteLine(": '" + t.Text + "'");
+            }
+
+            Console.WriteLine();
             Console.WriteLine("CODE");
             var w = new ConsoleWriter();
             var cw = new CodeTextWriter(w);
@@ -30,6 +41,7 @@ namespace Efekt
             var i = new Interpreter();
             var res = i.Eval(se);
 
+            Console.WriteLine();
             Console.WriteLine();
             Console.WriteLine("RES");
             CodeWriter.Write(res, cw);
