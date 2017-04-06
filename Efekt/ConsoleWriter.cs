@@ -2,7 +2,7 @@ using System;
 
 namespace Efekt
 {
-    public class ConsoleWriter : TextWriter
+    public sealed class ConsoleWriter : TextWriter
     {
         public void Write(string value)
         {

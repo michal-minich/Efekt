@@ -1,12 +1,11 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 using System.Linq;
 using JetBrains.Annotations;
 
 namespace Efekt
 {
-    public class Env
+    public sealed class Env
     {
         [NotNull] private readonly Dictionary<string, ValueElement> dict = new Dictionary<string, ValueElement>();
 

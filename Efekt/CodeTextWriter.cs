@@ -2,7 +2,7 @@ using System;
 
 namespace Efekt
 {
-    public class CodeTextWriter
+    public sealed class CodeTextWriter
     {
         private readonly TextWriter writer;
 

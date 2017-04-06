@@ -18,7 +18,7 @@ namespace Efekt
     }
 
 
-    public class ElementList<T> : SyntaxElement where T : SyntaxElement
+    public sealed class ElementList<T> : SyntaxElement where T : SyntaxElement
     {
         public ElementList(List<T> items)
         {
@@ -31,7 +31,7 @@ namespace Efekt
     }
 
 
-    public class Ident : ExpElement
+    public sealed class Ident : ExpElement
     {
         public Ident(string name)
         {
@@ -43,7 +43,7 @@ namespace Efekt
     }
 
 
-    public class Var : SyntaxElement
+    public sealed class Var : SyntaxElement
     {
         public Var(Ident ident, ExpElement exp)
         {
@@ -59,7 +59,7 @@ namespace Efekt
     }
 
 
-    public class When : ExpElement
+    public sealed class When : ExpElement
     {
         public When(SyntaxElement test, SyntaxElement then, [CanBeNull] SyntaxElement otherwise)
         {
@@ -79,7 +79,7 @@ namespace Efekt
     }
 
 
-    public class Loop : SyntaxElement
+    public sealed class Loop : SyntaxElement
     {
         public Loop(ElementList<SyntaxElement> body)
         {
@@ -91,7 +91,7 @@ namespace Efekt
     }
 
 
-    public class Return : SyntaxElement
+    public sealed class Return : SyntaxElement
     {
         public Return(ExpElement exp)
         {
@@ -103,7 +103,7 @@ namespace Efekt
     }
 
 
-    public class Fn : ValueElement
+    public sealed class Fn : ValueElement
     {
         public Fn(ElementList<Ident> parameters, ElementList<SyntaxElement> body)
         {
@@ -121,7 +121,7 @@ namespace Efekt
     }
 
 
-    public class Int : ValueElement
+    public sealed class Int : ValueElement
     {
         public Int(int value)
         {
@@ -132,7 +132,7 @@ namespace Efekt
     }
 
 
-    public class Void : ValueElement
+    public sealed class Void : ValueElement
     {
         private Void()
         {
@@ -141,7 +141,8 @@ namespace Efekt
         public static Void Instance { get; } = new Void();
     }
 
-    public class FnApply : ExpElement
+
+    public sealed class FnApply : ExpElement
     {
         public FnApply(ExpElement fn, ElementList<ExpElement> arguments)
         {

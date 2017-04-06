@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Efekt
 {
-    public class Tokenizer
+    public sealed class Tokenizer
     {
         public IEnumerable<Token> Tokenize(string code)
         {
