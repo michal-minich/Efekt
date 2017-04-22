@@ -79,7 +79,7 @@ namespace Efekt
                     ctw.WriteSpace().WriteOp("=").WriteSpace();
                     Write(v.Exp, ctw);
                     break;
-                case ElementList<SyntaxElement> sel:
+                case IElementList<SyntaxElement> sel:
                     foreach (var se2 in sel.Items)
                     {
                         Write(se2, ctw);

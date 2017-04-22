@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 
 namespace Efekt
@@ -8,6 +9,8 @@ namespace Efekt
     {
         private static void Main(string[] args)
         {
+            Contract.Requires(args != null);
+
             SyntaxElement se =
                 new ElementList<SyntaxElement>(
                     new List<SyntaxElement>
@@ -28,7 +31,7 @@ namespace Efekt
 
             Console.WriteLine("TOKENS");
             var tr = new Tokenizer();
-            var ts = tr.Tokenize("fn { var x = fn { return 1_2_3 } return x }").ToList(); // fn { var x = fn { return 1_2_3 } return x() }()
+            var ts = tr.Tokenize("fn { var x = fn { return 1_2_3 } return x() }()").ToList(); // fn { var x = fn { return 1_2_3 } return x() }()
             foreach (var t in ts)
             {
                 Console.Write(t.Type);

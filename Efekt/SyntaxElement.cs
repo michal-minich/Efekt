@@ -18,16 +18,21 @@ namespace Efekt
     }
 
 
-    public sealed class ElementList<T> : SyntaxElement where T : SyntaxElement
+    public interface IElementList<out T> : SyntaxElement where T : SyntaxElement
     {
-        public ElementList(List<T> items)
+        IReadOnlyList<T> Items { get; }
+    }
+
+
+    public sealed class ElementList<T> : IElementList<T> where T : SyntaxElement
+    {
+        public ElementList(IReadOnlyList<T> items)
         {
             Items = items;
         }
 
-
         [NotNull]
-        public List<T> Items { get; }
+        public IReadOnlyList<T> Items { get; }
     }
 
 
@@ -61,7 +66,7 @@ namespace Efekt
 
     public sealed class When : ExpElement
     {
-        public When(SyntaxElement test, SyntaxElement then, [CanBeNull] SyntaxElement otherwise)
+        public When(ExpElement test, SyntaxElement then, [CanBeNull] SyntaxElement otherwise)
         {
             Test = test;
             Then = then;
@@ -69,7 +74,7 @@ namespace Efekt
         }
 
         [NotNull]
-        public SyntaxElement Test { get; }
+        public ExpElement Test { get; }
 
         [NotNull]
         public SyntaxElement Then { get; }
@@ -81,13 +86,13 @@ namespace Efekt
 
     public sealed class Loop : SyntaxElement
     {
-        public Loop(ElementList<SyntaxElement> body)
+        public Loop(IElementList<SyntaxElement> body)
         {
             Body = body;
         }
 
         [NotNull]
-        public ElementList<SyntaxElement> Body { get; }
+        public IElementList<SyntaxElement> Body { get; }
     }
 
 
@@ -105,17 +110,17 @@ namespace Efekt
 
     public sealed class Fn : ValueElement
     {
-        public Fn(ElementList<Ident> parameters, ElementList<SyntaxElement> body)
+        public Fn(IElementList<Ident> parameters, IElementList<SyntaxElement> body)
         {
             Parameters = parameters;
             Body = body;
         }
 
         [NotNull]
-        public ElementList<Ident> Parameters { get; }
+        public IElementList<Ident> Parameters { get; }
 
         [NotNull]
-        public ElementList<SyntaxElement> Body { get; }
+        public IElementList<SyntaxElement> Body { get; }
 
         public Env LexicalEnv { get; set; }
     }
@@ -144,7 +149,7 @@ namespace Efekt
 
     public sealed class FnApply : ExpElement
     {
-        public FnApply(ExpElement fn, ElementList<ExpElement> arguments)
+        public FnApply(ExpElement fn, IElementList<ExpElement> arguments)
         {
             Fn = fn;
             Arguments = arguments;
@@ -154,6 +159,6 @@ namespace Efekt
         public ExpElement Fn { get; }
 
         [NotNull]
-        public ElementList<ExpElement> Arguments { get; }
+        public IElementList<ExpElement> Arguments { get; }
     }
 }

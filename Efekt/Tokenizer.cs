@@ -12,7 +12,7 @@ namespace Efekt
         {
             var ix = -1;
             char ch;
-            var tokType = TokenType.Num;
+            var tokType = TokenType.Int;
 
             void next()
             {
@@ -31,7 +31,23 @@ namespace Efekt
             {
                 var startIx = ix;
 
-                if (ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r')
+                if (ch == '\r')
+                {
+                    next();
+                    if (ch == '\n')
+                        next();
+                    tokType = TokenType.NewLine;
+                    goto final;
+                }
+
+                if (ch == '\n')
+                {
+                    next();
+                    tokType = TokenType.NewLine;
+                    goto final;
+                }
+
+                if (ch == ' ' || ch == '\t')
                 {
                     next();
                     continue;
@@ -39,7 +55,7 @@ namespace Efekt
 
                 if (ch >= '0' && ch <= '9')
                 {
-                    tokType = TokenType.Num;
+                    tokType = TokenType.Int;
                     while (ch >= '0' && ch <= '9' || ch == '_')
                         next();
                     goto final;
@@ -61,7 +77,7 @@ namespace Efekt
                     goto final;
                 }
 
-                if (ch == '{' || ch == '}' || ch == '(' || ch == ')' || ch == ',' || ch == '>' || ch == '[' ||
+                if (ch == '{' || ch == '}' || ch == '(' || ch == ')' || ch == ',' || ch == ';' || ch == '[' ||
                     ch == ']')
                 {
                     tokType = TokenType.Markup;
@@ -97,7 +113,7 @@ namespace Efekt
         }
     }
 
-    public class Token
+    public struct Token
     {
         public Token(TokenType type, string text)
         {
@@ -105,17 +121,19 @@ namespace Efekt
             Text = text;
         }
 
-        public string Text { get; set; }
-        public TokenType Type { get; set; }
+        public string Text { get; }
+        public TokenType Type { get; }
     }
 
     public enum TokenType
     {
+        None,
         Ident,
         TypeIdent,
-        Num,
+        Int,
         Markup,
         Op,
-        Key
+        Key,
+        NewLine
     }
 }
