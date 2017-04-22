@@ -32,10 +32,10 @@ namespace Efekt
                     ctw.WriteSpace();
                     var c = 0;
                     ctw.WriteMarkup("(");
-                    foreach (var a in fna.Arguments.Items)
+                    foreach (var a in fna.Arguments)
                     {
                         Write(a, ctw);
-                        if (fna.Arguments.Items.Count != ++c)
+                        if (fna.Arguments.Count != ++c)
                             ctw.WriteMarkup(", ");
                     }
                     ctw.WriteMarkup(")");
@@ -43,18 +43,18 @@ namespace Efekt
                 case Fn f:
                     ctw.WriteKey("fn").WriteSpace();
                     c = 0;
-                    foreach (var p in f.Parameters.Items)
+                    foreach (var p in f.Parameters)
                     {
                         Write(p, ctw);
-                        if (f.Parameters.Items.Count != ++c)
+                        if (f.Parameters.Count != ++c)
                             ctw.WriteMarkup(", ");
                     }
                     ctw.WriteMarkup("{");
                     c = 0;
-                    foreach (var p in f.Body.Items)
+                    foreach (var p in f.Body)
                     {
                         Write(p, ctw);
-                        if (f.Body.Items.Count != ++c)
+                        if (f.Body.Count != ++c)
                             ctw.WriteLine();
                     }
                     ctw.WriteMarkup("}");
@@ -79,8 +79,8 @@ namespace Efekt
                     ctw.WriteSpace().WriteOp("=").WriteSpace();
                     Write(v.Exp, ctw);
                     break;
-                case IElementList<SyntaxElement> sel:
-                    foreach (var se2 in sel.Items)
+                case StatementList sel:
+                    foreach (var se2 in sel)
                     {
                         Write(se2, ctw);
                         ctw.WriteLine();

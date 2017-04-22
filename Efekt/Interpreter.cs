@@ -48,10 +48,10 @@ namespace Efekt
 
         public ValueElement Eval(SyntaxElement se)
         {
-            /*   if (se is ElementList<SyntaxElement> body)
+            /*   if (se is StatementList body)
                {
                    se = new FnApply(
-                       new Fn(new ElementList<Ident>(new List<Ident>()), body), 
+                       new Fn(new IdentList(new List<Ident>()), body), 
                        new ElementList<ExpElement>(new List<ExpElement>()));
                }*/
 
@@ -76,13 +76,13 @@ namespace Efekt
                     var fn2 = fn as Fn;
                     if (fn2 == null)
                         throw new Exception();
-                    var eArgs = fna.Arguments.Items.Select(a => Eval(a, env)).ToList();
+                    var eArgs = fna.Arguments.Select(a => Eval(a, env)).ToList();
                     var paramsEnv = new Env(fn2.LexicalEnv);
                     var ix = 0;
-                    foreach (var p in fn2.Parameters.Items)
+                    foreach (var p in fn2.Parameters)
                         paramsEnv.Declare(p.Name, eArgs[ix++]);
                     var fnEnv = new Env(paramsEnv);
-                    foreach (var bodyElement in fn2.Body.Items)
+                    foreach (var bodyElement in fn2.Body)
                     {
                         var bodyVal = Eval(bodyElement, fnEnv);
                         if (bodyVal != Void.Instance)

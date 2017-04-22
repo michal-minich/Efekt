@@ -44,12 +44,12 @@ namespace Efekt
             {
                 if (tok.Type == TokenType.None)
                     break;
-                var se = ParseFull();
+                var se = ParseFullWithPostOp();
                 if (se == null)
                     throw new Exception();
                 list.Add(se);
             }
-            return new ElementList<SyntaxElement>(list);
+            return new StatementList(list.ToArray());
         }
 
 
@@ -60,7 +60,7 @@ namespace Efekt
             var list = new List<SyntaxElement>();
             while (true)
             {
-                var se = ParseFull();
+                var se = ParseFullWithPostOp();
                 if (se == null)
                     return list;
                 list.Add(se);
@@ -69,15 +69,15 @@ namespace Efekt
         
 
         [CanBeNull]
-        private SyntaxElement ParseFull()
+        private SyntaxElement ParseFullWithPostOp()
         {
-            var se = ParseOne();
+            var se = ParseFull();
             if (tok.Text == ",")
             {
                 var list = PaseList();
                 if (list == null || list.Count == 0)
                     throw new Exception();
-                return new ElementList<SyntaxElement>(list);
+                return new StatementList(list.ToArray());
             }
             if (tok.Text == "(")
             {
@@ -86,7 +86,7 @@ namespace Efekt
                 var list = PaseList();
                 if (list == null)
                     throw new Exception();
-                return new FnApply(exp, new ElementList<ExpElement>(list.Cast<ExpElement>().ToList()));
+                return new FnApply(exp, new ExpList(list.Cast<ExpElement>().ToArray()));
                 }
                 throw new Exception("cannot apply non exp");
             }
@@ -94,7 +94,7 @@ namespace Efekt
         }
 
         [CanBeNull]
-        private SyntaxElement ParseOne()
+        private SyntaxElement ParseFull()
         {
             if (tok.Type == TokenType.NewLine)
                 next();
@@ -139,7 +139,7 @@ namespace Efekt
                     var list = PaseList();
                     if (list == null)
                         return null;
-                    return new ElementList<SyntaxElement>(list);
+                    return new StatementList(list.ToArray());
                 }
                 
                 if (tok.Text == "(")
@@ -148,7 +148,7 @@ namespace Efekt
                     if (list == null)
                         return null;
                     if (list.Count == 0)
-                        return new ElementList<SyntaxElement>(new List<SyntaxElement>());
+                        return new StatementList();
                     if (list.Count == 1)
                         return list[0];
                     throw new Exception();
@@ -186,7 +186,7 @@ namespace Efekt
                 next();
                 return new Return(Void.Instance);
             }
-            var se = ParseFull();
+            var se = ParseFullWithPostOp();
             if (se is null)
                 return new Return(Void.Instance);
             if (se is ExpElement exp)
@@ -199,11 +199,16 @@ namespace Efekt
             next();
             if (!(tok.Type == TokenType.Ident || tok.Text == "{"))
                 throw new Exception();
-            IElementList<Ident> @params = new ElementList<Ident>(new List<Ident>());
-            var se = ParseOne();
-            if (se is IElementList<SyntaxElement> sel)
+            var @params = new IdentList();
+            var se = ParseFull();
+            if (se is StatementList sel)
                 return new Fn(@params, sel);
             throw new Exception();
+        }
+
+
+        private IdentList parseIdentList()
+        {
         }
 
 
@@ -214,7 +219,7 @@ namespace Efekt
                 ? new Ident(tok.Text)
                 : throw new Exception();
             CheckNextAndSkip("=");
-            var se = ParseFull();
+            var se = ParseFullWithPostOp();
             if (se is ExpElement exp)
                 return new Var(i, exp);
             throw new Exception();

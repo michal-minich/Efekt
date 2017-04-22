@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using JetBrains.Annotations;
 
@@ -18,27 +19,54 @@ namespace Efekt
     }
 
 
-    public interface IElementList<out T> : SyntaxElement where T : SyntaxElement
+    public interface IElementList<out T> : SyntaxElement, IReadOnlyList<T> where T : SyntaxElement
     {
-        IReadOnlyList<T> Items { get; }
     }
 
 
-    public sealed class ElementList<T> : IElementList<T> where T : SyntaxElement
+    public abstract class ElementList<T> : IElementList<T> where T : SyntaxElement
     {
-        public ElementList(IReadOnlyList<T> items)
+        [NotNull] private readonly IReadOnlyList<T> items;
+
+        protected ElementList([NotNull] IReadOnlyList<T> items)
         {
-            Items = items;
+            this.items = items;
         }
 
-        [NotNull]
-        public IReadOnlyList<T> Items { get; }
+        public IEnumerator<T> GetEnumerator() => items.GetEnumerator();
+
+        IEnumerator IEnumerable.GetEnumerator() => items.GetEnumerator();
+
+        public int Count => items.Count;
+
+        public T this[int index] => items[index];
     }
 
+
+    public sealed class StatementList : ElementList<SyntaxElement>
+    {
+        public StatementList([NotNull] params SyntaxElement[] items) : base(items)
+        {
+        }
+    }
+
+    public sealed class ExpList : ElementList<ExpElement>
+    {
+        public ExpList([NotNull] params ExpElement[] items) : base(items)
+        {
+        }
+    }
+
+    public sealed class IdentList : ElementList<Ident>
+    {
+        public IdentList([NotNull] params Ident[] items) : base(items)
+        {
+        }
+    }
 
     public sealed class Ident : ExpElement
     {
-        public Ident(string name)
+        public Ident([NotNull] string name)
         {
             Name = name;
         }
@@ -50,7 +78,7 @@ namespace Efekt
 
     public sealed class Var : SyntaxElement
     {
-        public Var(Ident ident, ExpElement exp)
+        public Var([NotNull] Ident ident, [NotNull] ExpElement exp)
         {
             Ident = ident;
             Exp = exp;
@@ -66,7 +94,7 @@ namespace Efekt
 
     public sealed class When : ExpElement
     {
-        public When(ExpElement test, SyntaxElement then, [CanBeNull] SyntaxElement otherwise)
+        public When([NotNull] ExpElement test, [NotNull] SyntaxElement then, [CanBeNull] SyntaxElement otherwise)
         {
             Test = test;
             Then = then;
@@ -86,19 +114,19 @@ namespace Efekt
 
     public sealed class Loop : SyntaxElement
     {
-        public Loop(IElementList<SyntaxElement> body)
+        public Loop([NotNull] StatementList body)
         {
             Body = body;
         }
 
         [NotNull]
-        public IElementList<SyntaxElement> Body { get; }
+        public StatementList Body { get; }
     }
 
 
     public sealed class Return : SyntaxElement
     {
-        public Return(ExpElement exp)
+        public Return([NotNull] ExpElement exp)
         {
             Exp = exp;
         }
@@ -110,18 +138,19 @@ namespace Efekt
 
     public sealed class Fn : ValueElement
     {
-        public Fn(IElementList<Ident> parameters, IElementList<SyntaxElement> body)
+        public Fn([NotNull] IdentList parameters, [NotNull] StatementList body)
         {
             Parameters = parameters;
             Body = body;
         }
 
         [NotNull]
-        public IElementList<Ident> Parameters { get; }
+        public IdentList Parameters { get; }
 
         [NotNull]
-        public IElementList<SyntaxElement> Body { get; }
+        public StatementList Body { get; }
 
+        [NotNull]
         public Env LexicalEnv { get; set; }
     }
 
@@ -143,13 +172,14 @@ namespace Efekt
         {
         }
 
+        [NotNull]
         public static Void Instance { get; } = new Void();
     }
 
 
     public sealed class FnApply : ExpElement
     {
-        public FnApply(ExpElement fn, IElementList<ExpElement> arguments)
+        public FnApply([NotNull] ExpElement fn, [NotNull] ExpList arguments)
         {
             Fn = fn;
             Arguments = arguments;
@@ -159,6 +189,6 @@ namespace Efekt
         public ExpElement Fn { get; }
 
         [NotNull]
-        public IElementList<ExpElement> Arguments { get; }
+        public ExpList Arguments { get; }
     }
 }
