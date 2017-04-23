@@ -123,6 +123,12 @@ namespace Efekt
 
         public string Text { get; }
         public TokenType Type { get; }
+
+        // for debug only
+        public override string ToString()
+        {
+            return Type + ": \"" + Text + "\"";
+        }
     }
 
     public enum TokenType

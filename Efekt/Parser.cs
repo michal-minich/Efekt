@@ -22,11 +22,20 @@ namespace Efekt
 
     internal sealed class Parser
     {
+        private readonly List<ParseElement> parsers;
         private IEnumerator<Token> te;
         private Token tok;
 
+        public Parser()
+        {
+            parsers = new List<ParseElement> {ParseIdent, ParseInt, ParseVar, ParseFn, ParseReturn, ParseCurly};
+        }
 
-        private void nextDontSkipWNewLine() => tok = te.MoveNext() ? te.Current : new Token(TokenType.None, "\0");
+
+        private void nextDontSkipWNewLine()
+        {
+            tok = te.MoveNext() ? te.Current : new Token(TokenType.None, "\0");
+        }
 
 
         private void next()
@@ -40,6 +49,9 @@ namespace Efekt
         }
 
 
+        private bool finished { get { return tok.Type == TokenType.None && tok.Text == "\0"; } }
+
+
         private void CheckNextAndSkip(string text)
         {
             next();
@@ -49,181 +61,92 @@ namespace Efekt
                 throw new Exception("Expected '" + text + "', found '" + tok.Text + "'.");
         }
 
-        public ElementList ParseNew(IEnumerable<Token> tokens)
-        {
-            var parsers = new List<ParseElement>();
-            parsers.Add(ParseIdent);
 
-            te = tokens.GetEnumerator();
-            var list = new List<Element>();
-            next();
-            var elements = new List<Element>();
-            while (true)
-            {
-                if (tok.Type == TokenType.None)
-                    break;
-                Element e = null;
-                foreach (var p in parsers)
-                {
-                    e = p();
-                    if (e != null)
-                        break;
-                }
-                if (e == null)
-                    throw new Exception();
-                elements.Add(e);
-            }
-
-            return new ElementList(elements.ToArray());
-        }
-
-        public ElementList ParseStatementList()
-        {
-            var list = new List<Element>();
-            next();
-            while (true)
-            {
-                if (tok.Type == TokenType.None)
-                    break;
-                var se = ParseFullWithPostOp();
-                if (se == null)
-                    throw new Exception();
-                list.Add(se);
-            }
-            return new ElementList(list.ToArray());
-        }
-
-
+        [NotNull]
         public Element Parse(IEnumerable<Token> tokens)
         {
             te = tokens.GetEnumerator();
-            var list = new List<Element>();
             next();
+            var elements = ParseUntilEnd();
+            return new ElementList(elements.ToArray());
+        }
+
+
+        [NotNull]
+        private List<Element> ParseUntilEnd()
+        {
+            var elements = new List<Element>();
             while (true)
             {
-                if (tok.Type == TokenType.None)
+                if (finished)
                     break;
-                var se = ParseFullWithPostOp();
-                if (se == null)
+                var e = ParseOne();
+                if (e == null && !finished)
                     throw new Exception();
-                list.Add(se);
+                elements.Add(e);
             }
-            return new ElementList(list.ToArray());
+            return elements;
         }
 
 
         [CanBeNull]
-        private List<Element> PaseList()
+        private Element ParseOne()
         {
-            next();
-            var list = new List<Element>();
-            while (true)
+            foreach (var p in parsers)
             {
-                var se = ParseFullWithPostOp();
-                if (se == null)
-                    return list;
-                list.Add(se);
+                var e = p();
+                if (e != null)
+                    return e;
             }
-        }
-        
-
-        [CanBeNull]
-        private Element ParseFullWithPostOp()
-        {
-            var se = ParseFull();
-            if (tok.Text == ",")
-            {
-                var list = PaseList();
-                if (list == null || list.Count == 0)
-                    throw new Exception();
-                return new ElementList(list.ToArray());
-            }
-            if (tok.Text == "(")
-            {
-                if (se is ExpElement exp)
-                {
-                var list = PaseList();
-                if (list == null)
-                    throw new Exception();
-                return new FnApply(exp, new ExpList(list.Cast<ExpElement>().ToArray()));
-                }
-                throw new Exception("cannot apply non exp");
-            }
-            return se;
+            if (!finished)
+                throw new Exception();
+            return null;
         }
 
-        [CanBeNull]
-        private Element ParseFull()
+        private ElementList ParseCurly()
         {
-            if (tok.Type == TokenType.NewLine)
-                next();
-
-            if (tok.Text == "}" || tok.Text == ")")
+            if (tok.Text == "}")
             {
                 next();
                 return null;
             }
 
-            if (tok.Type == TokenType.Ident)
-            {
-                return ParseIdent();
-            }
+            if (tok.Text != "{")
+                return null;
 
-            if (tok.Type == TokenType.Key)
+            next();
+
+            var elements = new List<Element>();
+            while (true)
             {
-                if (tok.Text == "var")
+                if (finished || tok.Text == "}")
+                    break;
+                var e = ParseOne();
+                if (e == null && !finished)
+                    throw new Exception();
+                elements.Add(e);
+                if (tok.Text == ",")
                 {
-                    return ParseVar();
+                    next();
+                    continue;
                 }
-                if (tok.Text == "fn")
+                else if (finished || tok.Text == "}")
                 {
-                    return ParseFn();
-                }
-                if (tok.Text == "return")
-                {
-                    return ParseReturn();
+                    break;
                 }
                 throw new Exception();
             }
 
-            if (tok.Type == TokenType.Int)
-            {
-                return ParseInt();
-            }
+            if (elements.Count == 0)
+                return new ElementList();
 
-            if (tok.Type == TokenType.Markup)
-            {
-                if (tok.Text == "{")
-                {
-                    var list = PaseList();
-                    if (list == null)
-                        return null;
-                    return new ElementList(list.ToArray());
-                }
-                
-                if (tok.Text == "(")
-                {
-                    var list = PaseList();
-                    if (list == null)
-                        return null;
-                    if (list.Count == 0)
-                        return new ElementList();
-                    if (list.Count == 1)
-                        return list[0];
-                    throw new Exception();
-                }
-            }
-
-            if (tok.Type == TokenType.None)
-            {
-                return null;
-            }
-
-            throw new Exception();
+            return new ElementList(elements.ToArray());
         }
 
-        private Element ParseIdent()
+        private Ident ParseIdent()
         {
+            if (tok.Type != TokenType.Ident)
+                return null;
             var i = new Ident(tok.Text);
             next();
             return i;
@@ -231,52 +154,60 @@ namespace Efekt
 
 
         [CanBeNull]
-        private Element ParseInt()
+        private Int ParseInt()
         {
-            if (tok.Type != TokenType.Ident)
+            if (tok.Type != TokenType.Int)
                 return null;
             var i = new Int(int.Parse(tok.Text.Replace("_", "")));
             next();
             return i;
         }
 
-        private Element ParseReturn()
+
+        private Return ParseReturn()
         {
+            if (tok.Text != "return")
+                return null;
             nextDontSkipWNewLine();
             if (tok.Type == TokenType.NewLine)
             {
                 next();
                 return new Return(Void.Instance);
             }
-            var se = ParseFullWithPostOp();
-            if (se is null)
+            var se = ParseOne();
+            if (se == null && finished)
                 return new Return(Void.Instance);
             if (se is ExpElement exp)
                 return new Return(exp);
             throw new Exception();
         }
 
-        private Element ParseFn()
+
+        private Fn ParseFn()
         {
+            if (tok.Text != "fn")
+                return null;
             next();
             if (!(tok.Type == TokenType.Ident || tok.Text == "{"))
                 throw new Exception();
             var @params = new IdentList();
-            var se = ParseFull();
+            var se = ParseOne();
             if (se is ElementList sel)
                 return new Fn(@params, sel);
             throw new Exception();
         }
 
 
-        private Element ParseVar()
+        private Var ParseVar()
         {
+            if (tok.Text != "var")
+                return null;
             next();
             var i = tok.Type == TokenType.Ident
                 ? new Ident(tok.Text)
                 : throw new Exception();
             CheckNextAndSkip("=");
-            var se = ParseFullWithPostOp();
+            var se = ParseOne();
             if (se is ExpElement exp)
                 return new Var(i, exp);
             throw new Exception();

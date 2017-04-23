@@ -28,7 +28,7 @@ namespace Efekt
 
             Console.WriteLine("TOKENS");
             var tr = new Tokenizer();
-            var ts = tr.Tokenize("1_2_3").ToList(); // fn { var x = fn { return 1_2_3 } return x() }()
+            var ts = tr.Tokenize("var x = fn { 1 }").ToList(); // fn { var x = fn { return 1_2_3 } return x() }()
             foreach (var t in ts)
             {
                 Console.Write(t.Type);
@@ -38,7 +38,7 @@ namespace Efekt
             Console.WriteLine();
             Console.WriteLine("PARSE");
             var p = new Parser();
-            var pse = p.ParseNew(ts);
+            var pse = p.Parse(ts);
             CodeWriter.Write(pse, cw);
 
             Console.WriteLine();
