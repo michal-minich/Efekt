@@ -4,7 +4,7 @@ namespace Efekt
 {
     public static class CodeWriter { 
 
-        public static void Write(SyntaxElement se, CodeTextWriter ctw)
+        public static void Write(Element se, CodeTextWriter ctw)
         {
             switch (se)
             {
@@ -79,7 +79,7 @@ namespace Efekt
                     ctw.WriteSpace().WriteOp("=").WriteSpace();
                     Write(v.Exp, ctw);
                     break;
-                case StatementList sel:
+                case ElementList sel:
                     foreach (var se2 in sel)
                     {
                         Write(se2, ctw);

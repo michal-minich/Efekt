@@ -10,15 +10,15 @@ namespace Efekt
         {
             Contract.Requires(args != null);
 
-            SyntaxElement se =
-                new StatementList(
+            Element se =
+                new ElementList(
                     new Var(new Ident("x"), new Fn(
                         new IdentList(),
-                        new StatementList(new Return(new Int(123))))),
+                        new ElementList(new Return(new Int(123))))),
                     new Return(new FnApply(new Ident("x"), new ExpList()))
                 );
 
-            if (se is StatementList body)
+            if (se is ElementList body)
                 se = new FnApply(
                     new Fn(new IdentList(), body),
                     new ExpList());
@@ -28,16 +28,17 @@ namespace Efekt
 
             Console.WriteLine("TOKENS");
             var tr = new Tokenizer();
-            var ts = tr.Tokenize("fn { var x = fn { return 1_2_3 } return x }").ToList(); // fn { var x = fn { return 1_2_3 } return x() }()
+            var ts = tr.Tokenize("1_2_3").ToList(); // fn { var x = fn { return 1_2_3 } return x() }()
             foreach (var t in ts)
             {
                 Console.Write(t.Type);
                 Console.WriteLine(": '" + t.Text + "'");
             }
 
+            Console.WriteLine();
             Console.WriteLine("PARSE");
             var p = new Parser();
-            var pse = p.Parse(ts);
+            var pse = p.ParseNew(ts);
             CodeWriter.Write(pse, cw);
 
             Console.WriteLine();

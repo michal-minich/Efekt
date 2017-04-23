@@ -5,6 +5,21 @@ using JetBrains.Annotations;
 
 namespace Efekt
 {
+    internal interface IElementVisitor<out T>
+    {
+        T VisitElementList(ElementList el);
+    }
+
+    [CanBeNull]
+    internal delegate Element ParseElement();
+
+
+    internal sealed class ParserState
+    {
+        private IEnumerator<Token> te;
+        private Token tok;
+    }
+
     internal sealed class Parser
     {
         private IEnumerator<Token> te;
@@ -34,11 +49,37 @@ namespace Efekt
                 throw new Exception("Expected '" + text + "', found '" + tok.Text + "'.");
         }
 
-
-        public SyntaxElement Parse(IEnumerable<Token> tokens)
+        public ElementList ParseNew(IEnumerable<Token> tokens)
         {
+            var parsers = new List<ParseElement>();
+            parsers.Add(ParseIdent);
+
             te = tokens.GetEnumerator();
-            var list = new List<SyntaxElement>();
+            var list = new List<Element>();
+            next();
+            var elements = new List<Element>();
+            while (true)
+            {
+                if (tok.Type == TokenType.None)
+                    break;
+                Element e = null;
+                foreach (var p in parsers)
+                {
+                    e = p();
+                    if (e != null)
+                        break;
+                }
+                if (e == null)
+                    throw new Exception();
+                elements.Add(e);
+            }
+
+            return new ElementList(elements.ToArray());
+        }
+
+        public ElementList ParseStatementList()
+        {
+            var list = new List<Element>();
             next();
             while (true)
             {
@@ -49,15 +90,33 @@ namespace Efekt
                     throw new Exception();
                 list.Add(se);
             }
-            return new StatementList(list.ToArray());
+            return new ElementList(list.ToArray());
+        }
+
+
+        public Element Parse(IEnumerable<Token> tokens)
+        {
+            te = tokens.GetEnumerator();
+            var list = new List<Element>();
+            next();
+            while (true)
+            {
+                if (tok.Type == TokenType.None)
+                    break;
+                var se = ParseFullWithPostOp();
+                if (se == null)
+                    throw new Exception();
+                list.Add(se);
+            }
+            return new ElementList(list.ToArray());
         }
 
 
         [CanBeNull]
-        private List<SyntaxElement> PaseList()
+        private List<Element> PaseList()
         {
             next();
-            var list = new List<SyntaxElement>();
+            var list = new List<Element>();
             while (true)
             {
                 var se = ParseFullWithPostOp();
@@ -69,7 +128,7 @@ namespace Efekt
         
 
         [CanBeNull]
-        private SyntaxElement ParseFullWithPostOp()
+        private Element ParseFullWithPostOp()
         {
             var se = ParseFull();
             if (tok.Text == ",")
@@ -77,7 +136,7 @@ namespace Efekt
                 var list = PaseList();
                 if (list == null || list.Count == 0)
                     throw new Exception();
-                return new StatementList(list.ToArray());
+                return new ElementList(list.ToArray());
             }
             if (tok.Text == "(")
             {
@@ -94,7 +153,7 @@ namespace Efekt
         }
 
         [CanBeNull]
-        private SyntaxElement ParseFull()
+        private Element ParseFull()
         {
             if (tok.Type == TokenType.NewLine)
                 next();
@@ -139,7 +198,7 @@ namespace Efekt
                     var list = PaseList();
                     if (list == null)
                         return null;
-                    return new StatementList(list.ToArray());
+                    return new ElementList(list.ToArray());
                 }
                 
                 if (tok.Text == "(")
@@ -148,7 +207,7 @@ namespace Efekt
                     if (list == null)
                         return null;
                     if (list.Count == 0)
-                        return new StatementList();
+                        return new ElementList();
                     if (list.Count == 1)
                         return list[0];
                     throw new Exception();
@@ -163,7 +222,7 @@ namespace Efekt
             throw new Exception();
         }
 
-        private SyntaxElement ParseIdent()
+        private Element ParseIdent()
         {
             var i = new Ident(tok.Text);
             next();
@@ -171,14 +230,17 @@ namespace Efekt
         }
 
 
-        private SyntaxElement ParseInt()
+        [CanBeNull]
+        private Element ParseInt()
         {
+            if (tok.Type != TokenType.Ident)
+                return null;
             var i = new Int(int.Parse(tok.Text.Replace("_", "")));
             next();
             return i;
         }
 
-        private SyntaxElement ParseReturn()
+        private Element ParseReturn()
         {
             nextDontSkipWNewLine();
             if (tok.Type == TokenType.NewLine)
@@ -194,25 +256,20 @@ namespace Efekt
             throw new Exception();
         }
 
-        private SyntaxElement ParseFn()
+        private Element ParseFn()
         {
             next();
             if (!(tok.Type == TokenType.Ident || tok.Text == "{"))
                 throw new Exception();
             var @params = new IdentList();
             var se = ParseFull();
-            if (se is StatementList sel)
+            if (se is ElementList sel)
                 return new Fn(@params, sel);
             throw new Exception();
         }
 
 
-        private IdentList parseIdentList()
-        {
-        }
-
-
-        private SyntaxElement ParseVar()
+        private Element ParseVar()
         {
             next();
             var i = tok.Type == TokenType.Ident

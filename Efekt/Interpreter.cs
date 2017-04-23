@@ -46,9 +46,9 @@ namespace Efekt
     {
         [CanBeNull] private ValueElement ret;
 
-        public ValueElement Eval(SyntaxElement se)
+        public ValueElement Eval(Element se)
         {
-            /*   if (se is StatementList body)
+            /*   if (se is ElementList body)
                {
                    se = new FnApply(
                        new Fn(new IdentList(new List<Ident>()), body), 
@@ -58,7 +58,7 @@ namespace Efekt
             return Eval(se, new Env(null));
         }
 
-        public ValueElement Eval(SyntaxElement se, Env env)
+        public ValueElement Eval(Element se, Env env)
         {
             switch (se)
             {

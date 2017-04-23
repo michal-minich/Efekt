@@ -62,7 +62,7 @@
     <Compile Include="Parser.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SyntaxElement.cs" />
+    <Compile Include="Element.cs" />
     <Compile Include="Tokenizer.cs" />
     <Compile Include="Utils.cs" />
     <Compile Include="TextWriter.cs" />

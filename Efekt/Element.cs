@@ -4,12 +4,12 @@ using JetBrains.Annotations;
 
 namespace Efekt
 {
-    public interface SyntaxElement
+    public interface Element
     {
     }
 
 
-    public interface ExpElement : SyntaxElement
+    public interface ExpElement : Element
     {
     }
 
@@ -19,12 +19,12 @@ namespace Efekt
     }
 
 
-    public interface IElementList<out T> : SyntaxElement, IReadOnlyList<T> where T : SyntaxElement
+    /*public interface IElementList<out T> : Element, IReadOnlyList<T> where T : Element
     {
-    }
+    }*/
 
 
-    public abstract class ElementList<T> : IElementList<T> where T : SyntaxElement
+    public abstract class ElementList<T> : Element, IReadOnlyList<T> where T : Element
     {
         [NotNull] private readonly IReadOnlyList<T> items;
 
@@ -43,9 +43,9 @@ namespace Efekt
     }
 
 
-    public sealed class StatementList : ElementList<SyntaxElement>
+    public sealed class ElementList : ElementList<Element>
     {
-        public StatementList([NotNull] params SyntaxElement[] items) : base(items)
+        public ElementList([NotNull] params Element[] items) : base(items)
         {
         }
     }
@@ -76,7 +76,7 @@ namespace Efekt
     }
 
 
-    public sealed class Var : SyntaxElement
+    public sealed class Var : Element
     {
         public Var([NotNull] Ident ident, [NotNull] ExpElement exp)
         {
@@ -94,7 +94,7 @@ namespace Efekt
 
     public sealed class When : ExpElement
     {
-        public When([NotNull] ExpElement test, [NotNull] SyntaxElement then, [CanBeNull] SyntaxElement otherwise)
+        public When([NotNull] ExpElement test, [NotNull] Element then, [CanBeNull] Element otherwise)
         {
             Test = test;
             Then = then;
@@ -105,26 +105,26 @@ namespace Efekt
         public ExpElement Test { get; }
 
         [NotNull]
-        public SyntaxElement Then { get; }
+        public Element Then { get; }
 
         [CanBeNull]
-        public SyntaxElement Otherwise { get; }
+        public Element Otherwise { get; }
     }
 
 
-    public sealed class Loop : SyntaxElement
+    public sealed class Loop : Element
     {
-        public Loop([NotNull] StatementList body)
+        public Loop([NotNull] ElementList body)
         {
             Body = body;
         }
 
         [NotNull]
-        public StatementList Body { get; }
+        public ElementList Body { get; }
     }
 
 
-    public sealed class Return : SyntaxElement
+    public sealed class Return : Element
     {
         public Return([NotNull] ExpElement exp)
         {
@@ -138,7 +138,7 @@ namespace Efekt
 
     public sealed class Fn : ValueElement
     {
-        public Fn([NotNull] IdentList parameters, [NotNull] StatementList body)
+        public Fn([NotNull] IdentList parameters, [NotNull] ElementList body)
         {
             Parameters = parameters;
             Body = body;
@@ -148,7 +148,7 @@ namespace Efekt
         public IdentList Parameters { get; }
 
         [NotNull]
-        public StatementList Body { get; }
+        public ElementList Body { get; }
 
         [NotNull]
         public Env LexicalEnv { get; set; }
