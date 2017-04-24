@@ -17,18 +17,13 @@ namespace Efekt
                         new ElementList(new Return(new Int(123))))),
                     new Return(new FnApply(new Ident("x"), new ExpList()))
                 );
-
-            if (se is ElementList body)
-                se = new FnApply(
-                    new Fn(new IdentList(), body),
-                    new ExpList());
-
+            
             var w = new ConsoleWriter();
             var cw = new CodeTextWriter(w);
 
             Console.WriteLine("TOKENS");
             var tr = new Tokenizer();
-            var ts = tr.Tokenize("var x = fn { 1 }").ToList(); // fn { var x = fn { return 1_2_3 } return x() }()
+            var ts = tr.Tokenize(" fn { var x = fn { return 1_2_3 } return x() }()").ToList(); // fn { var x = fn { return 1_2_3 } return x() }()
             foreach (var t in ts)
             {
                 Console.Write(t.Type);
@@ -46,7 +41,7 @@ namespace Efekt
             CodeWriter.Write(se, cw);
 
             var i = new Interpreter();
-            var res = i.Eval(se);
+            var res = i.Eval(pse);
 
             Console.WriteLine();
             Console.WriteLine();

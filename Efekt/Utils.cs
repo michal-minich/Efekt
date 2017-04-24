@@ -16,7 +16,7 @@ namespace Efekt
 
     public static class C
     {
-        [ContractAnnotation("condition:false => halt", true)]
+        [ContractAnnotation("false => halt", true)]
         // ReSharper disable once UnusedParameter.Global
         public static void Requires(bool condition)
         {
@@ -24,12 +24,19 @@ namespace Efekt
                 throw new Exception();
         }
 
-        public static bool ForAll<T>(IEnumerable<T> collection, Predicate<T> predicate)
+        [ContractAbbreviator]
+        // ReSharper disable once UnusedParameter.Global
+        public static void Nn<T>([NotNull] T value) where T : class
         {
-            foreach (var item in collection)
-                if (!predicate(item))
-                    return false;
-            return true;
+            Contract. /*Requires*/Assert(value != null);
+        }
+
+
+        [ContractAbbreviator]
+        [ContractAnnotation("null => halt")]
+        public static void AllNotNull<T>(IEnumerable<T> items)
+        {
+            Requires(Contract.ForAll(items, i => i != null));
         }
     }
 }

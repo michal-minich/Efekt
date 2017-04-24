@@ -104,7 +104,21 @@ namespace Efekt
             {
                 var e = p();
                 if (e != null)
+                {
+                    if (tok.Text == "(")
+                    {
+                        next();
+                        var args = ParseUntilEnd(true);
+                        var exp = e as ExpElement;
+                        if (exp == null)
+                            throw new Exception();
+                        var argsExpList = args.Select(a => a as ExpElement).ToArray();
+                        if (argsExpList.Any(a => a == null))
+                            throw new Exception();
+                        return new FnApply(exp, new ExpList(argsExpList));
+                    }
                     return e;
+                }
             }
             if (!finished)
                 throw new Exception();

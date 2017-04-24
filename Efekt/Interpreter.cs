@@ -48,12 +48,10 @@ namespace Efekt
 
         public ValueElement Eval(Element se)
         {
-            /*   if (se is ElementList body)
-               {
-                   se = new FnApply(
-                       new Fn(new IdentList(new List<Ident>()), body), 
-                       new ElementList<ExpElement>(new List<ExpElement>()));
-               }*/
+            if (se is ElementList body)
+                se = new FnApply(
+                    new Fn(new IdentList(), body),
+                    new ExpList());
 
             return Eval(se, new Env(null));
         }
