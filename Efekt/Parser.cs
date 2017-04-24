@@ -28,7 +28,10 @@ namespace Efekt
 
         public Parser()
         {
-            parsers = new List<ParseElement> {ParseIdent, ParseInt, ParseVar, ParseFn, ParseReturn, ParseCurly};
+            parsers = new List<ParseElement>
+            {
+                ParseIdent, ParseInt, ParseVar, ParseFn, ParseReturn, ParseCurly
+            };
         }
 
 
@@ -73,13 +76,18 @@ namespace Efekt
 
 
         [NotNull]
-        private List<Element> ParseUntilEnd()
+        private List<Element> ParseUntilEnd(bool stopOnBrace = false )
         {
             var elements = new List<Element>();
             while (true)
             {
                 if (finished)
                     break;
+                if (stopOnBrace && "])}".ToList().Any(x => x == tok.Text[0]))
+                {
+                    next();
+                    break;
+                }
                 var e = ParseOne();
                 if (e == null && !finished)
                     throw new Exception();
@@ -105,40 +113,12 @@ namespace Efekt
 
         private ElementList ParseCurly()
         {
-            if (tok.Text == "}")
-            {
-                next();
-                return null;
-            }
-
             if (tok.Text != "{")
                 return null;
 
             next();
 
-            var elements = new List<Element>();
-            while (true)
-            {
-                if (finished || tok.Text == "}")
-                    break;
-                var e = ParseOne();
-                if (e == null && !finished)
-                    throw new Exception();
-                elements.Add(e);
-                if (tok.Text == ",")
-                {
-                    next();
-                    continue;
-                }
-                else if (finished || tok.Text == "}")
-                {
-                    break;
-                }
-                throw new Exception();
-            }
-
-            if (elements.Count == 0)
-                return new ElementList();
+            var elements = ParseUntilEnd(true);
 
             return new ElementList(elements.ToArray());
         }

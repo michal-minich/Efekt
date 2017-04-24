@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using JetBrains.Annotations;
 
 namespace Efekt
@@ -30,6 +31,8 @@ namespace Efekt
 
         protected ElementList([NotNull] IReadOnlyList<T> items)
         {
+            Contract.Assert(C.ForAll(items, i => i != null));
+
             this.items = items;
         }
 
@@ -68,6 +71,9 @@ namespace Efekt
     {
         public Ident([NotNull] string name)
         {
+            Contract.Assert(!string.IsNullOrWhiteSpace(name));
+            Contract.Assert(name.Trim().Length == name.Length);
+
             Name = name;
         }
 
@@ -80,6 +86,9 @@ namespace Efekt
     {
         public Var([NotNull] Ident ident, [NotNull] ExpElement exp)
         {
+            Contract.Assert(ident != null);
+            Contract.Assert(exp != null);
+
             Ident = ident;
             Exp = exp;
         }
@@ -96,6 +105,10 @@ namespace Efekt
     {
         public When([NotNull] ExpElement test, [NotNull] Element then, [CanBeNull] Element otherwise)
         {
+            Contract.Assert(test != null);
+            Contract.Assert(then != null);
+            Contract.Assert(otherwise != null);
+
             Test = test;
             Then = then;
             Otherwise = otherwise;
@@ -116,6 +129,7 @@ namespace Efekt
     {
         public Loop([NotNull] ElementList body)
         {
+            Contract.Assert(body != null);
             Body = body;
         }
 
@@ -128,6 +142,7 @@ namespace Efekt
     {
         public Return([NotNull] ExpElement exp)
         {
+            Contract.Assert(exp != null);
             Exp = exp;
         }
 
@@ -140,6 +155,9 @@ namespace Efekt
     {
         public Fn([NotNull] IdentList parameters, [NotNull] ElementList body)
         {
+            Contract.Assert(parameters != null);
+            Contract.Assert(body != null);
+
             Parameters = parameters;
             Body = body;
         }
@@ -181,6 +199,9 @@ namespace Efekt
     {
         public FnApply([NotNull] ExpElement fn, [NotNull] ExpList arguments)
         {
+            Contract.Assert(fn != null);
+            Contract.Assert(arguments != null);
+
             Fn = fn;
             Arguments = arguments;
         }
