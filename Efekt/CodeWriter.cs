@@ -2,22 +2,29 @@ using System;
 
 namespace Efekt
 {
-    public static class CodeWriter { 
+    public sealed class CodeWriter
+    {
+        private readonly CodeTextWriter ctw;
 
-        public static void Write(Element se, CodeTextWriter ctw)
+        public CodeWriter(CodeTextWriter codeTextWriter)
+        {
+            ctw = codeTextWriter;
+        }
+
+        public void Write(Element se)
         {
             switch (se)
             {
                 case When w:
                     ctw.WriteKey("if").WriteSpace();
-                    Write(w.Test, ctw);
+                    Write(w.Test);
                     ctw.WriteSpace().WriteMarkup("{");
-                    Write(w.Then, ctw);
+                    Write(w.Then);
                     ctw.WriteMarkup("}");
                     if (w.Otherwise != null)
                     {
                         ctw.WriteSpace().WriteMarkup("else").WriteSpace().WriteMarkup("{");
-                        Write(w.Otherwise, ctw);
+                        Write(w.Otherwise);
                         ctw.WriteMarkup("}");
                     }
                     break;
@@ -28,13 +35,13 @@ namespace Efekt
                     ctw.WriteNum(ii.Value.ToString());
                     return;
                 case FnApply fna:
-                    Write(fna.Fn, ctw);
+                    Write(fna.Fn);
                     ctw.WriteSpace();
                     var c = 0;
                     ctw.WriteMarkup("(");
                     foreach (var a in fna.Arguments)
                     {
-                        Write(a, ctw);
+                        Write(a);
                         if (fna.Arguments.Count != ++c)
                             ctw.WriteMarkup(", ");
                     }
@@ -45,7 +52,7 @@ namespace Efekt
                     c = 0;
                     foreach (var p in f.Parameters)
                     {
-                        Write(p, ctw);
+                        Write(p);
                         if (f.Parameters.Count != ++c)
                             ctw.WriteMarkup(", ");
                     }
@@ -53,7 +60,7 @@ namespace Efekt
                     c = 0;
                     foreach (var p in f.Body)
                     {
-                        Write(p, ctw);
+                        Write(p);
                         if (f.Body.Count != ++c)
                             ctw.WriteLine();
                     }
@@ -64,25 +71,25 @@ namespace Efekt
                     if (r.Exp != Void.Instance)
                     {
                         ctw.WriteSpace();
-                        Write(r.Exp, ctw);
+                        Write(r.Exp);
                     }
                     break;
                 case Loop l:
                     ctw.WriteKey("loop").WriteSpace();
                     ctw.WriteMarkup("{");
-                    Write(l.Body, ctw);
+                    Write(l.Body);
                     ctw.WriteMarkup("}");
                     break;
                 case Var v:
                     ctw.WriteKey("var").WriteSpace();
-                    Write(v.Ident, ctw);
+                    Write(v.Ident);
                     ctw.WriteSpace().WriteOp("=").WriteSpace();
-                    Write(v.Exp, ctw);
+                    Write(v.Exp);
                     break;
                 case ElementList sel:
                     foreach (var se2 in sel)
                     {
-                        Write(se2, ctw);
+                        Write(se2);
                         ctw.WriteLine();
                     }
                     break;

@@ -6,12 +6,12 @@ namespace Efekt
     {
         private readonly TextWriter writer;
 
-        public int IndentLevel { get; private set; }
-
         public CodeTextWriter(TextWriter writer)
         {
             this.writer = writer;
         }
+
+        public int IndentLevel { get; private set; }
 
         public CodeTextWriter WriteIdent(string value)
         {

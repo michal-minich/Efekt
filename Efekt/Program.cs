@@ -1,56 +1,47 @@
 ﻿using System;
-using System.Diagnostics.Contracts;
 using System.Linq;
 
 namespace Efekt
 {
-    public sealed class Program
+    public static class Program
     {
+        private static readonly Tokenizer t = new Tokenizer();
+        private static readonly Parser p = new Parser();
+        private static readonly Interpreter i = new Interpreter();
+        private static readonly CodeTextWriter ctw = new CodeTextWriter(new ConsoleWriter());
+        private static readonly CodeWriter cw = new CodeWriter(ctw);
+
         private static void Main(string[] args)
         {
-            Contract.Requires(args != null);
+            C.Nn(args);
 
             Tests.RunAllTests();
 
-            Element se =
-                new ElementList(
-                    new Var(new Ident("x"), new Fn(
-                        new IdentList(),
-                        new ElementList(new Return(new Int(123))))),
-                    new Return(new FnApply(new Ident("x"), new ExpList()))
-                );
-            
-            var w = new ConsoleWriter();
-            var cw = new CodeTextWriter(w);
+            const string code = "var x = fn { return 1_2_3 } return x()";
+            debug(code);
 
+            Console.ReadLine();
+        }
+
+        private static void debug(string code)
+        {
+            var ts = t.Tokenize(code).ToList();
             Console.WriteLine("TOKENS");
-            var tr = new Tokenizer();
-            var ts = tr.Tokenize("var x = fn { return 1_2_3 } return x()").ToList(); // fn { var x = fn { return 1_2_3 } return x() }()
-            foreach (var t in ts)
+            foreach (var tok in ts)
             {
-                Console.Write(t.Type);
-                Console.WriteLine(": '" + t.Text + "'");
+                Console.Write(tok.Type.ToString().PadRight(8));
+                Console.WriteLine("'" + tok.Text + "'");
             }
 
             Console.WriteLine();
             Console.WriteLine("PARSE");
-            var p = new Parser();
             var pse = p.Parse(ts);
-            CodeWriter.Write(pse, cw);
+            cw.Write(pse);
 
             Console.WriteLine();
-            Console.WriteLine("CODE");
-            CodeWriter.Write(se, cw);
-
-            var i = new Interpreter();
+            Console.WriteLine("EVAL");
             var res = i.Eval(pse);
-
-            Console.WriteLine();
-            Console.WriteLine();
-            Console.WriteLine("RES");
-            CodeWriter.Write(res, cw);
-
-            Console.ReadLine();
+            cw.Write(res);
         }
     }
 }

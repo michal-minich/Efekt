@@ -6,7 +6,8 @@ namespace Efekt
 {
     public sealed class Tokenizer
     {
-        private readonly string[] keywords = {"var", "fn", "if", "else", "return", "loop", "break", "continue", "label", "goto" };
+        private static readonly string[] keywords =
+            {"var", "fn", "if", "else", "return", "loop", "break", "continue", "label", "goto"};
 
         public IEnumerable<Token> Tokenize(string code)
         {

@@ -30,9 +30,17 @@ namespace Efekt
         {
             parsers = new List<ParseElement>
             {
-                ParseIdent, ParseInt, ParseVar, ParseFn, ParseReturn, ParseCurly
+                ParseIdent,
+                ParseInt,
+                ParseVar,
+                ParseFn,
+                ParseReturn,
+                ParseCurly
             };
         }
+
+
+        private bool finished => tok.Type == TokenType.None && tok.Text == "\0";
 
 
         private void nextDontSkipWNewLine()
@@ -50,9 +58,6 @@ namespace Efekt
             if (tok.Type == TokenType.NewLine)
                 goto again;
         }
-
-
-        private bool finished { get { return tok.Type == TokenType.None && tok.Text == "\0"; } }
 
 
         private void CheckNextAndSkip(string text)
@@ -76,7 +81,7 @@ namespace Efekt
 
 
         [NotNull]
-        private List<Element> ParseUntilEnd(bool stopOnBrace = false )
+        private List<Element> ParseUntilEnd(bool stopOnBrace = false)
         {
             var elements = new List<Element>();
             while (true)
