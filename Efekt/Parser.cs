@@ -5,20 +5,8 @@ using JetBrains.Annotations;
 
 namespace Efekt
 {
-    internal interface IElementVisitor<out T>
-    {
-        T VisitElementList(ElementList el);
-    }
-
     [CanBeNull]
     internal delegate Element ParseElement();
-
-
-    internal sealed class ParserState
-    {
-        private IEnumerator<Token> te;
-        private Token tok;
-    }
 
     internal sealed class Parser
     {
@@ -76,7 +64,7 @@ namespace Efekt
             te = tokens.GetEnumerator();
             next();
             var elements = ParseUntilEnd();
-            return new ElementList(elements.ToArray());
+            return elements.Count == 1 ? elements[0] : new ElementList(elements.ToArray());
         }
 
 

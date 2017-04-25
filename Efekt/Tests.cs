@@ -15,7 +15,7 @@ namespace Efekt
         public static void RunAllTests()
         {
             error("~");
-            test("return 1", "1");
+            test("1", "1");
             test("var x = fn { return 1_2_3 } return x()", "123");
         }
 
