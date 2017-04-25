@@ -10,6 +10,8 @@ namespace Efekt
         {
             Contract.Requires(args != null);
 
+            Tests.RunAllTests();
+
             Element se =
                 new ElementList(
                     new Var(new Ident("x"), new Fn(
