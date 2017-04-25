@@ -23,7 +23,7 @@ namespace Efekt
 
             Console.WriteLine("TOKENS");
             var tr = new Tokenizer();
-            var ts = tr.Tokenize(" fn { var x = fn { return 1_2_3 } return x() }()").ToList(); // fn { var x = fn { return 1_2_3 } return x() }()
+            var ts = tr.Tokenize("var x = fn { return 1_2_3 } return x()").ToList(); // fn { var x = fn { return 1_2_3 } return x() }()
             foreach (var t in ts)
             {
                 Console.Write(t.Type);

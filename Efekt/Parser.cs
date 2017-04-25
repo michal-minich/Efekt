@@ -88,7 +88,7 @@ namespace Efekt
                     next();
                     break;
                 }
-                var e = ParseOne();
+                var e = ParseOne(true);
                 if (e == null && !finished)
                     throw new Exception();
                 elements.Add(e);
@@ -98,14 +98,14 @@ namespace Efekt
 
 
         [CanBeNull]
-        private Element ParseOne()
+        private Element ParseOne(bool withOps = false)
         {
             foreach (var p in parsers)
             {
                 var e = p();
                 if (e != null)
                 {
-                    if (tok.Text == "(")
+                    if (withOps && tok.Text == "(")
                     {
                         next();
                         var args = ParseUntilEnd(true);
@@ -168,7 +168,7 @@ namespace Efekt
                 next();
                 return new Return(Void.Instance);
             }
-            var se = ParseOne();
+            var se = ParseOne(true);
             if (se == null && finished)
                 return new Return(Void.Instance);
             if (se is ExpElement exp)
@@ -201,7 +201,7 @@ namespace Efekt
                 ? new Ident(tok.Text)
                 : throw new Exception();
             CheckNextAndSkip("=");
-            var se = ParseOne();
+            var se = ParseOne(true);
             if (se is ExpElement exp)
                 return new Var(i, exp);
             throw new Exception();
