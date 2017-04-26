@@ -102,6 +102,17 @@ namespace Efekt
                     return f;
                 case ValueElement ve:
                     return ve;
+                case ElementList el:
+                    var newEnv = new Env(env);
+                    foreach (var listElement in el)
+                    {
+                        var bodyVal = Eval(listElement, newEnv);
+                        if (bodyVal != Void.Instance)
+                            throw new Exception("Unused value"); if (ret != null)
+                        if (ret != null)
+                            return Void.Instance;
+                    }
+                    return Void.Instance;
                 default:
                     throw new NotImplementedException();
                 case null:
