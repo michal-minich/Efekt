@@ -8,8 +8,12 @@ namespace Efekt
     [CanBeNull]
     internal delegate Element ParseElement();
 
+    [CanBeNull]
+    internal delegate Exp ParseOpElement(Exp prev);
+
     internal sealed class Parser
     {
+        private readonly List<ParseOpElement> opOparsers;
         private readonly List<ParseElement> parsers;
         private IEnumerator<Token> te;
         private Token tok;
@@ -24,6 +28,12 @@ namespace Efekt
                 ParseFn,
                 ParseReturn,
                 ParseCurly
+            };
+
+            opOparsers = new List<ParseOpElement>
+            {
+                ParseFnApply,
+                ParseOpApply
             };
         }
 
@@ -96,28 +106,71 @@ namespace Efekt
             foreach (var p in parsers)
             {
                 var e = p();
-                if (e != null)
-                {
-                    if (withOps && tok.Text == "(")
-                    {
-                        next();
-                        var args = ParseUntilEnd(true);
-                        var exp = e as ExpElement;
-                        if (exp == null)
-                            throw new Exception();
-                        var argsExpList = args.Select(a => a as ExpElement).ToArray();
-                        if (argsExpList.Any(a => a == null))
-                            throw new Exception();
-                        return new FnApply(exp, new ExpList(argsExpList));
-                    }
+                if (e == null)
+                    continue;
+                if (!withOps || finished)
                     return e;
+                if (tok.Text != "(" && tok.Type != TokenType.Op)
+                    return e;
+                var prev = e as Exp;
+                if (prev == null)
+                    throw new Exception();
+                foreach (var opar in opOparsers)
+                {
+                    var o = opar(prev);
+                    if (o != null)
+                        return o;
                 }
+                return e;
             }
             if (!finished)
                 throw new Exception();
             return null;
         }
 
+
+        [CanBeNull]
+        private FnApply ParseFnApply(Exp prev)
+        {
+            if (tok.Text != "(")
+                return null;
+            next();
+            var args = ParseUntilEnd(true);
+            var argsExpList = args.Select(a => a as Exp).ToArray();
+            if (argsExpList.Any(a => a == null))
+                throw new Exception();
+            return new FnApply(prev, new ExpList(argsExpList));
+        }
+
+
+        [CanBeNull]
+        private Exp ParseOpApply(Exp prev)
+        {
+            if (tok.Type != TokenType.Op)
+                return null;
+            var opText = tok.Text;
+            next();
+            var second = ParseOne();
+            if (second == null)
+                throw new Exception();
+            var secondExp = second as Exp;
+            if (secondExp == null)
+                throw new Exception();
+            if (opText == "=")
+            {
+                var i = prev as Ident;
+                if (i == null)
+                    throw new Exception();
+                return new Assign(i, secondExp);
+            }
+            else
+            {
+                return new FnApply(prev, new ExpList(secondExp));
+            }
+        }
+
+
+        [CanBeNull]
         private ElementList ParseCurly()
         {
             if (tok.Text != "{")
@@ -130,6 +183,8 @@ namespace Efekt
             return new ElementList(elements.ToArray());
         }
 
+
+        [CanBeNull]
         private Ident ParseIdent()
         {
             if (tok.Type != TokenType.Ident)
@@ -151,6 +206,7 @@ namespace Efekt
         }
 
 
+        [CanBeNull]
         private Return ParseReturn()
         {
             if (tok.Text != "return")
@@ -164,12 +220,13 @@ namespace Efekt
             var se = ParseOne(true);
             if (se == null && finished)
                 return new Return(Void.Instance);
-            if (se is ExpElement exp)
+            if (se is Exp exp)
                 return new Return(exp);
             throw new Exception();
         }
 
 
+        [CanBeNull]
         private Fn ParseFn()
         {
             if (tok.Text != "fn")
@@ -185,6 +242,7 @@ namespace Efekt
         }
 
 
+        [CanBeNull]
         private Var ParseVar()
         {
             if (tok.Text != "var")
@@ -195,7 +253,7 @@ namespace Efekt
                 : throw new Exception();
             CheckNextAndSkip("=");
             var se = ParseOne(true);
-            if (se is ExpElement exp)
+            if (se is Exp exp)
                 return new Var(i, exp);
             throw new Exception();
         }

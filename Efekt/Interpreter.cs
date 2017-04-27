@@ -7,7 +7,7 @@ namespace Efekt
 {
     public sealed class Env
     {
-        [NotNull] private readonly Dictionary<string, ValueElement> dict = new Dictionary<string, ValueElement>();
+        [NotNull] private readonly Dictionary<string, Value> dict = new Dictionary<string, Value>();
 
         public Env([CanBeNull] Env parent)
         {
@@ -17,38 +17,46 @@ namespace Efekt
         [CanBeNull]
         public Env Parent { get; }
 
-        public ValueElement Get(string name)
+        public Value Get(string name)
         {
-            if (dict.TryGetValue(name, out ValueElement value))
+            if (dict.TryGetValue(name, out Value value))
                 return value;
             if (Parent != null)
                 return Parent.Get(name);
             throw new Exception();
         }
 
-        public void Declare(string name, ValueElement value)
+        public void Declare(string name, Value value)
         {
             if (dict.ContainsKey(name))
                 throw new Exception();
             dict.Add(name, value);
         }
 
-        public void Set(string name, ValueElement value)
+        public void Set(string name, Value value)
         {
-            if (!dict.ContainsKey(name))
-                throw new Exception();
-            dict[name] = value;
+            var e = this;
+            do
+            {
+                if (e.dict.ContainsKey(name))
+                {
+                    e.dict[name] = value;
+                    return;
+                }
+                e = e.Parent;
+            } while (e != null);
+            throw new Exception();
         }
     }
 
 
     public class Interpreter
     {
-        [CanBeNull] private ValueElement ret;
+        [CanBeNull] private Value ret;
 
-        public ValueElement Eval(Element se)
+        public Value Eval(Element se)
         {
-            if (se is ExpElement exp)
+            if (se is Exp exp)
                 se = new ElementList(new Return(exp));
 
             if (se is ElementList body)
@@ -59,13 +67,17 @@ namespace Efekt
             return Eval(se, new Env(null));
         }
 
-        public ValueElement Eval(Element se, Env env)
+        public Value Eval(Element se, Env env)
         {
             switch (se)
             {
                 case Var v:
                     var val = Eval(v.Exp, env);
                     env.Declare(v.Ident.Name, val);
+                    return Void.Instance;
+                case Assign a:
+                    var val2 = Eval(a.Exp, env);
+                    env.Set(a.Ident.Name, val2);
                     return Void.Instance;
                 case Ident i:
                     return env.Get(i.Name);
@@ -100,7 +112,7 @@ namespace Efekt
                     if (f.LexicalEnv == null)
                         f.LexicalEnv = env;
                     return f;
-                case ValueElement ve:
+                case Value ve:
                     return ve;
                 case ElementList el:
                     var newEnv = new Env(env);

@@ -16,13 +16,22 @@ namespace Efekt
         {
             error("~");
             test("1", "1");
+            
+            // var
+            test("var a = 1 return a", "1");
+
+            // assign
+            test("var a = 1 a = 2 return a", "2");
+
+            // scope
             test("var a = 1 { var a = 2 return a }", "2");
             test("var a = 1 { var a = 2 } return a", "1");
-            //test("var a = 1 { a = 2 } return a", "2");
-            //test("var a = 1 { a = 2 } return a a = 3", "2");
-            //test("var a = 1 { var a = 2 } return a", "1");
-            //test("var a = 1 { var a = 2 } return a a = 3", "1");
+            test("var a = 1 { a = 2 } return a", "2");
+            test("var a = 1 { a = 2 } return a a = 3", "2");
+            test("var a = 1 { var a = 2 } return a", "1");
+            test("var a = 1 { var a = 2 } return a a = 3", "1");
             test("var x = fn { return 1_2_3 } return x()", "123");
+            test("var a = 1 var b = 2 { a = 3 b = a } return b", "3");
         }
 
         private static void error(string code)

@@ -82,9 +82,10 @@ namespace Efekt
                     break;
                 case Var v:
                     ctw.WriteKey("var").WriteSpace();
-                    Write(v.Ident);
-                    ctw.WriteSpace().WriteOp("=").WriteSpace();
-                    Write(v.Exp);
+                    writeAssign(v.Ident, v.Exp);
+                    break;
+                case Assign a:
+                    writeAssign(a.Ident, a.Exp);
                     break;
                 case ElementList sel:
                     foreach (var se2 in sel)
@@ -99,6 +100,13 @@ namespace Efekt
                 case null:
                     throw new Exception();
             }
+        }
+
+        private void writeAssign(Ident i, Exp e)
+        {
+            Write(i);
+            ctw.WriteSpace().WriteOp("=").WriteSpace();
+            Write(e);
         }
     }
 }

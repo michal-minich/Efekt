@@ -9,12 +9,12 @@ namespace Efekt
     }
 
 
-    public interface ExpElement : Element
+    public interface Exp : Element
     {
     }
 
 
-    public interface ValueElement : ExpElement
+    public interface Value : Exp
     {
     }
 
@@ -52,9 +52,9 @@ namespace Efekt
         }
     }
 
-    public sealed class ExpList : ElementList<ExpElement>
+    public sealed class ExpList : ElementList<Exp>
     {
-        public ExpList([NotNull] params ExpElement[] items) : base(items)
+        public ExpList([NotNull] params Exp[] items) : base(items)
         {
         }
     }
@@ -66,7 +66,7 @@ namespace Efekt
         }
     }
 
-    public sealed class Ident : ExpElement
+    public sealed class Ident : Exp
     {
         public Ident([NotNull] string name)
         {
@@ -83,7 +83,7 @@ namespace Efekt
 
     public sealed class Var : Element
     {
-        public Var([NotNull] Ident ident, [NotNull] ExpElement exp)
+        public Var([NotNull] Ident ident, [NotNull] Exp exp)
         {
             C.Nn(ident);
             C.Nn(exp);
@@ -96,13 +96,32 @@ namespace Efekt
         public Ident Ident { get; }
 
         [NotNull]
-        public ExpElement Exp { get; }
+        public Exp Exp { get; }
+    }
+    
+
+    public sealed class Assign : Exp // TODO: make it implement Element
+    {
+        public Assign([NotNull] Ident ident, [NotNull] Exp exp)
+        {
+            C.Nn(ident);
+            C.Nn(exp);
+
+            Ident = ident;
+            Exp = exp;
+        }
+
+        [NotNull]
+        public Ident Ident { get; }
+
+        [NotNull]
+        public Exp Exp { get; }
     }
 
 
-    public sealed class When : ExpElement
+    public sealed class When : Exp
     {
-        public When([NotNull] ExpElement test, [NotNull] Element then, [CanBeNull] Element otherwise)
+        public When([NotNull] Exp test, [NotNull] Element then, [CanBeNull] Element otherwise)
         {
             C.Nn(test);
             C.Nn(then);
@@ -114,7 +133,7 @@ namespace Efekt
         }
 
         [NotNull]
-        public ExpElement Test { get; }
+        public Exp Test { get; }
 
         [NotNull]
         public Element Then { get; }
@@ -139,18 +158,18 @@ namespace Efekt
 
     public sealed class Return : Element
     {
-        public Return([NotNull] ExpElement exp)
+        public Return([NotNull] Exp exp)
         {
             C.Nn(exp);
             Exp = exp;
         }
 
         [NotNull]
-        public ExpElement Exp { get; }
+        public Exp Exp { get; }
     }
 
 
-    public sealed class Fn : ValueElement
+    public sealed class Fn : Value
     {
         public Fn([NotNull] IdentList parameters, [NotNull] ElementList body)
         {
@@ -172,7 +191,7 @@ namespace Efekt
     }
 
 
-    public sealed class Int : ValueElement
+    public sealed class Int : Value
     {
         public Int(int value)
         {
@@ -183,7 +202,7 @@ namespace Efekt
     }
 
 
-    public sealed class Void : ValueElement
+    public sealed class Void : Value
     {
         private Void()
         {
@@ -194,9 +213,9 @@ namespace Efekt
     }
 
 
-    public sealed class FnApply : ExpElement
+    public sealed class FnApply : Exp
     {
-        public FnApply([NotNull] ExpElement fn, [NotNull] ExpList arguments)
+        public FnApply([NotNull] Exp fn, [NotNull] ExpList arguments)
         {
             C.Nn(fn);
             C.Nn(arguments);
@@ -206,7 +225,7 @@ namespace Efekt
         }
 
         [NotNull]
-        public ExpElement Fn { get; }
+        public Exp Fn { get; }
 
         [NotNull]
         public ExpList Arguments { get; }
