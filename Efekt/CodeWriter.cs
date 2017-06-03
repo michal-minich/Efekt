@@ -80,6 +80,12 @@ namespace Efekt
                     Write(l.Body);
                     ctw.WriteMarkup("}");
                     break;
+                case Bool b:
+                    ctw.WriteKey(b.Value ? "true" : "false");
+                    break;
+                case Break b:
+                    ctw.WriteKey("break");
+                    break;
                 case Var v:
                     ctw.WriteKey("var").WriteSpace();
                     writeAssign(v.Ident, v.Exp);

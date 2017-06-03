@@ -28,6 +28,8 @@ namespace Efekt
                 ParseVar,
                 ParseFn,
                 ParseWhen,
+                ParseLoop,
+                ParseBreak,
                 ParseReturn,
                 ParseCurly
             };
@@ -288,6 +290,30 @@ namespace Efekt
                 otherwise = null;
             }
             return new When(testExp, then, otherwise);
+        }
+
+
+        [CanBeNull]
+        private Loop ParseLoop()
+        {
+            if (tok.Text != "loop")
+                return null;
+            next();
+            if (tok.Text != "{")
+                throw new Exception();
+            next();
+            var body = ParseUntilEnd(true);
+            return new Loop(new ElementList(body.ToArray()));
+        }
+
+
+        [CanBeNull]
+        Break ParseBreak()
+        {
+            if (tok.Text != "break")
+                return null;
+            next();
+            return Break.Instance;
         }
 
 

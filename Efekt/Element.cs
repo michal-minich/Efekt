@@ -125,7 +125,6 @@ namespace Efekt
         {
             C.Nn(test);
             C.Nn(then);
-            C.Nn(otherwise);
 
             Test = test;
             Then = then;
@@ -166,6 +165,17 @@ namespace Efekt
 
         [NotNull]
         public Exp Exp { get; }
+    }
+
+
+    public sealed class Break : Element
+    {
+        private Break()
+        {
+        }
+
+        [NotNull]
+        public static Break Instance { get; } = new Break();
     }
 
 

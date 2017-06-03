@@ -53,6 +53,7 @@ namespace Efekt
     public class Interpreter
     {
         [CanBeNull] private Value ret;
+        private bool isBreak;
 
         public Value Eval(Element se)
         {
@@ -113,12 +114,28 @@ namespace Efekt
                         f.LexicalEnv = env;
                     return f;
                 case When w:
-                    if (w.Test == Bool.True)
+                    if (Eval(w.Test) == Bool.True)
                         return Eval(w.Then, env);
                     else if (w.Otherwise != null)
                         return Eval(w.Otherwise, env);
                     else
                         return Void.Instance;
+                case Loop l:
+                    while (true)
+                    {
+                        foreach (var e in l.Body)
+                        {
+                            if (isBreak)
+                            {
+                                isBreak = false;
+                                return Void.Instance;
+                            }
+                            Eval(e, env);
+                        }
+                    }
+                case Break b:
+                    isBreak = true;
+                    return Void.Instance;
                 case Value ve:
                     return ve;
                 case ElementList el:
@@ -127,7 +144,7 @@ namespace Efekt
                     {
                         var bodyVal = Eval(listElement, newEnv);
                         if (bodyVal != Void.Instance)
-                            throw new Exception("Unused value"); if (ret != null)
+                            throw new Exception("Unused value");
                         if (ret != null)
                             return Void.Instance;
                     }
