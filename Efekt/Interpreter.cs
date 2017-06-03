@@ -112,6 +112,13 @@ namespace Efekt
                     if (f.LexicalEnv == null)
                         f.LexicalEnv = env;
                     return f;
+                case When w:
+                    if (w.Test == Bool.True)
+                        return Eval(w.Then, env);
+                    else if (w.Otherwise != null)
+                        return Eval(w.Otherwise, env);
+                    else
+                        return Void.Instance;
                 case Value ve:
                     return ve;
                 case ElementList el:

@@ -32,6 +32,10 @@ namespace Efekt
             test("var a = 1 { var a = 2 } return a a = 3", "1");
             test("var x = fn { return 1_2_3 } return x()", "123");
             test("var a = 1 var b = 2 { a = 3 b = a } return b", "3");
+
+            // if
+            test("if true then 1 else 2", "1");
+            test("if false then 1 else 2", "2");
         }
 
         private static void error(string code)

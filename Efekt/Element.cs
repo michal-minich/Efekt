@@ -202,6 +202,23 @@ namespace Efekt
     }
 
 
+    public sealed class Bool : Value
+    {
+        private Bool(bool value)
+        {
+            Value = value;
+        }
+
+        public bool Value { get; }
+
+        [NotNull]
+        public static Bool True { get; } = new Bool(true);
+
+        [NotNull]
+        public static Bool False { get; } = new Bool(false);
+    }
+
+
     public sealed class Void : Value
     {
         private Void()

@@ -24,8 +24,10 @@ namespace Efekt
             {
                 ParseIdent,
                 ParseInt,
+                ParseBool,
                 ParseVar,
                 ParseFn,
+                ParseWhen,
                 ParseReturn,
                 ParseCurly
             };
@@ -86,12 +88,12 @@ namespace Efekt
             {
                 if (finished)
                     break;
-                if (stopOnBrace && "])}".ToList().Any(x => x == tok.Text[0]))
+                if (stopOnBrace && "])}".Any(x => x == tok.Text[0]))
                 {
                     next();
                     break;
                 }
-                var e = ParseOne(true);
+                var e = ParseOne();
                 if (e == null && !finished)
                     throw new Exception();
                 elements.Add(e);
@@ -101,7 +103,7 @@ namespace Efekt
 
 
         [CanBeNull]
-        private Element ParseOne(bool withOps = false)
+        private Element ParseOne(bool withOps = true)
         {
             foreach (var p in parsers)
             {
@@ -150,7 +152,7 @@ namespace Efekt
                 return null;
             var opText = tok.Text;
             next();
-            var second = ParseOne();
+            var second = ParseOne(false);
             if (second == null)
                 throw new Exception();
             var secondExp = second as Exp;
@@ -207,6 +209,23 @@ namespace Efekt
 
 
         [CanBeNull]
+        private Bool ParseBool()
+        {
+            switch (tok.Text)
+            {
+                case "true":
+                    next();
+                    return Bool.True;
+                case "false":
+                    next();
+                    return Bool.False;
+                default:
+                    return null;
+            }
+        }
+
+
+        [CanBeNull]
         private Return ParseReturn()
         {
             if (tok.Text != "return")
@@ -217,7 +236,7 @@ namespace Efekt
                 next();
                 return new Return(Void.Instance);
             }
-            var se = ParseOne(true);
+            var se = ParseOne();
             if (se == null && finished)
                 return new Return(Void.Instance);
             if (se is Exp exp)
@@ -235,10 +254,40 @@ namespace Efekt
             if (!(tok.Type == TokenType.Ident || tok.Text == "{"))
                 throw new Exception();
             var @params = new IdentList();
-            var se = ParseOne();
+            var se = ParseOne(false);
             if (se is ElementList sel)
                 return new Fn(@params, sel);
             throw new Exception();
+        }
+
+
+        [CanBeNull]
+        private When ParseWhen()
+        {
+            if (tok.Text != "if")
+                return null;
+            next();
+            var test = ParseOne();
+            var testExp = test as Exp;
+            if (testExp == null)
+                throw  new Exception();
+            if (tok.Text != "then")
+                throw new Exception();
+            next();
+            var then = ParseOne();
+            if (then == null)
+                throw new Exception();
+            Element otherwise;
+            if (tok.Text == "else")
+            {
+                next();
+                otherwise = ParseOne();
+            }
+            else
+            {
+                otherwise = null;
+            }
+            return new When(testExp, then, otherwise);
         }
 
 
@@ -252,7 +301,7 @@ namespace Efekt
                 ? new Ident(tok.Text)
                 : throw new Exception();
             CheckNextAndSkip("=");
-            var se = ParseOne(true);
+            var se = ParseOne();
             if (se is Exp exp)
                 return new Var(i, exp);
             throw new Exception();
