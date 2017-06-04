@@ -65,32 +65,32 @@ namespace Efekt
                     new Fn(new IdentList(), body),
                     new ExpList());
 
-            return Eval(se, new Env(null));
+            return eval(se, new Env(null));
         }
 
-        public Value Eval(Element se, Env env)
+        private Value eval(Element se, Env env)
         {
             switch (se)
             {
                 case Var v:
-                    var val = Eval(v.Exp, env);
+                    var val = eval(v.Exp, env);
                     env.Declare(v.Ident.Name, val);
                     return Void.Instance;
                 case Assign a:
-                    var val2 = Eval(a.Exp, env);
+                    var val2 = eval(a.Exp, env);
                     env.Set(a.Ident.Name, val2);
                     return Void.Instance;
                 case Ident i:
                     return env.Get(i.Name);
                 case Return r:
-                    ret = Eval(r.Exp, env);
+                    ret = eval(r.Exp, env);
                     return Void.Instance;
                 case FnApply fna:
-                    var fn = Eval(fna.Fn, env);
+                    var fn = eval(fna.Fn, env);
                     var fn2 = fn as Fn;
                     if (fn2 == null)
                         throw new Exception();
-                    var eArgs = fna.Arguments.Select(a => Eval(a, env)).ToList();
+                    var eArgs = fna.Arguments.Select(a => eval(a, env)).ToList();
                     var paramsEnv = new Env(fn2.LexicalEnv);
                     var ix = 0;
                     foreach (var p in fn2.Parameters)
@@ -98,7 +98,7 @@ namespace Efekt
                     var fnEnv = new Env(paramsEnv);
                     foreach (var bodyElement in fn2.Body)
                     {
-                        var bodyVal = Eval(bodyElement, fnEnv);
+                        var bodyVal = eval(bodyElement, fnEnv);
                         if (bodyVal != Void.Instance)
                             throw new Exception("Unused value");
                         if (ret != null)
@@ -114,10 +114,10 @@ namespace Efekt
                         f.LexicalEnv = env;
                     return f;
                 case When w:
-                    if (Eval(w.Test, env) == Bool.True)
-                        return Eval(w.Then, env);
+                    if (eval(w.Test, env) == Bool.True)
+                        return eval(w.Then, env);
                     else if (w.Otherwise != null)
-                        return Eval(w.Otherwise, env);
+                        return eval(w.Otherwise, env);
                     else
                         return Void.Instance;
                 case Loop l:
@@ -130,7 +130,7 @@ namespace Efekt
                                 isBreak = false;
                                 return Void.Instance;
                             }
-                            Eval(e, env);
+                            eval(e, env);
                         }
                     }
                 case Break b:
@@ -142,7 +142,7 @@ namespace Efekt
                     var newEnv = new Env(env);
                     foreach (var listElement in el)
                     {
-                        var bodyVal = Eval(listElement, newEnv);
+                        var bodyVal = eval(listElement, newEnv);
                         if (bodyVal != Void.Instance)
                             throw new Exception("Unused value");
                         if (ret != null)
