@@ -40,7 +40,7 @@ namespace Efekt
             // loop
             test("loop { break } return 1", "1");
             test("var a = 1 loop { a = 2 break a = 3 } return a", "2");
-            test("var a = 1 var b = false loop { a = 2 if b then break a = 3 b = true } return a", "3");
+            test("var a = 1 var b = false loop { if b then break a = 2 b = true } return a", "2");
         }
 
         private static void error(string code)

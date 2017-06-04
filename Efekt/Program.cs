@@ -17,7 +17,7 @@ namespace Efekt
 
             Tests.RunAllTests();
 
-            const string code = "var a = 1 var b = false loop { a = 2 if b then break a = 3 b = true } return a";
+            const string code = "";
             debug(code);
 
             Console.ReadLine();

@@ -121,6 +121,7 @@ namespace Efekt
                     else
                         return Void.Instance;
                 case Loop l:
+                    var loopEnv = new Env(env);
                     while (true)
                     {
                         foreach (var e in l.Body)
@@ -130,7 +131,7 @@ namespace Efekt
                                 isBreak = false;
                                 return Void.Instance;
                             }
-                            eval(e, new Env(env));
+                            eval(e, loopEnv);
                         }
                     }
                 case Break b:
@@ -139,9 +140,10 @@ namespace Efekt
                 case Value ve:
                     return ve;
                 case ElementList el:
+                    var scopeEnv = new Env(env);
                     foreach (var listElement in el)
                     {
-                        var bodyVal = eval(listElement, new Env(env));
+                        var bodyVal = eval(listElement, scopeEnv);
                         if (bodyVal != Void.Instance)
                             throw new Exception("Unused value");
                         if (ret != null)
