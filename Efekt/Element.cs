@@ -4,17 +4,26 @@ using JetBrains.Annotations;
 
 namespace Efekt
 {
-    public interface Element
+    public abstract class Element
+    {
+        private static readonly StringWriter sw = new StringWriter();
+        private static readonly CodeTextWriter ctw = new CodeTextWriter(sw);
+        private static readonly CodeWriter cw = new CodeWriter(ctw);
+
+        public override string ToString()
+        {
+            cw.Write(this);
+            return GetType().Name + ": " + sw.GetAndReset();
+        }
+    }
+
+
+    public abstract class Exp : Element
     {
     }
 
 
-    public interface Exp : Element
-    {
-    }
-
-
-    public interface Value : Exp
+    public abstract class Value : Exp
     {
     }
 

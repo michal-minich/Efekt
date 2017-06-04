@@ -114,7 +114,7 @@ namespace Efekt
                         f.LexicalEnv = env;
                     return f;
                 case When w:
-                    if (Eval(w.Test) == Bool.True)
+                    if (Eval(w.Test, env) == Bool.True)
                         return Eval(w.Then, env);
                     else if (w.Otherwise != null)
                         return Eval(w.Otherwise, env);
