@@ -18,7 +18,7 @@ namespace Efekt
     {
         [ContractAnnotation("false => halt", true)]
         // ReSharper disable once UnusedParameter.Global
-        public static void Requires(bool condition)
+        public static void Req(bool condition)
         {
             if (!condition)
                 throw new Exception();
@@ -36,7 +36,7 @@ namespace Efekt
         [ContractAnnotation("null => halt")]
         public static void AllNotNull<T>(IEnumerable<T> items)
         {
-            Requires(Contract.ForAll(items, i => i != null));
+            Req(Contract.ForAll(items, i => i != null));
         }
     }
 }

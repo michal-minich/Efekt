@@ -99,8 +99,8 @@ namespace Efekt
     {
         public Ident([NotNull] string name)
         {
-            C.Requires(!string.IsNullOrWhiteSpace(name));
-            C.Requires(name.Trim().Length == name.Length);
+            C.Req(!string.IsNullOrWhiteSpace(name));
+            C.Req(name.Trim().Length == name.Length);
 
             Name = name;
         }

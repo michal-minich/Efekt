@@ -151,6 +151,7 @@ namespace Efekt
                             eval(e, loopEnv);
                         }
                     }
+                // ReSharper disable once UnusedVariable
                 case Break b:
                     isBreak = true;
                     return Void.Instance;
