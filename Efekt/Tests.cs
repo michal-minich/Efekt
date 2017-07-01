@@ -41,6 +41,17 @@ namespace Efekt
             test("loop { break } return 1", "1");
             test("var a = 1 loop { a = 2 break a = 3 } return a", "2");
             test("var a = 1 var b = false loop { if b then break a = 2 b = true } return a", "2");
+
+            // builtins
+            test("1 + 2", "3");
+            //test("var a = (+) a(1, 2)", "3");
+            //test("print(1)", "<Void>");
+
+            // fn
+            test("var a = fn { return 1 } return a()", "1");
+            test("var a = fn b { return b } return a(1)", "1");
+            test("var a = fn a { return a } return a(1)", "1");
+            test("var b = 2 var a = fn b { return b } return a(1)", "1");
         }
 
         private static void error(string code)

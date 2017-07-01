@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using JetBrains.Annotations;
@@ -61,6 +62,7 @@ namespace Efekt
         }
     }
 
+
     public sealed class ExpList : ElementList<Exp>
     {
         public ExpList([NotNull] params Exp[] items) : base(items)
@@ -68,12 +70,30 @@ namespace Efekt
         }
     }
 
+
     public sealed class IdentList : ElementList<Ident>
     {
         public IdentList([NotNull] params Ident[] items) : base(items)
         {
         }
     }
+
+
+    public sealed class Builtin : Value
+    {
+        public Builtin([NotNull] string name, [NotNull] Func<ExpList, Value> fn)
+        {
+            Name = name;
+            Fn = fn;
+        }
+
+        [NotNull]
+        public string Name { get; }
+
+        [NotNull]
+        public Func<ExpList, Value> Fn { get; }
+    }
+
 
     public sealed class Ident : Exp
     {

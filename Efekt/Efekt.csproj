@@ -55,6 +55,7 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Builtins.cs" />
     <Compile Include="CodeTextWriter.cs" />
     <Compile Include="CodeWriter.cs" />
     <Compile Include="ConsoleWriter.cs" />

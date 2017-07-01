@@ -169,7 +169,7 @@ namespace Efekt
             }
             else
             {
-                return new FnApply(prev, new ExpList(secondExp));
+                return new FnApply(new Ident(opText), new ExpList(prev, secondExp));
             }
         }
 
@@ -255,10 +255,14 @@ namespace Efekt
             next();
             if (!(tok.Type == TokenType.Ident || tok.Text == "{"))
                 throw new Exception();
-            var @params = new IdentList();
+            var @params = tok.Type == TokenType.Ident 
+                ? new IdentList(ParseIdent()) 
+                : new IdentList();
             var se = ParseOne(false);
             if (se is ElementList sel)
                 return new Fn(@params, sel);
+            if (se is Exp e)
+                return new Fn(@params, new ElementList(e));
             throw new Exception();
         }
 

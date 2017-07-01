@@ -9,13 +9,25 @@ namespace Efekt
     {
         [NotNull] private readonly Dictionary<string, Value> dict = new Dictionary<string, Value>();
 
-        public Env([CanBeNull] Env parent)
+        private Env()
+        {
+            Parent = null;
+            foreach (var b in Builtins.Values)
+                dict.Add(b.Name, b);
+        }
+
+        public Env([NotNull] Env parent)
         {
             Parent = parent;
         }
 
         [CanBeNull]
         public Env Parent { get; }
+
+        public static Env CreateRoot()
+        {
+            return new Env();
+        }
 
         public Value Get(string name)
         {
@@ -65,7 +77,7 @@ namespace Efekt
                     new Fn(new IdentList(), body),
                     new ExpList());
 
-            return eval(se, new Env(null));
+            return eval(se, Env.CreateRoot());
         }
 
         private Value eval(Element se, Env env)
@@ -87,6 +99,11 @@ namespace Efekt
                     return Void.Instance;
                 case FnApply fna:
                     var fn = eval(fna.Fn, env);
+                    var builtin = fn as Builtin;
+                    if (builtin != null)
+                    {
+                        return builtin.Fn(fna.Arguments);
+                    }
                     var fn2 = fn as Fn;
                     if (fn2 == null)
                         throw new Exception();
