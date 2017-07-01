@@ -45,7 +45,7 @@ namespace Efekt
             // builtins
             test("1 + 2", "3");
             //test("var a = (+) a(1, 2)", "3");
-            //test("print(1)", "<Void>");
+            test("print(1)", "<Void>", "Int: 1");
 
             // fn
             test("var a = fn { return 1 } return a()", "1");
@@ -71,7 +71,7 @@ namespace Efekt
         }
 
         // ReSharper disable once UnusedParameter.Local
-        private static void test(string code, string expected)
+        private static void test(string code, string expectedResult, string expectedOutput = "")
         {
             var tokens = t.Tokenize(code).ToList();
             if (!(tokens.Count == 0 && code.Length == 0
@@ -82,7 +82,10 @@ namespace Efekt
             var r = i.Eval(se);
             cw.Write(r);
             var val = sw.GetAndReset();
-            if (val != expected)
+            if (val != expectedResult)
+                throw new Exception();
+            var acutalOutput = Builtins.Writer.GetAndReset();
+            if (acutalOutput != expectedOutput)
                 throw new Exception();
         }
     }
