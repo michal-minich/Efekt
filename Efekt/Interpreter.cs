@@ -5,8 +5,17 @@ using JetBrains.Annotations;
 
 namespace Efekt
 {
-    public sealed class Env
+    public interface IEnv
     {
+        Value Get(string name);
+        void Declare(string name, Value value);
+        //void Alias(string name, string newName);
+        void Set(string name, Value value);
+    }
+
+    public sealed class Env : IEnv
+    {
+
         [NotNull] private readonly Dictionary<string, Value> dict = new Dictionary<string, Value>();
 
         private Env()
@@ -16,7 +25,7 @@ namespace Efekt
                 dict.Add(b.Name, b);
         }
 
-        public Env([NotNull] Env parent)
+        private Env([NotNull] Env parent)
         {
             Parent = parent;
         }
@@ -27,6 +36,11 @@ namespace Efekt
         public static Env CreateRoot()
         {
             return new Env();
+        }
+        
+        public static Env Create(Env parent)
+        {
+            return new Env(parent);
         }
 
         public Value Get(string name)
@@ -108,11 +122,11 @@ namespace Efekt
                     if (fn2 == null)
                         throw new Exception();
                     var eArgs = fna.Arguments.Select(a => eval(a, env)).ToList();
-                    var paramsEnv = new Env(fn2.LexicalEnv);
+                    var paramsEnv = Env.Create(fn2.LexicalEnv);
                     var ix = 0;
                     foreach (var p in fn2.Parameters)
                         paramsEnv.Declare(p.Name, eArgs[ix++]);
-                    var fnEnv = new Env(paramsEnv);
+                    var fnEnv = Env.Create(paramsEnv);
                     foreach (var bodyElement in fn2.Body)
                     {
                         var bodyVal = eval(bodyElement, fnEnv);
@@ -132,13 +146,13 @@ namespace Efekt
                     return f;
                 case When w:
                     if (eval(w.Test, env) == Bool.True)
-                        return eval(w.Then, new Env(env));
+                        return eval(w.Then, Env.Create(env));
                     else if (w.Otherwise != null)
-                        return eval(w.Otherwise, new Env(env));
+                        return eval(w.Otherwise, Env.Create(env));
                     else
                         return Void.Instance;
                 case Loop l:
-                    var loopEnv = new Env(env);
+                    var loopEnv = Env.Create(env);
                     while (true)
                     {
                         foreach (var e in l.Body)
@@ -158,7 +172,7 @@ namespace Efekt
                 case Value ve:
                     return ve;
                 case ElementList el:
-                    var scopeEnv = new Env(env);
+                    var scopeEnv = Env.Create(env);
                     foreach (var listElement in el)
                     {
                         var bodyVal = eval(listElement, scopeEnv);

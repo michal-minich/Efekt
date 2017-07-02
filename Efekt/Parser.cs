@@ -83,24 +83,46 @@ namespace Efekt
 
 
         [NotNull]
-        private List<Element> ParseUntilEnd(bool stopOnBrace = false)
+        private List<Element> ParseUntilEnd(bool stopOnBrace = false, bool skipComa = false)
         {
             var elements = new List<Element>();
-            while (true)
+            while (!finished)
             {
-                if (finished)
-                    break;
                 if (stopOnBrace && "])}".Any(x => x == tok.Text[0]))
                 {
                     next();
                     break;
                 }
+                if (skipComa && tok.Text == ",")
+                    next();
                 var e = ParseOne();
                 if (e == null && !finished)
                     throw new Exception();
                 elements.Add(e);
             }
             return elements;
+        }
+
+
+        [NotNull]
+        private IdentList ParseComaIdentList()
+        {
+            var elements = new List<Ident>();
+            while (!finished)
+            {
+                if (tok.Text == ",")
+                    next();
+                if (finished || tok.Text == "{" || tok.Type != TokenType.Ident)
+                    break;
+                var e = ParseOne();
+                if (e == null && !finished)
+                    throw new Exception();
+                var i = e as Ident;
+                if (i == null)
+                    throw new Exception();
+                elements.Add(i);
+            }
+            return new IdentList(elements.ToArray());
         }
 
 
@@ -139,7 +161,7 @@ namespace Efekt
             if (tok.Text != "(")
                 return null;
             next();
-            var args = ParseUntilEnd(true);
+            var args = ParseUntilEnd(true, true);
             var argsExpList = args.Select(a => a as Exp).ToArray();
             if (argsExpList.Any(a => a == null))
                 throw new Exception();
@@ -255,9 +277,7 @@ namespace Efekt
             next();
             if (!(tok.Type == TokenType.Ident || tok.Text == "{"))
                 throw new Exception();
-            var @params = tok.Type == TokenType.Ident 
-                ? new IdentList(ParseIdent()) 
-                : new IdentList();
+            var @params = ParseComaIdentList();
             var se = ParseOne(false);
             if (se is ElementList sel)
                 return new Fn(@params, sel);

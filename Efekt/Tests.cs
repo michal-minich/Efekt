@@ -52,6 +52,8 @@ namespace Efekt
             test("var a = fn b { return b } return a(1)", "1");
             test("var a = fn a { return a } return a(1)", "1");
             test("var b = 2 var a = fn b { return b } return a(1)", "1");
+            test("var x = fn a, b { return a } return x(1, 2)", "1");
+            test("var x = fn a, b { return b } return x(1, 2)", "2");
         }
 
         private static void error(string code)

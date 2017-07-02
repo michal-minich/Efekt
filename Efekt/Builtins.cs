@@ -6,7 +6,7 @@ namespace Efekt
     {
         public static readonly StringWriter Writer = new StringWriter();
 
-        public static IReadOnlyList<Builtin> Values = new List<Builtin>
+        public static readonly IReadOnlyList<Builtin> Values = new List<Builtin>
         {
             new Builtin("+", @params =>
             {
