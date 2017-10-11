@@ -129,12 +129,12 @@ namespace Efekt
         [CanBeNull]
         private Element ParseOne(bool withOps = true)
         {
-            var startedWithBrace = false;
+            /*var startedWithBrace = false;
             if (tok.Text == "(")
             {
                 startedWithBrace = true;
                 next();
-            }
+            }*/
             Element e;
             foreach (var p in parsers)
             {
@@ -159,7 +159,7 @@ namespace Efekt
                 throw new Exception();
             return null;
             ret:
-            if (tok.Text == ")")
+            /*if (tok.Text == ")")
             {
                 if (!startedWithBrace)
                     throw new Exception();
@@ -169,7 +169,7 @@ namespace Efekt
             {
                 if (startedWithBrace)
                     throw new Exception();
-            }
+            }*/
             return e;
         }
 

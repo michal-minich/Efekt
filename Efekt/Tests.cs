@@ -14,7 +14,7 @@ namespace Efekt
 
         public static void RunAllTests()
         {
-            test("var a = (+) return a(1, 2)", "3");
+            //test("var a = + return a(1, 2)", "3");
             
             error("~");
             test("1", "1");
@@ -46,7 +46,7 @@ namespace Efekt
 
             // builtins
             test("1 + 2", "3");
-            test("var a = (+) return a(1, 2)", "3");
+            test("var a = + return a(1, 2)", "3");
             test("print(1)", "<Void>", "Int: 1");
 
             // fn
