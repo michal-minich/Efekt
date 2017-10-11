@@ -129,15 +129,22 @@ namespace Efekt
         [CanBeNull]
         private Element ParseOne(bool withOps = true)
         {
+            var startedWithBrace = false;
+            if (tok.Text == "(")
+            {
+                startedWithBrace = true;
+                next();
+            }
+            Element e;
             foreach (var p in parsers)
             {
-                var e = p();
+                e = p();
                 if (e == null)
                     continue;
                 if (!withOps || finished)
-                    return e;
+                    goto ret;
                 if (tok.Text != "(" && tok.Type != TokenType.Op)
-                    return e;
+                    goto ret;
                 var prev = e as Exp;
                 if (prev == null)
                     throw new Exception();
@@ -145,13 +152,25 @@ namespace Efekt
                 {
                     var o = opar(prev);
                     if (o != null)
-                        return o;
+                        goto ret;
                 }
-                return e;
             }
             if (!finished)
                 throw new Exception();
             return null;
+            ret:
+            if (tok.Text == ")")
+            {
+                if (!startedWithBrace)
+                    throw new Exception();
+                next();
+            }
+            else
+            {
+                if (startedWithBrace)
+                    throw new Exception();
+            }
+            return e;
         }
 
 
@@ -189,10 +208,7 @@ namespace Efekt
                     throw new Exception();
                 return new Assign(i, secondExp);
             }
-            else
-            {
-                return new FnApply(new Ident(opText), new ExpList(prev, secondExp));
-            }
+            return new FnApply(new Ident(opText), new ExpList(prev, secondExp));
         }
 
 
@@ -213,7 +229,7 @@ namespace Efekt
         [CanBeNull]
         private Ident ParseIdent()
         {
-            if (tok.Type != TokenType.Ident)
+            if (tok.Type != TokenType.Ident && tok.Type != TokenType.Op)
                 return null;
             var i = new Ident(tok.Text);
             next();
@@ -296,7 +312,7 @@ namespace Efekt
             var test = ParseOne();
             var testExp = test as Exp;
             if (testExp == null)
-                throw  new Exception();
+                throw new Exception();
             if (tok.Text != "then")
                 throw new Exception();
             next();
@@ -332,7 +348,7 @@ namespace Efekt
 
 
         [CanBeNull]
-        Break ParseBreak()
+        private Break ParseBreak()
         {
             if (tok.Text != "break")
                 return null;
