@@ -150,8 +150,8 @@ namespace Efekt
                     throw new Exception();
                 foreach (var opar in opOparsers)
                 {
-                    var o = opar(prev);
-                    if (o != null)
+                    e = opar(prev);
+                    if (e != null)
                         goto ret;
                 }
             }
