@@ -77,18 +77,45 @@ namespace Efekt
         {
             te = tokens.GetEnumerator();
             next();
-            var elements = ParseList();
+            var elements = ParseAll();
             return elements.Count == 1 ? elements[0] : new ElementList(elements.ToArray());
         }
 
 
         [NotNull]
-        private List<Element> ParseList(char? stopOnBrace = null, bool skipComa = false)
+        private List<Element> ParseAll()
         {
             var elements = new List<Element>();
             while (!finished)
             {
-                if (stopOnBrace != null && tok.Text[0] == stopOnBrace.Value)
+                var e = ParseOne();
+                if (e == null && !finished)
+                    throw new Exception();
+                elements.Add(e);
+            }
+            return elements;
+        }
+
+
+        [CanBeNull]
+        private List<Element> ParseList(char? stopOnBrace = null, bool skipComa = false)
+        {
+            char end;
+            if (tok.Text == "(")
+                end = ')';
+            else if (tok.Text == "{")
+                end = '}';
+            else if (tok.Text == "[")
+                end = ']';
+            else
+                return null;
+            if (stopOnBrace != end)
+                throw new Exception();
+            next();
+            var elements = new List<Element>();
+            while (!finished)
+            {
+                if (tok.Text[0] == end)
                 {
                     next();
                     break;
@@ -129,13 +156,30 @@ namespace Efekt
         [CanBeNull]
         private Element ParseOne(bool withOps = true)
         {
+            if (tok.Text == "(")
+            {
+                var es = ParseList(')');
+                if (es.Count != 1)
+                    throw new Exception();
+                var e = es.First();
+                if (withOps)
+                    e = ParseWithOp(e);
+                return e;
+            }
+            return ParseOne2(withOps);
+        }
+
+
+        [CanBeNull]
+        private Element ParseOne2(bool withOps = true)
+        {
             Element e;
             foreach (var p in parsers)
             {
                 e = p();
                 if (e == null)
                     continue;
-                if (withOps && !finished)
+                if (withOps)
                     e = ParseWithOp(e);
                 return e;
             }
@@ -147,11 +191,15 @@ namespace Efekt
 
         private Element ParseWithOp(Element e)
         {
-            if (tok.Text != "(" && tok.Type != TokenType.Op)
+            if (finished || tok.Text != "(" && tok.Type != TokenType.Op)
                 return e;
             var prev = e as Exp;
             if (prev == null)
+            {
+                if (tok.Text == "(")
+                    return e;
                 throw new Exception();
+            }
             foreach (var opar in opOparsers)
             {
                 e = opar(prev);
@@ -167,7 +215,6 @@ namespace Efekt
         {
             if (tok.Text != "(")
                 return null;
-            next();
             var args = ParseList(')', true);
             var argsExpList = args.Select(a => a as Exp).ToArray();
             if (argsExpList.Any(a => a == null))
@@ -205,11 +252,7 @@ namespace Efekt
         {
             if (tok.Text != "{")
                 return null;
-
-            next();
-
             var elements = ParseList('}');
-
             return new ElementList(elements.ToArray());
         }
 
@@ -329,7 +372,6 @@ namespace Efekt
             next();
             if (tok.Text != "{")
                 throw new Exception();
-            next();
             var body = ParseList('}');
             return new Loop(new ElementList(body.ToArray()));
         }

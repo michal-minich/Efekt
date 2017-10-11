@@ -18,7 +18,8 @@ namespace Efekt
             
             error("~");
             test("1", "1");
-            
+            test("(1)", "1");
+
             // var
             test("var a = 1 return a", "1");
 
@@ -41,12 +42,14 @@ namespace Efekt
 
             // loop
             test("loop { break } return 1", "1");
-            test("var a = 1 loop { a = 2 break a = 3 } return a", "2");
+            test("var a = 1 loop { a = 2 break (a = 3) } return a", "2");
             test("var a = 1 var b = false loop { if b then break a = 2 b = true } return a", "2");
 
             // builtins
             test("1 + 2", "3");
+            test("(1 + 2)", "3");
             test("var a = + return a(1, 2)", "3");
+            test("var a = (+) return a(1, 2)", "3");
             test("print(1)", "<Void>", "Int: 1");
 
             // fn
@@ -58,7 +61,7 @@ namespace Efekt
             test("var x = fn a, b { return b } return x(1, 2)", "2");
             test("fn { return 1 }()", "1");
             test("fn a { return a }(1)", "1");
-            test("fn a, b { return b }(1, 2)", "2");
+            test("fn a, b { return b }((1), (2))", "2");
         }
 
         private static void error(string code)
