@@ -77,13 +77,13 @@ namespace Efekt
         {
             te = tokens.GetEnumerator();
             next();
-            var elements = ParseUntilEnd();
+            var elements = ParseList();
             return elements.Count == 1 ? elements[0] : new ElementList(elements.ToArray());
         }
 
 
         [NotNull]
-        private List<Element> ParseUntilEnd(char? stopOnBrace = null, bool skipComa = false)
+        private List<Element> ParseList(char? stopOnBrace = null, bool skipComa = false)
         {
             var elements = new List<Element>();
             while (!finished)
@@ -129,48 +129,36 @@ namespace Efekt
         [CanBeNull]
         private Element ParseOne(bool withOps = true)
         {
-            /*var startedWithBrace = false;
-            if (tok.Text == "(")
-            {
-                startedWithBrace = true;
-                next();
-            }*/
             Element e;
             foreach (var p in parsers)
             {
                 e = p();
                 if (e == null)
                     continue;
-                if (!withOps || finished)
-                    goto ret;
-                if (tok.Text != "(" && tok.Type != TokenType.Op)
-                    goto ret;
-                var prev = e as Exp;
-                if (prev == null)
-                    throw new Exception();
-                foreach (var opar in opOparsers)
-                {
-                    e = opar(prev);
-                    if (e != null)
-                        goto ret;
-                }
+                if (withOps && !finished)
+                    e = ParseWithOp(e);
+                return e;
             }
             if (!finished)
                 throw new Exception();
             return null;
-            ret:
-            /*if (tok.Text == ")")
+        }
+
+
+        private Element ParseWithOp(Element e)
+        {
+            if (tok.Text != "(" && tok.Type != TokenType.Op)
+                return e;
+            var prev = e as Exp;
+            if (prev == null)
+                throw new Exception();
+            foreach (var opar in opOparsers)
             {
-                if (!startedWithBrace)
-                    throw new Exception();
-                next();
+                e = opar(prev);
+                if (e != null)
+                    return e;
             }
-            else
-            {
-                if (startedWithBrace)
-                    throw new Exception();
-            }*/
-            return e;
+            throw new Exception();
         }
 
 
@@ -180,7 +168,7 @@ namespace Efekt
             if (tok.Text != "(")
                 return null;
             next();
-            var args = ParseUntilEnd(')', true);
+            var args = ParseList(')', true);
             var argsExpList = args.Select(a => a as Exp).ToArray();
             if (argsExpList.Any(a => a == null))
                 throw new Exception();
@@ -220,7 +208,7 @@ namespace Efekt
 
             next();
 
-            var elements = ParseUntilEnd('}');
+            var elements = ParseList('}');
 
             return new ElementList(elements.ToArray());
         }
@@ -342,7 +330,7 @@ namespace Efekt
             if (tok.Text != "{")
                 throw new Exception();
             next();
-            var body = ParseUntilEnd('}');
+            var body = ParseList('}');
             return new Loop(new ElementList(body.ToArray()));
         }
 
