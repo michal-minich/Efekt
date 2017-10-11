@@ -83,12 +83,12 @@ namespace Efekt
 
 
         [NotNull]
-        private List<Element> ParseUntilEnd(bool stopOnBrace = false, bool skipComa = false)
+        private List<Element> ParseUntilEnd(char? stopOnBrace = null, bool skipComa = false)
         {
             var elements = new List<Element>();
             while (!finished)
             {
-                if (stopOnBrace && "])}".Any(x => x == tok.Text[0]))
+                if (stopOnBrace != null && tok.Text[0] == stopOnBrace.Value)
                 {
                     next();
                     break;
@@ -180,7 +180,7 @@ namespace Efekt
             if (tok.Text != "(")
                 return null;
             next();
-            var args = ParseUntilEnd(true, true);
+            var args = ParseUntilEnd(')', true);
             var argsExpList = args.Select(a => a as Exp).ToArray();
             if (argsExpList.Any(a => a == null))
                 throw new Exception();
@@ -220,7 +220,7 @@ namespace Efekt
 
             next();
 
-            var elements = ParseUntilEnd(true);
+            var elements = ParseUntilEnd('}');
 
             return new ElementList(elements.ToArray());
         }
@@ -342,7 +342,7 @@ namespace Efekt
             if (tok.Text != "{")
                 throw new Exception();
             next();
-            var body = ParseUntilEnd(true);
+            var body = ParseUntilEnd('}');
             return new Loop(new ElementList(body.ToArray()));
         }
 

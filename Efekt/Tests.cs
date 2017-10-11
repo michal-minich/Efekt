@@ -77,8 +77,10 @@ namespace Efekt
                 throw new Exception();
         }
 
-        // ReSharper disable once UnusedParameter.Local
+        
+        // ReSharper disable ParameterOnlyUsedForPreconditionCheck.Local
         private static void test(string code, string expectedResult, string expectedOutput = "")
+        // ReSharper restore ParameterOnlyUsedForPreconditionCheck.Local
         {
             var tokens = t.Tokenize(code).ToList();
             if (!(tokens.Count == 0 && code.Length == 0
