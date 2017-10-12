@@ -81,7 +81,7 @@ namespace Efekt
 
     public sealed class Builtin : Value
     {
-        public Builtin([NotNull] string name, [NotNull] Func<ExpList, Value> fn)
+        public Builtin([NotNull] string name, [NotNull] Func<IReadOnlyList<Exp>, Value> fn)
         {
             Name = name;
             Fn = fn;
@@ -91,7 +91,7 @@ namespace Efekt
         public string Name { get; }
 
         [NotNull]
-        public Func<ExpList, Value> Fn { get; }
+        public Func<IReadOnlyList<Exp>, Value> Fn { get; }
     }
 
 

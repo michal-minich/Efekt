@@ -204,7 +204,7 @@ namespace Efekt
             {
                 e = opar(prev);
                 if (e != null)
-                    return e;
+                    return ParseWithOp(e);
             }
             throw new Exception();
         }

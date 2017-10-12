@@ -62,6 +62,8 @@ namespace Efekt
             test("fn { return 1 }()", "1");
             test("fn a { return a }(1)", "1");
             test("fn a, b { return b }((1), (2))", "2");
+            test("fn a { return fn b { return a + b } }(1)(2)", "3");
+
         }
 
         private static void error(string code)

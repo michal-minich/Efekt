@@ -114,14 +114,14 @@ namespace Efekt
                 case FnApply fna:
                     var fn = eval(fna.Fn, env);
                     var builtin = fn as Builtin;
+                    var eArgs = fna.Arguments.Select(a => eval(a, env)).ToList();
                     if (builtin != null)
                     {
-                        return builtin.Fn(fna.Arguments);
+                        return builtin.Fn(eArgs);
                     }
                     var fn2 = fn as Fn;
                     if (fn2 == null)
                         throw new Exception();
-                    var eArgs = fna.Arguments.Select(a => eval(a, env)).ToList();
                     var paramsEnv = Env.Create(fn2.LexicalEnv);
                     var ix = 0;
                     foreach (var p in fn2.Parameters)
