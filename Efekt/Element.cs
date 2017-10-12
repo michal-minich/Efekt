@@ -219,6 +219,14 @@ namespace Efekt
             Body = body;
         }
 
+        public Fn([NotNull] IdentList parameters, [NotNull] ElementList body, [NotNull] Env env)
+            : this(parameters, body)
+        {
+            C.Nn(env);
+
+            Env = env;
+        }
+
         [NotNull]
         public IdentList Parameters { get; }
 
@@ -226,7 +234,7 @@ namespace Efekt
         public ElementList Body { get; }
 
         [NotNull]
-        public Env LexicalEnv { get; set; }
+        public Env Env { get; set; }
     }
 
 

@@ -12,6 +12,16 @@ namespace Efekt
         {
             return string.Concat(Enumerable.Repeat(value, count));
         }
+
+        public static String SubstringAfter(this String value, String after)
+        {
+            Contract.Requires(value.Length >= after.Length);
+
+            var startIx = value.IndexOf(after);
+            Contract.Assume(startIx != -1);
+            var ix = startIx + after.Length;
+            return value.Substring(ix);
+        }
     }
 
     public static class C

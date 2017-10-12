@@ -54,9 +54,10 @@ namespace Efekt
                     {
                         Write(p);
                         if (f.Parameters.Count != ++c)
-                            ctw.WriteMarkup(", ");
+                            ctw.WriteMarkup(",");
+                        ctw.WriteSpace();
                     }
-                    ctw.WriteMarkup("{");
+                    ctw.WriteMarkup("{").WriteSpace();
                     c = 0;
                     foreach (var p in f.Body)
                     {
@@ -64,7 +65,7 @@ namespace Efekt
                         if (f.Body.Count != ++c)
                             ctw.WriteLine();
                     }
-                    ctw.WriteMarkup("}");
+                    ctw.WriteSpace().WriteMarkup("}");
                     break;
                 case Return r:
                     ctw.WriteKey("return");

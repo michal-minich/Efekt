@@ -64,7 +64,39 @@ namespace Efekt
             test("fn a, b { return b }((1), (2))", "2");
             test("fn a { return fn b { return a + b } }(1)(2)", "3");
 
+            // labda
+            const string t = "var t = fn tt { return fn y { return tt } }";
+            const string f = " var f = fn ff { return fn y { return y } }";
+            const string and = " var andX = fn p { return fn q { return p(q)(p) } }";
+            const string or = " var orX = fn p { return fn q { return p(p)(q) } }";
+            const string ifthen = " var ifthen = fn p { return fn a { return fn b { return p(a)(b) } } }";
+            const string not = " var not = fn b { return ifthen(b)(f)(t) }";
+            const string bools = t + f + and + or + ifthen + not + " return ";
+            test(bools + "t", removeVar(t));
+            test(bools + "andX(t)(t)", removeVar(t));
+            test(bools + "andX(t)(f)", removeVar(f));
+            test(bools + "andX(f)(t)", removeVar(f));
+            test(bools + "andX(f)(f)", removeVar(f));
+            test(bools + "orX(t)(t)", removeVar(t));
+            test(bools + "orX(t)(f)", removeVar(t));
+            test(bools + "orX(f)(t)", removeVar(t));
+            test(bools + "orX(f)(f)", removeVar(f));
+            test(bools + "not(t)", removeVar(f));
+            test(bools + "not(f)", removeVar(t));
+            test(bools + "not(andX(t)(f))", removeVar(t));
+            test(bools + "not(orX(t)(f))", removeVar(f));
+            test(bools + "andX(not(t))(not(f))", removeVar(f));
+            test(bools + "orX(not(t))(not(f))", removeVar(t));
+
+            // closure
+            const string adder =
+                "var adder = fn a { var state = a return fn { state = (state + 1) return state } }";
+            test(adder + " var a = adder(10) a() return a()", "12");
+            test(adder + " var a = adder(10) var b = adder(100) a() b() return a()", "12");
+            test(adder + " var a = adder(10) var b = adder(100) b() a() return b()", "102");
         }
+
+        static string removeVar(string t) => t.SubstringAfter("= ");
 
         private static void error(string code)
         {

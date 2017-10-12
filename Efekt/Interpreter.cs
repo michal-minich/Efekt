@@ -122,7 +122,7 @@ namespace Efekt
                     var fn2 = fn as Fn;
                     if (fn2 == null)
                         throw new Exception();
-                    var paramsEnv = Env.Create(fn2.LexicalEnv);
+                    var paramsEnv = Env.Create(fn2.Env);
                     var ix = 0;
                     foreach (var p in fn2.Parameters)
                         paramsEnv.Declare(p.Name, eArgs[ix++]);
@@ -130,7 +130,8 @@ namespace Efekt
                     foreach (var bodyElement in fn2.Body)
                     {
                         var bodyVal = eval(bodyElement, fnEnv);
-                        if (bodyVal != Void.Instance)
+                        //if (bodyVal != Void.Instance)
+                        if (bodyElement is Value)
                             throw new Exception("Unused value");
                         if (ret != null)
                         {
@@ -141,9 +142,7 @@ namespace Efekt
                     }
                     return Void.Instance;
                 case Fn f:
-                    if (f.LexicalEnv == null)
-                        f.LexicalEnv = env;
-                    return f;
+                    return new Fn(f.Parameters, f.Body, env);
                 case When w:
                     if (eval(w.Test, env) == Bool.True)
                         return eval(w.Then, Env.Create(env));
