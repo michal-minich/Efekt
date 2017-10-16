@@ -34,17 +34,17 @@ namespace Efekt
 
                 if (ch == '\r')
                 {
+                    tokType = TokenType.NewLine;
                     next();
                     if (ch == '\n')
                         next();
-                    tokType = TokenType.NewLine;
                     goto final;
                 }
 
                 if (ch == '\n')
                 {
-                    next();
                     tokType = TokenType.NewLine;
+                    next();
                     goto final;
                 }
 
@@ -90,17 +90,39 @@ namespace Efekt
                 if (opChars.Contains(ch.ToString()))
                 {
                     tokType = TokenType.Op;
-                    while (opChars.Contains(ch.ToString()))
-                        next();
+                    while (true)
+                    {
+                        if (ix - startIx == 3)
+                        {
+                            var text = code.Substring(startIx, 3);
+                            if (text == "---" || text == "--*" || text == "*--")
+                                break;
+                        }
+
+                        if (opChars.Contains(ch.ToString()))
+                            next();
+                        else
+                            break;
+                    }
                 }
 
                 final:
-
+                
                 if (startIx != ix)
                 {
                     var text = code.Substring(startIx, ix - startIx);
                     if (tokType == TokenType.Ident && keywords.Contains(text))
                         tokType = TokenType.Key;
+                    if (tokType == TokenType.Op)
+                    {
+                        if (text == "---")
+                            tokType = TokenType.LineCommentBegin;
+                        else if (text == "--*")
+                            tokType = TokenType.CommentBegin;
+                        else if (text == "*--")
+                            tokType = TokenType.CommentEnd;
+                    }
+
                     var t = new Token(tokType, text);
                     yield return t;
                 }
@@ -116,6 +138,8 @@ namespace Efekt
 
     public struct Token
     {
+        public static Token Terminal = new Token(TokenType.Terminal, "\0");
+
         public Token(TokenType type, string text)
         {
             Type = type;
@@ -134,13 +158,16 @@ namespace Efekt
 
     public enum TokenType
     {
-        None,
+        Terminal,
         Ident,
         TypeIdent,
         Int,
         Markup,
         Op,
         Key,
-        NewLine
+        NewLine,
+        LineCommentBegin,
+        CommentBegin,
+        CommentEnd
     }
 }

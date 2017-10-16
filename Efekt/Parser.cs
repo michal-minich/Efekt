@@ -17,6 +17,7 @@ namespace Efekt
         private readonly List<ParseElement> parsers;
         private IEnumerator<Token> te;
         private Token tok;
+        private int lineIndex;
 
         public Parser()
         {
@@ -42,23 +43,58 @@ namespace Efekt
         }
 
 
-        private bool finished => tok.Type == TokenType.None && tok.Text == "\0";
+        private bool finished => tok.Type == TokenType.Terminal;
 
 
-        private void nextDontSkipWNewLine()
+        private bool hasWork => !finished;
+
+
+        private void nextTok()
         {
-            tok = te.MoveNext() ? te.Current : new Token(TokenType.None, "\0");
+            if (te.MoveNext())
+            {
+                tok = te.Current;
+                if (tok.Type == TokenType.NewLine)
+                    ++lineIndex;
+            }
+            else
+            {
+                tok = Token.Terminal;
+            }
+        }
+
+
+        private void nextWithoutComment()
+        {
+            nextTok();
+            if (finished)
+                return;
+            if (tok.Type == TokenType.LineCommentBegin)
+            {
+                while(hasWork && tok.Type != TokenType.NewLine)
+                {
+                    nextTok();
+                }
+                nextTok();
+            }
+            if (tok.Type == TokenType.CommentBegin)
+            {
+                while (hasWork && tok.Type != TokenType.CommentEnd)
+                {
+                    nextTok();
+                }
+                nextTok();
+            }
         }
 
 
         private void next()
         {
-            again:
-            nextDontSkipWNewLine();
-            if (tok.Type == TokenType.None)
-                return;
-            if (tok.Type == TokenType.NewLine)
-                goto again;
+            do
+            {
+                nextWithoutComment();
+
+            } while (hasWork && tok.Type == TokenType.NewLine);
         }
 
 
@@ -86,10 +122,10 @@ namespace Efekt
         private List<Element> ParseAll()
         {
             var elements = new List<Element>();
-            while (!finished)
+            while (hasWork)
             {
                 var e = ParseOne();
-                if (e == null && !finished)
+                if (e == null && hasWork)
                     throw new Exception();
                 elements.Add(e);
             }
@@ -113,7 +149,7 @@ namespace Efekt
                 throw new Exception();
             next();
             var elements = new List<Element>();
-            while (!finished)
+            while (hasWork)
             {
                 if (tok.Text[0] == end)
                 {
@@ -123,7 +159,7 @@ namespace Efekt
                 if (skipComa && tok.Text == ",")
                     next();
                 var e = ParseOne();
-                if (e == null && !finished)
+                if (e == null && hasWork)
                     throw new Exception();
                 elements.Add(e);
             }
@@ -135,14 +171,14 @@ namespace Efekt
         private IdentList ParseComaIdentList()
         {
             var elements = new List<Ident>();
-            while (!finished)
+            while (hasWork)
             {
                 if (tok.Text == ",")
                     next();
                 if (finished || tok.Text == "{" || tok.Type != TokenType.Ident)
                     break;
                 var e = ParseOne();
-                if (e == null && !finished)
+                if (e == null && hasWork)
                     throw new Exception();
                 var i = e as Ident;
                 if (i == null)
@@ -183,7 +219,7 @@ namespace Efekt
                     e = ParseWithOp(e);
                 return e;
             }
-            if (!finished)
+            if (hasWork)
                 throw new Exception();
             return null;
         }
@@ -301,12 +337,10 @@ namespace Efekt
         {
             if (tok.Text != "return")
                 return null;
-            nextDontSkipWNewLine();
-            if (tok.Type == TokenType.NewLine)
-            {
-                next();
+            var linexIndexOnReturn = lineIndex;
+            next();
+            if (linexIndexOnReturn != lineIndex)
                 return new Return(Void.Instance);
-            }
             var se = ParseOne();
             if (se == null && finished)
                 return new Return(Void.Instance);
