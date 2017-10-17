@@ -32,7 +32,8 @@ namespace Efekt
                 ParseLoop,
                 ParseBreak,
                 ParseReturn,
-                ParseCurly
+                ParseCurly,
+                ParseArr
             };
 
             opOparsers = new List<ParseOpElement>
@@ -290,6 +291,18 @@ namespace Efekt
                 return null;
             var elements = ParseList('}');
             return new ElementList(elements.ToArray());
+        }
+
+
+        [CanBeNull]
+        private ArrExp ParseArr()
+        {
+            if (tok.Text != "[")
+                return null;
+            var elements = ParseList(']', true);
+            if (elements == null)
+                throw new Exception();
+            return new ArrExp(elements.Cast<Exp>().ToList());
         }
 
 

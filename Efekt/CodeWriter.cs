@@ -94,6 +94,17 @@ namespace Efekt
                 case Assign a:
                     writeAssign(a.Ident, a.Exp);
                     break;
+                case Arr arr:
+                    ctw.WriteMarkup("[");
+                    var counter = 0;
+                    foreach (var i in arr.Items)
+                    {
+                        Write(i);
+                        if (++counter != arr.Items.Count)
+                            ctw.WriteMarkup(",").WriteSpace();
+                    }
+                    ctw.WriteMarkup("]");
+                    break;
                 case ElementList sel:
                     foreach (var se2 in sel)
                     {

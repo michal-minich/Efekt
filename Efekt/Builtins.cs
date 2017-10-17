@@ -12,10 +12,20 @@ namespace Efekt
             {
                 return new Int(((Int)@params[0]).Value + ((Int)@params[1]).Value);
             }),
+
             new Builtin("print", @params =>
             {
                 Writer.Write(@params[0].ToString());
                 return Void.Instance;
+            }),
+
+            new Builtin("cons", @params =>
+            {
+                var xs = ((Arr) @params[0]).Items;
+                var list = new List<Value>(xs.Count + 1);
+                list.AddRange(xs);
+                list.Add((Value)@params[1]);
+                return new Arr(list);
             })
         };
     }

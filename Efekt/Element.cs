@@ -294,4 +294,28 @@ namespace Efekt
         [NotNull]
         public ExpList Arguments { get; }
     }
+
+
+    public sealed class ArrExp : Exp
+    {
+        public ArrExp(List<Exp> list)
+        {
+            Items = list;
+        }
+
+        [NotNull]
+        public List<Exp> Items { get; }
+    }
+
+
+    public sealed class Arr : Value
+    {
+        public Arr(List<Value> list)
+        {
+            Items = list;
+        }
+
+        [NotNull]
+        public List<Value> Items { get; }
+    }
 }

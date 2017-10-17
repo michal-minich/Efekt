@@ -168,6 +168,8 @@ namespace Efekt
                 case Break b:
                     isBreak = true;
                     return Void.Instance;
+                case ArrExp ae:
+                    return new Arr(ae.Items.Select(e => eval(e, env)).ToList());
                 case Value ve:
                     return ve;
                 case ElementList el:
