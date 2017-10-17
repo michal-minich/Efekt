@@ -1,0 +1,2 @@
+﻿var f = fn a { return a + 1 }
+print(f(2))

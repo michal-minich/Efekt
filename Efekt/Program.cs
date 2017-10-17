@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
 
 namespace Efekt
@@ -15,6 +16,12 @@ namespace Efekt
         {
             C.Nn(args);
 
+            if (args.Length != 0)
+            {
+                processInput(args);
+                return;
+            }
+
             Tests.RunAllTests();
 
             const string code = "";
@@ -22,6 +29,7 @@ namespace Efekt
 
             Console.ReadLine();
         }
+
 
         private static void debug(string code)
         {
@@ -42,6 +50,20 @@ namespace Efekt
             Console.WriteLine("EVAL");
             var res = i.Eval(pse);
             cw.Write(res);
+
+            Console.WriteLine();
+            Console.WriteLine();
+            Console.WriteLine("OUT");
+            var text = Builtins.Writer.GetAndReset();
+            Console.WriteLine(text);
+        }
+
+
+        private static void processInput(string[] args)
+        {
+            var filePath = args[0];
+            debug(File.ReadAllText(filePath));
+            Console.ReadLine();
         }
     }
 }
