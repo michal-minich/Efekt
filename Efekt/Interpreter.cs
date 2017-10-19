@@ -129,6 +129,7 @@ namespace Efekt
                     var fnEnv = Env.Create(paramsEnv);
                     foreach (var bodyElement in fn2.Body)
                     {
+                        // ReSharper disable once UnusedVariable
                         var bodyVal = eval(bodyElement, fnEnv);
                         //if (bodyVal != Void.Instance)
                         if (bodyElement is Value)
@@ -170,6 +171,16 @@ namespace Efekt
                     return Void.Instance;
                 case ArrExp ae:
                     return new Arr(ae.Items.Select(e => eval(e, env)).ToList());
+                case MemberAccess ma:
+                    var exp = eval(ma.Exp, env);
+                    if (exp is Obj o)
+                        return o.Env.Get(ma.Ident.Name);
+                    throw new Exception();
+                case New n:
+                    var objEnv = Env.Create(env);
+                    foreach (var v in n.Vars)
+                        eval(v, objEnv);
+                    return new Obj(n.Vars, objEnv);
                 case Value ve:
                     return ve;
                 case ElementList el:

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using JetBrains.Annotations;
 
 namespace Efekt
 {
@@ -10,12 +11,14 @@ namespace Efekt
         {
             new Builtin("+", @params =>
             {
-                return new Int(((Int)@params[0]).Value + ((Int)@params[1]).Value);
+                var a = (Int)@params[0];
+                var b = (Int)@params[1];
+                return new Int(a.Value + b.Value);
             }),
 
             new Builtin("print", @params =>
             {
-                Writer.Write(@params[0].ToString());
+                Writer.Write(@params[0].ElementToString());
                 return Void.Instance;
             }),
 
@@ -28,5 +31,15 @@ namespace Efekt
                 return new Arr(list);
             })
         };
+
+        public static readonly StringWriter sw = new StringWriter();
+        private static readonly CodeTextWriter ctw = new CodeTextWriter(sw);
+        public static readonly CodeWriter cw = new CodeWriter(ctw);
+
+        private static string ElementToString([NotNull] this Element e)
+        {
+            cw.Write(e);
+            return e.GetType().Name + ": " + sw.GetAndReset();
+        }
     }
 }

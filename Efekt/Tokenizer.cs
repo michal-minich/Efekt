@@ -7,7 +7,7 @@ namespace Efekt
     public sealed class Tokenizer
     {
         private static readonly string[] keywords =
-            {"var", "fn", "if", "else", "return", "loop", "break", "continue", "label", "goto", "true", "false"};
+            {"var", "fn", "if", "else", "return", "loop", "break", "continue", "label", "goto", "true", "false", "new" };
 
         public IEnumerable<Token> Tokenize(string code)
         {
@@ -70,7 +70,7 @@ namespace Efekt
                     goto final;
                 }
 
-                if (ch >= 'a' && ch <= 'Z')
+                if (ch >= 'A' && ch <= 'Z')
                 {
                     tokType = TokenType.TypeIdent;
                     while (ch >= 'a' && ch <= 'z' || ch >= 'A' && ch <= 'Z' || ch >= '0' && ch <= '9' || ch == '_')

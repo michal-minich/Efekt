@@ -84,7 +84,7 @@ namespace Efekt
                 case Bool b:
                     ctw.WriteKey(b.Value ? "true" : "false");
                     break;
-                case Break b:
+                case Break _:
                     ctw.WriteKey("break");
                     break;
                 case Var v:
@@ -104,6 +104,20 @@ namespace Efekt
                             ctw.WriteMarkup(",").WriteSpace();
                     }
                     ctw.WriteMarkup("]");
+                    break;
+                case MemberAccess ma:
+                    Write(ma.Exp);
+                    ctw.WriteOp(".");
+                    Write(ma.Ident);
+                    break;
+                case New n:
+                    ctw.WriteKey("new").WriteSpace().WriteMarkup("{");
+                    foreach (var se2 in n.Vars)
+                    {
+                        Write(se2);
+                        ctw.WriteLine();
+                    }
+                    ctw.WriteMarkup("}");
                     break;
                 case ElementList sel:
                     foreach (var se2 in sel)

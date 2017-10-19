@@ -16,7 +16,7 @@ namespace Efekt
         {
             //test("var a = + return a(1, 2)", "3");
             
-            error("~");
+            //error("~");
             test("1", "1");
             test("(1)", "1");
 
@@ -70,13 +70,13 @@ namespace Efekt
             // labda
             const string tt = "fn tt { return fn y { return tt } }";
             const string ff = "fn ff { return fn y { return y } }";
-            const string t = "var t = " + tt;
+            const string tr = "var t = " + tt;
             const string f = "var f = " + ff;
             const string and = " var andX = fn p { return fn q { return p(q)(p) } }";
             const string or = " var orX = fn p { return fn q { return p(p)(q) } }";
             const string ifthen = " var ifthen = fn p { return fn a { return fn b { return p(a)(b) } } }";
             const string not = " var not = fn b { return ifthen(b)(f)(t) }";
-            const string bools = t + f + and + or + ifthen + not + " return ";
+            const string bools = tr + f + and + or + ifthen + not + " return ";
             test(bools + "t", tt);
             test(bools + "andX(t)(t)", tt);
             test(bools + "andX(t)(f)", ff);
@@ -111,10 +111,11 @@ namespace Efekt
             test("--- return  1", "<Void>");
             test("var a = 1 return a --**--", "1");
         }
-        
+
+        /*
         private static void error(string code)
         {
-            return;
+            
             Exception e = null;
             try
             {
@@ -126,9 +127,11 @@ namespace Efekt
             }
             if (e == null)
                 throw new Exception();
+           
         }
+        */
 
-        
+
         // ReSharper disable ParameterOnlyUsedForPreconditionCheck.Local
         private static void test(string code, string expectedResult, string expectedOutput = "")
         // ReSharper restore ParameterOnlyUsedForPreconditionCheck.Local

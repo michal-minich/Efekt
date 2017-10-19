@@ -9,7 +9,7 @@ namespace Efekt
     internal delegate Element ParseElement();
 
     [CanBeNull]
-    internal delegate Exp ParseOpElement(Exp prev);
+    internal delegate Element ParseOpElement(Exp prev);
 
     internal sealed class Parser
     {
@@ -33,7 +33,8 @@ namespace Efekt
                 ParseBreak,
                 ParseReturn,
                 ParseCurly,
-                ParseArr
+                ParseArr,
+                ParseNew
             };
 
             opOparsers = new List<ParseOpElement>
@@ -135,6 +136,7 @@ namespace Efekt
 
 
         [CanBeNull]
+        // ReSharper disable once ParameterOnlyUsedForPreconditionCheck.Local
         private List<Element> ParseList(char? stopOnBrace = null, bool skipComa = false)
         {
             char end;
@@ -196,6 +198,7 @@ namespace Efekt
             if (tok.Text == "(")
             {
                 var es = ParseList(')');
+                C.Nn(es);
                 if (es.Count != 1)
                     throw new Exception();
                 var e = es.First();
@@ -210,10 +213,9 @@ namespace Efekt
         [CanBeNull]
         private Element ParseOne2(bool withOps = true)
         {
-            Element e;
             foreach (var p in parsers)
             {
-                e = p();
+                var e = p();
                 if (e == null)
                     continue;
                 if (withOps)
@@ -250,9 +252,9 @@ namespace Efekt
         [CanBeNull]
         private FnApply ParseFnApply(Exp prev)
         {
-            if (tok.Text != "(")
-                return null;
             var args = ParseList(')', true);
+            if (args == null)
+                return null;
             var argsExpList = args.Select(a => a as Exp).ToArray();
             if (argsExpList.Any(a => a == null))
                 throw new Exception();
@@ -261,7 +263,7 @@ namespace Efekt
 
 
         [CanBeNull]
-        private Exp ParseOpApply(Exp prev)
+        private Element ParseOpApply(Exp prev)
         {
             if (tok.Type != TokenType.Op)
                 return null;
@@ -280,6 +282,12 @@ namespace Efekt
                     throw new Exception();
                 return new Assign(i, secondExp);
             }
+            if (opText == ".")
+            {
+                if (secondExp is Ident i)
+                    return new MemberAccess(prev, i);
+                throw new Exception();
+            }
             return new FnApply(new Ident(opText), new ExpList(prev, secondExp));
         }
 
@@ -287,9 +295,9 @@ namespace Efekt
         [CanBeNull]
         private ElementList ParseCurly()
         {
-            if (tok.Text != "{")
-                return null;
             var elements = ParseList('}');
+            if (elements == null)
+                return null;
             return new ElementList(elements.ToArray());
         }
 
@@ -303,6 +311,19 @@ namespace Efekt
             if (elements == null)
                 throw new Exception();
             return new ArrExp(elements.Cast<Exp>().ToList());
+        }
+
+
+        [CanBeNull]
+        private New ParseNew()
+        {
+            if (tok.Text != "new")
+                return null;
+            next();
+            var e = ParseOne();
+            if (e is ElementList el)
+                return new New(el.Cast<Var>().ToList());
+            throw new Exception();
         }
 
 
@@ -417,9 +438,9 @@ namespace Efekt
             if (tok.Text != "loop")
                 return null;
             next();
-            if (tok.Text != "{")
-                throw new Exception();
             var body = ParseList('}');
+            if (body == null)
+                throw new Exception();
             return new Loop(new ElementList(body.ToArray()));
         }
 

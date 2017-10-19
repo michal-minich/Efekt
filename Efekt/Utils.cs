@@ -17,7 +17,7 @@ namespace Efekt
         {
             Contract.Requires(value.Length >= after.Length);
 
-            var startIx = value.IndexOf(after);
+            var startIx = value.IndexOf(after, StringComparison.Ordinal);
             Contract.Assume(startIx != -1);
             var ix = startIx + after.Length;
             return value.Substring(ix);
@@ -34,9 +34,10 @@ namespace Efekt
                 throw new Exception();
         }
 
+        [ContractAnnotation("null => halt", true)]
         [ContractAbbreviator]
         // ReSharper disable once UnusedParameter.Global
-        public static void Nn<T>([NotNull] T value) where T : class
+        public static void Nn(object value)
         {
             Contract. /*Requires*/Assert(value != null);
         }
