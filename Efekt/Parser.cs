@@ -13,8 +13,8 @@ namespace Efekt
 
     internal sealed class Parser
     {
-        private readonly List<ParseOpElement> opOparsers;
-        private readonly List<ParseElement> parsers;
+        [NotNull] private readonly List<ParseOpElement> opOparsers;
+        [NotNull] private readonly List<ParseElement> parsers;
         private IEnumerator<Token> te;
         private Token tok;
         private int lineIndex;
@@ -106,12 +106,14 @@ namespace Efekt
 
 
         [NotNull]
-        public Element Parse(IEnumerable<Token> tokens)
+        public Element Parse([NotNull] IEnumerable<Token> tokens)
         {
             te = tokens.GetEnumerator();
             next();
             var elements = ParseAll();
-            return elements.Count == 1 ? elements[0] : new Sequence(elements.ToArray());
+            var e = elements[0];
+            C.Nn(e);
+            return elements.Count == 1 ? e : new Sequence(elements.ToArray());
         }
 
 
@@ -236,6 +238,7 @@ namespace Efekt
             }
             foreach (var opar in opOparsers)
             {
+                // ReSharper disable once PossibleNullReferenceException
                 e = opar(prev);
                 if (e != null)
                     return ParseWithOp(e);

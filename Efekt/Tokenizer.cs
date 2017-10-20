@@ -10,8 +10,11 @@ namespace Efekt
         [NotNull] private static readonly string[] keywords =
             {"var", "fn", "if", "else", "return", "loop", "break", "continue", "label", "goto", "true", "false", "new"};
 
+        [NotNull]
+        readonly List<char> opChars = "<>~`\\@#$%^&*+-=./:?!|".ToList();
 
-        private string code;
+        // ReSharper disable once NotNullMemberIsNotInitialized
+        [NotNull] private string code;
         private char ch;
         private int ix;
         private TokenType tokType;
@@ -19,7 +22,6 @@ namespace Efekt
         private void next()
         {
             ++ix;
-            // ReSharper disable once PossibleNullReferenceException
             if (ix >= code.Length)
             {
                 ch = '\0';
@@ -93,52 +95,56 @@ namespace Efekt
                     goto final;
                 }
 
-                const string opChars = "<>~`\\@#$%^&*+-=./:?!|";
-                if (opChars.Contains(ch.ToString()))
+                if (ch == '-')
+                {
+                    var text = code.Substring(startIx, 3);
+                    if (text == "---")
+                    {
+                        mark(TokenType.LineCommentBegin);
+                        next();
+                        next();
+                        goto final;
+                    }
+                    if (text == "--*")
+                    {
+                        mark(TokenType.CommentBegin);
+                        next();
+                        next();
+                        goto final;
+                    }
+                }
+
+                if (ch == '-')
+                {
+                    var text = code.Substring(startIx, 3);
+                    if (text == "*--")
+                    {
+                        mark(TokenType.CommentEnd);
+                        next();
+                        next();
+                        goto final;
+                    }
+                }
+
+                if (opChars.Contains(ch))
                 {
                     mark(TokenType.Op);
-                    while (true)
-                    {
-                        if (ix - startIx == 3)
-                        {
-                            var text = code.Substring(startIx, 3);
-                            if (text == "---" || text == "--*" || text == "*--")
-                                break;
-                        }
-
-                        if (opChars.Contains(ch.ToString()))
-                            next();
-                        else
-                            break;
-                    }
+                    while (opChars.Contains(ch))
+                        next();
                 }
 
                 final:
-
-                if (startIx != ix)
-                {
-                    var text = code.Substring(startIx, ix - startIx);
-                    if (tokType == TokenType.Ident && keywords.Contains(text))
-                        tokType = TokenType.Key;
-                    if (tokType == TokenType.Op)
-                    {
-                        if (text == "---")
-                            tokType = TokenType.LineCommentBegin;
-                        else if (text == "--*")
-                            tokType = TokenType.CommentBegin;
-                        else if (text == "*--")
-                            tokType = TokenType.CommentEnd;
-                    }
-
-                    var t = new Token(tokType, text);
-                    tokens.Add(t);
-                }
 
                 if (ch == '\0')
                     break;
 
                 if (startIx == ix)
                     throw new NotSupportedException("Character not supported '" + ch + "'.");
+
+                var text2 = code.Substring(startIx, ix - startIx);
+                if (tokType == TokenType.Ident && keywords.Contains(text2))
+                    tokType = TokenType.Key;
+                tokens.Add(new Token(tokType, text2));
             }
 
             return tokens;
@@ -149,13 +155,13 @@ namespace Efekt
     {
         public static Token Terminal = new Token(TokenType.Terminal, "\0");
 
-        public Token(TokenType type, string text)
+        public Token(TokenType type, [NotNull] string text)
         {
             Type = type;
             Text = text;
         }
 
-        public string Text { get; }
+        [NotNull] public string Text { get; }
         public TokenType Type { get; }
 
         // for debug only
