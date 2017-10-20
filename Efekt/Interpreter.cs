@@ -1,17 +1,17 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using JetBrains.Annotations;
 
 namespace Efekt
 {
     public interface IEnv
     {
-        Value Get(string name);
-        void Declare(string name, Value value);
+        [NotNull]
+        Value Get([NotNull] string name);
+        void Declare([NotNull] string name, [NotNull]  Value value);
         //void Alias(string name, string newName);
-        void Set(string name, Value value);
+        void Set([NotNull] string name, [NotNull] Value value);
     }
 
     public sealed class Env : IEnv
@@ -34,19 +34,21 @@ namespace Efekt
         [CanBeNull]
         public Env Parent { get; }
 
+        [NotNull]
         public static Env CreateRoot()
         {
             return new Env();
         }
-        
-        public static Env Create(Env parent)
+
+        [NotNull]
+        public static Env Create([NotNull] Env parent)
         {
             return new Env(parent);
         }
 
         public Value Get(string name)
         {
-            if (dict.TryGetValue(name, out Value value))
+            if (dict.TryGetValue(name, out var value))
                 return value;
             if (Parent != null)
                 return Parent.Get(name);
@@ -82,7 +84,8 @@ namespace Efekt
         [CanBeNull] private Value ret;
         private bool isBreak;
 
-        public Value Eval(Element se)
+        [NotNull]
+        public Value Eval([NotNull] Element se)
         {
             if (se is Exp exp)
                 se = new Sequence(new Return(exp));
@@ -95,7 +98,8 @@ namespace Efekt
             return eval(se, Env.CreateRoot());
         }
 
-        private Value eval(Element se, Env env)
+        [NotNull]
+        private Value eval([NotNull] Element se, [NotNull] Env env)
         {
             switch (se)
             {
@@ -115,6 +119,7 @@ namespace Efekt
                 case FnApply fna:
                     var fn = eval(fna.Fn, env);
                     var builtin = fn as Builtin;
+                    // ReSharper disable once AssignNullToNotNullAttribute
                     var eArgs = fna.Arguments.Select(a => eval(a, env)).ToArray();
                     if (builtin != null)
                     {
@@ -126,10 +131,16 @@ namespace Efekt
                     var paramsEnv = Env.Create(fn2.Env);
                     var ix = 0;
                     foreach (var p in fn2.Parameters)
-                        paramsEnv.Declare(p.Name, eArgs[ix++]);
+                    {
+                        C.Nn(p);
+                        var eArg = eArgs[ix++];
+                        C.Nn(eArg);
+                        paramsEnv.Declare(p.Name, eArg);
+                    }
                     var fnEnv = Env.Create(paramsEnv);
                     foreach (var bodyElement in fn2.Sequence)
                     {
+                        C.Nn(bodyElement);
                         // ReSharper disable once UnusedVariable
                         var bodyVal = eval(bodyElement, fnEnv);
                         //if (bodyVal != Void.Instance)
@@ -158,6 +169,7 @@ namespace Efekt
                     {
                         foreach (var e in l.Body)
                         {
+                            C.Nn(e);
                             if (isBreak)
                             {
                                 isBreak = false;
@@ -171,6 +183,7 @@ namespace Efekt
                     isBreak = true;
                     return Void.Instance;
                 case ArrConstructor ae:
+                    // ReSharper disable once AssignNullToNotNullAttribute
                     return new Arr(new Values(ae.Arguments.Select(e => eval(e, env)).ToArray()));
                 case MemberAccess ma:
                     var exp = eval(ma.Exp, env);
@@ -197,8 +210,6 @@ namespace Efekt
                     }
                     return Void.Instance;
                 default:
-                    throw new NotImplementedException();
-                case null:
                     throw new Exception();
             }
         }

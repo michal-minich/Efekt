@@ -1,16 +1,19 @@
 using System;
+using JetBrains.Annotations;
 
 namespace Efekt
 {
     public sealed class Printer
     {
+        [NotNull]
         private readonly PlainTextCodeWriter w;
 
-        public Printer(PlainTextCodeWriter codeWriter)
+        public Printer([NotNull] PlainTextCodeWriter codeWriter)
         {
             w = codeWriter;
         }
 
+        [NotNull]
         public PlainTextCodeWriter Write(Element se)
         {
             switch (se)

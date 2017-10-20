@@ -37,7 +37,7 @@ namespace Efekt
         [ContractAnnotation("null => halt", true)]
         [ContractAbbreviator]
         // ReSharper disable once ParameterOnlyUsedForPreconditionCheck.Global
-        public static void Nn(object value)
+        public static void Nn([CanBeNull] object value)
         {
             if (value == null)
                 throw new Exception();
@@ -46,9 +46,12 @@ namespace Efekt
 
         [ContractAbbreviator]
         [ContractAnnotation("null => halt")]
-        public static void AllNotNull<T>(IEnumerable<T> items)
+        public static void AllNotNull<T>([CanBeNull] IEnumerable<T> items)
         {
-            Assert(Contract.ForAll(items, i => i != null));
+            Nn(items);
+            foreach (var i in items)
+                if (i == null)
+                    throw new Exception();
         }
     }
 }

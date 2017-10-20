@@ -1,15 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using JetBrains.Annotations;
 
 namespace Efekt
 {
     public sealed class Tokenizer
     {
+        [NotNull]
         private static readonly string[] keywords =
             {"var", "fn", "if", "else", "return", "loop", "break", "continue", "label", "goto", "true", "false", "new" };
 
-        public IEnumerable<Token> Tokenize(string code)
+        [NotNull]
+        public IEnumerable<Token> Tokenize([NotNull] string code)
         {
             var ix = -1;
             char ch;

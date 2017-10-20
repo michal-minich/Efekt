@@ -6,6 +6,8 @@ namespace Efekt
     {
         public void Write(string value)
         {
+            C.Nn(value);
+
             Console.Write(value);
         }
     }
