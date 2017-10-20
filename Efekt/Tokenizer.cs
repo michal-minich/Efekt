@@ -69,15 +69,7 @@ namespace Efekt
                         next();
                     goto final;
                 }
-
-                if (ch >= 'A' && ch <= 'Z')
-                {
-                    tokType = TokenType.TypeIdent;
-                    while (ch >= 'a' && ch <= 'z' || ch >= 'A' && ch <= 'Z' || ch >= '0' && ch <= '9' || ch == '_')
-                        next();
-                    goto final;
-                }
-
+                
                 if (ch == '{' || ch == '}' || ch == '(' || ch == ')' || ch == ',' || ch == ';' || ch == '[' ||
                     ch == ']')
                 {
@@ -160,7 +152,6 @@ namespace Efekt
     {
         Terminal,
         Ident,
-        TypeIdent,
         Int,
         Markup,
         Op,

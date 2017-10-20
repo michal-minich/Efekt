@@ -25,7 +25,7 @@ namespace Efekt
     }
 
 
-    public interface IElementList<out T> : Element, IReadOnlyList<T> where T : Element
+    public interface IElementList<out T> : IReadOnlyList<T> where T : Element
     {
     }
 
@@ -51,7 +51,7 @@ namespace Efekt
     }
 
 
-    public sealed class ElementList : ElementList<Element>
+    public sealed class ElementList : ElementList<Element>, Element
     {
         public ElementList([NotNull] params Element[] items) : base(items)
         {
@@ -59,17 +59,41 @@ namespace Efekt
     }
 
 
-    public sealed class ExpList : ElementList<Exp>
+    public sealed class Sequence : ElementList<Element>, Stm
     {
-        public ExpList([NotNull] params Exp[] items) : base(items)
+        public Sequence([NotNull] params Element[] items) : base(items)
         {
         }
     }
 
 
-    public sealed class IdentList : ElementList<Ident>
+    public sealed class ClassBody : ElementList<Var>
     {
-        public IdentList([NotNull] params Ident[] items) : base(items)
+        public ClassBody([NotNull] params Var[] items) : base(items)
+        {
+        }
+    }
+
+
+    public sealed class FnArguments : ElementList<Exp>
+    {
+        public FnArguments([NotNull] params Exp[] items) : base(items)
+        {
+        }
+    }
+
+
+    public sealed class FnParameters : ElementList<Ident>
+    {
+        public FnParameters([NotNull] params Ident[] items) : base(items)
+        {
+        }
+    }
+
+
+    public sealed class Values : ElementList<Value>
+    {
+        public Values([NotNull] params Value[] items) : base(items)
         {
         }
     }
@@ -77,8 +101,12 @@ namespace Efekt
 
     public sealed class Builtin : Value
     {
-        public Builtin([NotNull] string name, [NotNull] Func<IReadOnlyList<Exp>, Value> fn)
+        public Builtin([NotNull] string name, [NotNull] Func<FnArguments, Value> fn)
         {
+            C.Assert(!string.IsNullOrWhiteSpace(name));
+            C.Assert(name.Trim().Length == name.Length);
+            C.Nn(fn);
+
             Name = name;
             Fn = fn;
         }
@@ -87,7 +115,7 @@ namespace Efekt
         public string Name { get; }
 
         [NotNull]
-        public Func<IReadOnlyList<Exp>, Value> Fn { get; }
+        public Func<FnArguments, Value> Fn { get; }
     }
 
 
@@ -95,8 +123,8 @@ namespace Efekt
     {
         public Ident([NotNull] string name)
         {
-            C.Req(!string.IsNullOrWhiteSpace(name));
-            C.Req(name.Trim().Length == name.Length);
+            C.Assert(!string.IsNullOrWhiteSpace(name));
+            C.Assert(name.Trim().Length == name.Length);
 
             Name = name;
         }
@@ -169,14 +197,14 @@ namespace Efekt
 
     public sealed class Loop : Stm
     {
-        public Loop([NotNull] ElementList body)
+        public Loop([NotNull] Sequence body)
         {
             C.AllNotNull(body);
             Body = body;
         }
 
         [NotNull]
-        public ElementList Body { get; }
+        public Sequence Body { get; }
     }
 
 
@@ -206,17 +234,17 @@ namespace Efekt
 
     public sealed class Fn : Value
     {
-        public Fn([NotNull] IdentList parameters, [NotNull] ElementList body)
+        public Fn([NotNull] FnParameters parameters, [NotNull] Sequence sequence)
         {
             C.AllNotNull(parameters);
-            C.AllNotNull(body);
+            C.AllNotNull(sequence);
 
             Parameters = parameters;
-            Body = body;
+            Sequence = sequence;
         }
 
-        public Fn([NotNull] IdentList parameters, [NotNull] ElementList body, [NotNull] Env env)
-            : this(parameters, body)
+        public Fn([NotNull] FnParameters parameters, [NotNull] Sequence sequence, [NotNull] Env env)
+            : this(parameters, sequence)
         {
             C.Nn(env);
 
@@ -224,10 +252,10 @@ namespace Efekt
         }
 
         [NotNull]
-        public IdentList Parameters { get; }
+        public FnParameters Parameters { get; }
 
         [NotNull]
-        public ElementList Body { get; }
+        public Sequence Sequence { get; }
 
         [NotNull]
         public Env Env { get; }
@@ -275,7 +303,7 @@ namespace Efekt
 
     public sealed class FnApply : Exp
     {
-        public FnApply([NotNull] Exp fn, [NotNull] ExpList arguments)
+        public FnApply([NotNull] Exp fn, [NotNull] FnArguments arguments)
         {
             C.Nn(fn);
             C.AllNotNull(arguments);
@@ -288,72 +316,72 @@ namespace Efekt
         public Exp Fn { get; }
 
         [NotNull]
-        public ExpList Arguments { get; }
+        public FnArguments Arguments { get; }
     }
 
 
-    public sealed class ArrExp : Exp
+    public sealed class ArrConstructor : Exp
     {
-        public ArrExp(List<Exp> list)
+        public ArrConstructor(FnArguments arguments)
         {
-            C.AllNotNull(list);
+            C.AllNotNull(arguments);
 
-            Items = list;
+            Arguments = arguments;
         }
 
         [NotNull]
-        public List<Exp> Items { get; }
+        public FnArguments Arguments { get; }
     }
 
 
     public sealed class Arr : Value
     {
-        public Arr(List<Value> list)
+        public Arr(Values values)
         {
-            C.AllNotNull(list);
+            C.AllNotNull(values);
 
-            Items = list;
+            Values = values;
         }
 
         [NotNull]
-        public List<Value> Items { get; }
+        public Values Values { get; }
     }
 
 
     public sealed class New : Exp
     {
-        public New([NotNull] IReadOnlyList<Var> vars)
+        public New([NotNull] ClassBody body)
         {
-            C.AllNotNull(vars);
+            C.AllNotNull(body);
 
-            Vars = vars;
+            Body = body;
         }
 
         [NotNull]
-        public IReadOnlyList<Var> Vars { get; }
+        public ClassBody Body { get; }
     }
 
 
     public sealed class Obj : Value
     {
-        public Obj([NotNull] IReadOnlyList<Var> vars, [NotNull] Env env)
+        public Obj([NotNull] ClassBody body, [NotNull] Env env)
         {
-            C.AllNotNull(vars);
+            C.AllNotNull(body);
             C.Nn(env);
 
-            Vars = vars;
+            Body = body;
             Env = env;
         }
 
         [NotNull]
-        public IReadOnlyList<Var> Vars { get; }
+        public ClassBody Body { get; }
 
         [NotNull]
         public Env Env { get; }
     }
 
 
-    public sealed class MemberAccess : Value
+    public sealed class MemberAccess : Exp
     {
         public MemberAccess([NotNull] Exp exp, [NotNull] Ident ident)
         {

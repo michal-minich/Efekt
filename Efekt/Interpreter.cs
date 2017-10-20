@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using JetBrains.Annotations;
 
 namespace Efekt
@@ -84,12 +85,12 @@ namespace Efekt
         public Value Eval(Element se)
         {
             if (se is Exp exp)
-                se = new ElementList(new Return(exp));
+                se = new Sequence(new Return(exp));
 
-            if (se is ElementList body)
+            if (se is Sequence body)
                 se = new FnApply(
-                    new Fn(new IdentList(), body),
-                    new ExpList());
+                    new Fn(new FnParameters(), body),
+                    new FnArguments());
 
             return eval(se, Env.CreateRoot());
         }
@@ -114,10 +115,10 @@ namespace Efekt
                 case FnApply fna:
                     var fn = eval(fna.Fn, env);
                     var builtin = fn as Builtin;
-                    var eArgs = fna.Arguments.Select(a => eval(a, env)).ToList();
+                    var eArgs = fna.Arguments.Select(a => eval(a, env)).ToArray();
                     if (builtin != null)
                     {
-                        return builtin.Fn(eArgs);
+                        return builtin.Fn(new FnArguments(eArgs));
                     }
                     var fn2 = fn as Fn;
                     if (fn2 == null)
@@ -127,7 +128,7 @@ namespace Efekt
                     foreach (var p in fn2.Parameters)
                         paramsEnv.Declare(p.Name, eArgs[ix++]);
                     var fnEnv = Env.Create(paramsEnv);
-                    foreach (var bodyElement in fn2.Body)
+                    foreach (var bodyElement in fn2.Sequence)
                     {
                         // ReSharper disable once UnusedVariable
                         var bodyVal = eval(bodyElement, fnEnv);
@@ -143,7 +144,7 @@ namespace Efekt
                     }
                     return Void.Instance;
                 case Fn f:
-                    return new Fn(f.Parameters, f.Body, env);
+                    return new Fn(f.Parameters, f.Sequence, env);
                 case When w:
                     if (eval(w.Test, env) == Bool.True)
                         return eval(w.Then, Env.Create(env));
@@ -169,8 +170,8 @@ namespace Efekt
                 case Break b:
                     isBreak = true;
                     return Void.Instance;
-                case ArrExp ae:
-                    return new Arr(ae.Items.Select(e => eval(e, env)).ToList());
+                case ArrConstructor ae:
+                    return new Arr(new Values(ae.Arguments.Select(e => eval(e, env)).ToArray()));
                 case MemberAccess ma:
                     var exp = eval(ma.Exp, env);
                     if (exp is Obj o)
@@ -178,16 +179,17 @@ namespace Efekt
                     throw new Exception();
                 case New n:
                     var objEnv = Env.Create(env);
-                    foreach (var v in n.Vars)
+                    foreach (var v in n.Body)
                         eval(v, objEnv);
-                    return new Obj(n.Vars, objEnv);
+                    return new Obj(n.Body, objEnv);
                 case Value ve:
                     return ve;
-                case ElementList el:
+                case Sequence seq:
+                    
                     var scopeEnv = Env.Create(env);
-                    foreach (var listElement in el)
+                    foreach (var item in seq)
                     {
-                        var bodyVal = eval(listElement, scopeEnv);
+                        var bodyVal = eval(item, scopeEnv);
                         if (bodyVal != Void.Instance)
                             throw new Exception("Unused value");
                         if (ret != null)

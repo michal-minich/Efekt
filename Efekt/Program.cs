@@ -9,8 +9,8 @@ namespace Efekt
         private static readonly Tokenizer t = new Tokenizer();
         private static readonly Parser p = new Parser();
         private static readonly Interpreter i = new Interpreter();
-        private static readonly CodeTextWriter ctw = new CodeTextWriter(new ConsoleWriter());
-        private static readonly CodeWriter cw = new CodeWriter(ctw);
+        private static readonly PlainTextCodeWriter ctw = new PlainTextCodeWriter(new ConsoleWriter());
+        private static readonly Printer cw = new Printer(ctw);
 
         private static void Main(string[] args)
         {
@@ -22,7 +22,7 @@ namespace Efekt
                 return;
             }
 
-            Tests.RunAllTests();
+            Tests.Tests.RunAllTests();
 
             const string code = "";
             debug(code);

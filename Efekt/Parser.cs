@@ -116,7 +116,7 @@ namespace Efekt
             te = tokens.GetEnumerator();
             next();
             var elements = ParseAll();
-            return elements.Count == 1 ? elements[0] : new ElementList(elements.ToArray());
+            return elements.Count == 1 ? elements[0] : new Sequence(elements.ToArray());
         }
 
 
@@ -171,7 +171,7 @@ namespace Efekt
 
 
         [NotNull]
-        private IdentList ParseComaIdentList()
+        private FnParameters ParseFnParameters()
         {
             var elements = new List<Ident>();
             while (hasWork)
@@ -188,7 +188,7 @@ namespace Efekt
                     throw new Exception();
                 elements.Add(i);
             }
-            return new IdentList(elements.ToArray());
+            return new FnParameters(elements.ToArray());
         }
 
 
@@ -258,7 +258,7 @@ namespace Efekt
             var argsExpList = args.Select(a => a as Exp).ToArray();
             if (argsExpList.Any(a => a == null))
                 throw new Exception();
-            return new FnApply(prev, new ExpList(argsExpList));
+            return new FnApply(prev, new FnArguments(argsExpList));
         }
 
 
@@ -288,7 +288,7 @@ namespace Efekt
                     return new MemberAccess(prev, i);
                 throw new Exception();
             }
-            return new FnApply(new Ident(opText), new ExpList(prev, secondExp));
+            return new FnApply(new Ident(opText), new FnArguments(prev, secondExp));
         }
 
 
@@ -303,14 +303,14 @@ namespace Efekt
 
 
         [CanBeNull]
-        private ArrExp ParseArr()
+        private ArrConstructor ParseArr()
         {
             if (tok.Text != "[")
                 return null;
             var elements = ParseList(']', true);
             if (elements == null)
                 throw new Exception();
-            return new ArrExp(elements.Cast<Exp>().ToList());
+            return new ArrConstructor(new FnArguments(elements.Cast<Exp>().ToArray()));
         }
 
 
@@ -322,7 +322,7 @@ namespace Efekt
             next();
             var e = ParseOne();
             if (e is ElementList el)
-                return new New(el.Cast<Var>().ToList());
+                return new New(new ClassBody(el.Cast<Var>().ToArray()));
             throw new Exception();
         }
 
@@ -392,12 +392,12 @@ namespace Efekt
             next();
             if (!(tok.Type == TokenType.Ident || tok.Text == "{"))
                 throw new Exception();
-            var @params = ParseComaIdentList();
+            var @params = ParseFnParameters();
             var se = ParseOne(false);
             if (se is ElementList sel)
-                return new Fn(@params, sel);
+                return new Fn(@params, new Sequence(sel.ToArray()));
             if (se is Exp e)
-                return new Fn(@params, new ElementList(e));
+                return new Fn(@params, new Sequence(e));
             throw new Exception();
         }
 
@@ -441,7 +441,7 @@ namespace Efekt
             var body = ParseList('}');
             if (body == null)
                 throw new Exception();
-            return new Loop(new ElementList(body.ToArray()));
+            return new Loop(new Sequence(body.ToArray()));
         }
 
 

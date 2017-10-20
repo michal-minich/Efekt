@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Linq;
 
-namespace Efekt
+// ReSharper disable once CheckNamespace
+namespace Efekt.Tests
 {
     internal static class Tests
     {
@@ -9,8 +10,8 @@ namespace Efekt
         private static readonly Parser p = new Parser();
         private static readonly Interpreter i = new Interpreter();
         private static readonly StringWriter sw = new StringWriter();
-        private static readonly CodeTextWriter ctw = new CodeTextWriter(sw);
-        private static readonly CodeWriter cw = new CodeWriter(ctw);
+        private static readonly PlainTextCodeWriter ctw = new PlainTextCodeWriter(sw);
+        private static readonly Printer cw = new Printer(ctw);
 
         public static void RunAllTests()
         {
@@ -38,6 +39,12 @@ namespace Efekt
             test("var a = 1 { var a = 2 } return a a = 3", "1");
             test("var x = fn { return 1_2_3 } return x()", "123");
             test("var a = 1 var b = 2 { a = 3 b = a } return b", "3");
+
+            // basic ops and braces
+            test("(1 + 2) * 10", "30");
+            test("10 * (1 + 2)", "30");
+            test("(1 + (2 * 10))", "21");
+            test("(10 * 1) + 2))", "12");
 
             // if
             test("if true then 1 else 2", "1");
@@ -110,6 +117,13 @@ namespace Efekt
             test("var a = ---1\n2 return a", "2");
             test("--- return  1", "<Void>");
             test("var a = 1 return a --**--", "1");
+
+            // array
+            test("var c = 1 + 2 return [1, 2, c]", "[1, 2, 3]");
+            test("var c = 1 + 2 return [c + 1, c + 1, c + 1]", "[4, 4, 4]");
+            test("var c = 1 + 2 return [c = c + 1, c = c + 1, c = c + 1]", "[4, 5, 6]");
+            test("var c = 3 var a = [c = c + 1, c = c + 1] c = 5 var b = a return a", "[4, 5]");
+
         }
 
         /*

@@ -56,8 +56,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Builtins.cs" />
-    <Compile Include="CodeTextWriter.cs" />
-    <Compile Include="CodeWriter.cs" />
+    <Compile Include="PlainTextCodeWriter.cs" />
+    <Compile Include="Printer.cs" />
     <Compile Include="ConsoleWriter.cs" />
     <Compile Include="Interpreter.cs" />
     <Compile Include="Parser.cs" />
