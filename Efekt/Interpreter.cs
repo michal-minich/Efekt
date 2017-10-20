@@ -7,18 +7,17 @@ namespace Efekt
 {
     public interface IEnv
     {
-        [NotNull]
-        Value Get([NotNull] string name);
+        Value Get(string name);
 
-        void Declare([NotNull] string name, [NotNull] Value value);
+        void Declare(string name, Value value);
 
         //void Alias(string name, string newName);
-        void Set([NotNull] string name, [NotNull] Value value);
+        void Set(string name, Value value);
     }
 
     public sealed class Env : IEnv
     {
-        [NotNull] private readonly Dictionary<string, Value> dict = new Dictionary<string, Value>();
+        private readonly Dictionary<string, Value> dict = new Dictionary<string, Value>();
 
         private Env()
         {
@@ -27,7 +26,7 @@ namespace Efekt
                 dict.Add(b.Name, b);
         }
 
-        private Env([NotNull] Env parent)
+        private Env(Env parent)
         {
             Parent = parent;
         }
@@ -35,14 +34,14 @@ namespace Efekt
         [CanBeNull]
         public Env Parent { get; }
 
-        [NotNull]
+
         public static Env CreateRoot()
         {
             return new Env();
         }
 
-        [NotNull]
-        public static Env Create([NotNull] Env parent)
+
+        public static Env Create(Env parent)
         {
             return new Env(parent);
         }
@@ -85,8 +84,8 @@ namespace Efekt
         [CanBeNull] private Value ret;
         private bool isBreak;
 
-        [NotNull]
-        public Value Eval([NotNull] Element se)
+
+        public Value Eval(Element se)
         {
             if (se is Exp exp)
                 se = new Sequence(new Return(exp));
@@ -99,8 +98,8 @@ namespace Efekt
             return eval(se, Env.CreateRoot());
         }
 
-        [NotNull]
-        private Value eval([NotNull] Element se, [NotNull] Env env)
+
+        private Value eval(Element se, Env env)
         {
             switch (se)
             {
@@ -165,7 +164,6 @@ namespace Efekt
                 case Loop l:
                     var loopEnv = Env.Create(env);
                     while (true)
-                    {
                         foreach (var e in l.Body)
                         {
                             C.Nn(e);
@@ -176,7 +174,6 @@ namespace Efekt
                             }
                             eval(e, loopEnv);
                         }
-                    }
                 // ReSharper disable once UnusedVariable
                 case Break b:
                     isBreak = true;

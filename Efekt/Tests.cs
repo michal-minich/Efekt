@@ -1,18 +1,17 @@
 ﻿using System;
 using System.Linq;
-using JetBrains.Annotations;
 
 // ReSharper disable once CheckNamespace
 namespace Efekt.Tests
 {
     internal static class Tests
     {
-        [NotNull] private static readonly Tokenizer t = new Tokenizer();
-        [NotNull] private static readonly Parser p = new Parser();
-        [NotNull] private static readonly Interpreter i = new Interpreter();
-        [NotNull] private static readonly StringWriter sw = new StringWriter();
-        [NotNull] private static readonly PlainTextCodeWriter ctw = new PlainTextCodeWriter(sw);
-        [NotNull] private static readonly Printer cw = new Printer(ctw);
+        private static readonly Tokenizer t = new Tokenizer();
+        private static readonly Parser p = new Parser();
+        private static readonly Interpreter i = new Interpreter();
+        private static readonly StringWriter sw = new StringWriter();
+        private static readonly PlainTextCodeWriter ctw = new PlainTextCodeWriter(sw);
+        private static readonly Printer cw = new Printer(ctw);
 
         public static void RunAllTests()
         {
@@ -147,8 +146,8 @@ namespace Efekt.Tests
 
 
         // ReSharper disable ParameterOnlyUsedForPreconditionCheck.Local
-        private static void test([NotNull] string code, [NotNull] string expectedResult,
-                [NotNull] string expectedOutput = "")
+        private static void test(string code, string expectedResult,
+                string expectedOutput = "")
             // ReSharper restore ParameterOnlyUsedForPreconditionCheck.Local
         {
             var tokens = t.Tokenize(code).ToList();

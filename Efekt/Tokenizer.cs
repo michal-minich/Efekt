@@ -7,13 +7,12 @@ namespace Efekt
 {
     public sealed class Tokenizer
     {
-        [NotNull] private static readonly string[] keywords =
+        private static readonly string[] keywords =
             {"var", "fn", "if", "else", "return", "loop", "break", "continue", "label", "goto", "true", "false", "new"};
 
-        [NotNull]
-        readonly List<char> opChars = "<>~`\\@#$%^&*+-=./:?!|".ToList();
 
-        // ReSharper disable once NotNullMemberIsNotInitialized
+        private readonly List<char> opChars = "<>~`\\@#$%^&*+-=./:?!|".ToList();
+
         [NotNull] private string code;
         private char ch;
         private int ix;
@@ -38,8 +37,7 @@ namespace Efekt
         }
 
 
-        [NotNull]
-        public IEnumerable<Token> Tokenize([NotNull] string codeText)
+        public IEnumerable<Token> Tokenize(string codeText)
         {
             var tokens = new List<Token>();
             code = codeText;
@@ -155,13 +153,15 @@ namespace Efekt
     {
         public static Token Terminal = new Token(TokenType.Terminal, "\0");
 
-        public Token(TokenType type, [NotNull] string text)
+        public Token(TokenType type, string text)
         {
             Type = type;
             Text = text;
         }
 
-        [NotNull] public string Text { get; }
+        [NotNull]
+        public string Text { get; }
+
         public TokenType Type { get; }
 
         // for debug only

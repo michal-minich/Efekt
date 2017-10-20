@@ -1,14 +1,13 @@
 using System;
 using System.Collections.Generic;
-using JetBrains.Annotations;
 
 namespace Efekt
 {
     public static class Builtins
     {
-        [NotNull] public static readonly StringWriter Writer = new StringWriter();
+        public static readonly StringWriter Writer = new StringWriter();
 
-        [NotNull] public static readonly IReadOnlyList<Builtin> Values = new List<Builtin>
+        public static readonly IReadOnlyList<Builtin> Values = new List<Builtin>
         {
             new Builtin("+", @params =>
             {
@@ -50,26 +49,24 @@ namespace Efekt
         };
 
 
-        [NotNull]
         private static Int AsInt(this Exp exp)
         {
             return exp is Int i ? i : throw new Exception();
         }
 
 
-        [NotNull]
         private static Arr AsArr(this Exp exp)
         {
             return exp is Arr a ? a : throw new Exception();
         }
 
 
-        [NotNull] private static readonly StringWriter sw = new StringWriter();
-        [NotNull] private static readonly PlainTextCodeWriter ctw = new PlainTextCodeWriter(sw);
-        [NotNull] private static readonly Printer cw = new Printer(ctw);
+        private static readonly StringWriter sw = new StringWriter();
+        private static readonly PlainTextCodeWriter ctw = new PlainTextCodeWriter(sw);
+        private static readonly Printer cw = new Printer(ctw);
 
-        [NotNull]
-        private static string ElementToString([NotNull] this Element e)
+
+        private static string ElementToString(this Element e)
         {
             cw.Write(e);
             return e.GetType().Name + ": " + sw.GetAndReset();

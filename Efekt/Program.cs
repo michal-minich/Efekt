@@ -1,19 +1,18 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
-using JetBrains.Annotations;
 
 namespace Efekt
 {
     public static class Program
     {
-        [NotNull] private static readonly Tokenizer t = new Tokenizer();
-        [NotNull] private static readonly Parser p = new Parser();
-        [NotNull] private static readonly Interpreter i = new Interpreter();
-        [NotNull] private static readonly PlainTextCodeWriter ctw = new PlainTextCodeWriter(new ConsoleWriter());
-        [NotNull] private static readonly Printer cw = new Printer(ctw);
+        private static readonly Tokenizer t = new Tokenizer();
+        private static readonly Parser p = new Parser();
+        private static readonly Interpreter i = new Interpreter();
+        private static readonly PlainTextCodeWriter ctw = new PlainTextCodeWriter(new ConsoleWriter());
+        private static readonly Printer cw = new Printer(ctw);
 
-        private static void Main([NotNull] string[] args)
+        private static void Main(string[] args)
         {
             C.Nn(args);
 
@@ -32,7 +31,7 @@ namespace Efekt
         }
 
 
-        private static void debug([NotNull] string code)
+        private static void debug(string code)
         {
             var ts = t.Tokenize(code).ToList();
             Console.WriteLine("TOKENS");
@@ -60,7 +59,7 @@ namespace Efekt
         }
 
 
-        private static void processInput([NotNull] string[] args)
+        private static void processInput(string[] args)
         {
             var filePath = args[0];
             C.Nn(filePath);

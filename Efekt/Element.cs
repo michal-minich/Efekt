@@ -32,9 +32,9 @@ namespace Efekt
 
     public abstract class ElementList<T> : IElementList<T> where T : Element
     {
-        [NotNull] private readonly IReadOnlyList<T> items;
+        private readonly IReadOnlyList<T> items;
 
-        protected ElementList([NotNull] IReadOnlyList<T> items)
+        protected ElementList(IReadOnlyList<T> items)
         {
             C.AllNotNull(items);
 
@@ -59,7 +59,7 @@ namespace Efekt
 
     public sealed class ElementList : ElementList<Element>, Element
     {
-        public ElementList([NotNull] params Element[] items) : base(items)
+        public ElementList(params Element[] items) : base(items)
         {
         }
     }
@@ -67,7 +67,7 @@ namespace Efekt
 
     public sealed class Sequence : ElementList<Element>, Stm
     {
-        public Sequence([NotNull] params Element[] items) : base(items)
+        public Sequence(params Element[] items) : base(items)
         {
         }
     }
@@ -75,7 +75,7 @@ namespace Efekt
 
     public sealed class ClassBody : ElementList<Var>
     {
-        public ClassBody([NotNull] params Var[] items) : base(items)
+        public ClassBody(params Var[] items) : base(items)
         {
         }
     }
@@ -83,7 +83,7 @@ namespace Efekt
 
     public sealed class FnArguments : ElementList<Exp>
     {
-        public FnArguments([NotNull] params Exp[] items) : base(items)
+        public FnArguments(params Exp[] items) : base(items)
         {
         }
     }
@@ -91,7 +91,7 @@ namespace Efekt
 
     public sealed class FnParameters : ElementList<Ident>
     {
-        public FnParameters([NotNull] params Ident[] items) : base(items)
+        public FnParameters(params Ident[] items) : base(items)
         {
         }
     }
@@ -99,7 +99,7 @@ namespace Efekt
 
     public sealed class Values : ElementList<Value>
     {
-        public Values([NotNull] params Value[] items) : base(items)
+        public Values(params Value[] items) : base(items)
         {
         }
     }
@@ -107,7 +107,7 @@ namespace Efekt
 
     public sealed class Builtin : Value
     {
-        public Builtin([NotNull] string name, [NotNull] Func<FnArguments, Value> fn)
+        public Builtin(string name, Func<FnArguments, Value> fn)
         {
             C.Assert(!string.IsNullOrWhiteSpace(name));
             C.Assert(name.Trim().Length == name.Length);
@@ -117,17 +117,17 @@ namespace Efekt
             Fn = fn;
         }
 
-        [NotNull]
+
         public string Name { get; }
 
-        [NotNull]
+
         public Func<FnArguments, Value> Fn { get; }
     }
 
 
     public sealed class Ident : Exp
     {
-        public Ident([NotNull] string name)
+        public Ident(string name)
         {
             C.Assert(!string.IsNullOrWhiteSpace(name));
             C.Assert(name.Trim().Length == name.Length);
@@ -135,14 +135,14 @@ namespace Efekt
             Name = name;
         }
 
-        [NotNull]
+
         public string Name { get; }
     }
 
 
     public sealed class Var : Stm
     {
-        public Var([NotNull] Ident ident, [NotNull] Exp exp)
+        public Var(Ident ident, Exp exp)
         {
             C.Nn(ident);
             C.Nn(exp);
@@ -151,17 +151,17 @@ namespace Efekt
             Exp = exp;
         }
 
-        [NotNull]
+
         public Ident Ident { get; }
 
-        [NotNull]
+
         public Exp Exp { get; }
     }
 
 
     public sealed class Assign : Stm
     {
-        public Assign([NotNull] Ident ident, [NotNull] Exp exp)
+        public Assign(Ident ident, Exp exp)
         {
             C.Nn(ident);
             C.Nn(exp);
@@ -170,17 +170,17 @@ namespace Efekt
             Exp = exp;
         }
 
-        [NotNull]
+
         public Ident Ident { get; }
 
-        [NotNull]
+
         public Exp Exp { get; }
     }
 
 
     public sealed class When : Exp
     {
-        public When([NotNull] Exp test, [NotNull] Element then, [CanBeNull] Element otherwise)
+        public When(Exp test, Element then, [CanBeNull] Element otherwise)
         {
             C.Nn(test);
             C.Nn(then);
@@ -190,10 +190,10 @@ namespace Efekt
             Otherwise = otherwise;
         }
 
-        [NotNull]
+
         public Exp Test { get; }
 
-        [NotNull]
+
         public Element Then { get; }
 
         [CanBeNull]
@@ -203,26 +203,26 @@ namespace Efekt
 
     public sealed class Loop : Stm
     {
-        public Loop([NotNull] Sequence body)
+        public Loop(Sequence body)
         {
             C.AllNotNull(body);
             Body = body;
         }
 
-        [NotNull]
+
         public Sequence Body { get; }
     }
 
 
     public sealed class Return : Stm
     {
-        public Return([NotNull] Exp exp)
+        public Return(Exp exp)
         {
             C.Nn(exp);
             Exp = exp;
         }
 
-        [NotNull]
+
         public Exp Exp { get; }
     }
 
@@ -233,14 +233,14 @@ namespace Efekt
         {
         }
 
-        [NotNull]
+
         public static Break Instance { get; } = new Break();
     }
 
 
     public sealed class Fn : Value
     {
-        public Fn([NotNull] FnParameters parameters, [NotNull] Sequence sequence)
+        public Fn(FnParameters parameters, Sequence sequence)
         {
             C.AllNotNull(parameters);
             C.AllNotNull(sequence);
@@ -249,7 +249,7 @@ namespace Efekt
             Sequence = sequence;
         }
 
-        public Fn([NotNull] FnParameters parameters, [NotNull] Sequence sequence, [NotNull] Env env)
+        public Fn(FnParameters parameters, Sequence sequence, Env env)
             : this(parameters, sequence)
         {
             C.Nn(env);
@@ -257,13 +257,13 @@ namespace Efekt
             Env = env;
         }
 
-        [NotNull]
+
         public FnParameters Parameters { get; }
 
-        [NotNull]
+
         public Sequence Sequence { get; }
 
-        [NotNull]
+
         public Env Env { get; }
     }
 
@@ -288,10 +288,10 @@ namespace Efekt
 
         public bool Value { get; }
 
-        [NotNull]
+
         public static Bool True { get; } = new Bool(true);
 
-        [NotNull]
+
         public static Bool False { get; } = new Bool(false);
     }
 
@@ -302,14 +302,14 @@ namespace Efekt
         {
         }
 
-        [NotNull]
+
         public static Void Instance { get; } = new Void();
     }
 
 
     public sealed class FnApply : Exp
     {
-        public FnApply([NotNull] Exp fn, [NotNull] FnArguments arguments)
+        public FnApply(Exp fn, FnArguments arguments)
         {
             C.Nn(fn);
             C.AllNotNull(arguments);
@@ -318,10 +318,10 @@ namespace Efekt
             Arguments = arguments;
         }
 
-        [NotNull]
+
         public Exp Fn { get; }
 
-        [NotNull]
+
         public FnArguments Arguments { get; }
     }
 
@@ -335,7 +335,7 @@ namespace Efekt
             Arguments = arguments;
         }
 
-        [NotNull]
+
         public FnArguments Arguments { get; }
     }
 
@@ -349,28 +349,28 @@ namespace Efekt
             Values = values;
         }
 
-        [NotNull]
+
         public Values Values { get; }
     }
 
 
     public sealed class New : Exp
     {
-        public New([NotNull] ClassBody body)
+        public New(ClassBody body)
         {
             C.AllNotNull(body);
 
             Body = body;
         }
 
-        [NotNull]
+
         public ClassBody Body { get; }
     }
 
 
     public sealed class Obj : Value
     {
-        public Obj([NotNull] ClassBody body, [NotNull] Env env)
+        public Obj(ClassBody body, Env env)
         {
             C.AllNotNull(body);
             C.Nn(env);
@@ -379,17 +379,17 @@ namespace Efekt
             Env = env;
         }
 
-        [NotNull]
+
         public ClassBody Body { get; }
 
-        [NotNull]
+
         public Env Env { get; }
     }
 
 
     public sealed class MemberAccess : Exp
     {
-        public MemberAccess([NotNull] Exp exp, [NotNull] Ident ident)
+        public MemberAccess(Exp exp, Ident ident)
         {
             C.Nn(exp);
             C.Nn(ident);
@@ -398,10 +398,10 @@ namespace Efekt
             Ident = ident;
         }
 
-        [NotNull]
+
         public Exp Exp { get; }
 
-        [NotNull]
+
         public Ident Ident { get; }
     }
 }

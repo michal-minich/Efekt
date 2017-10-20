@@ -1,18 +1,17 @@
 using System;
-using JetBrains.Annotations;
 
 namespace Efekt
 {
     public sealed class Printer
     {
-        [NotNull] private readonly PlainTextCodeWriter w;
+        private readonly PlainTextCodeWriter w;
 
-        public Printer([NotNull] PlainTextCodeWriter codeWriter)
+        public Printer(PlainTextCodeWriter codeWriter)
         {
             w = codeWriter;
         }
 
-        [NotNull]
+
         public PlainTextCodeWriter Write(Element se)
         {
             switch (se)
@@ -112,6 +111,7 @@ namespace Efekt
                     w.Key("new").Space().Markup("{");
                     foreach (var se2 in n.Body)
                     {
+                        C.Nn(se2);
                         Write(se2);
                         w.Line();
                     }
