@@ -6,11 +6,9 @@ namespace Efekt
 {
     public static class Builtins
     {
-        [NotNull]
-        public static readonly StringWriter Writer = new StringWriter();
+        [NotNull] public static readonly StringWriter Writer = new StringWriter();
 
-        [NotNull]
-        public static readonly IReadOnlyList<Builtin> Values = new List<Builtin>
+        [NotNull] public static readonly IReadOnlyList<Builtin> Values = new List<Builtin>
         {
             new Builtin("+", @params =>
             {
@@ -46,7 +44,7 @@ namespace Efekt
                 var xs = @params[0].AsArr().Values;
                 var list = new List<Value>(xs.Count + 1);
                 list.AddRange(xs);
-                list.Add((Value)@params[1]);
+                list.Add((Value) @params[1]);
                 return new Arr(new Values(list.ToArray()));
             })
         };

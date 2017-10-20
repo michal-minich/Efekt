@@ -73,18 +73,14 @@ namespace Efekt
                 return;
             if (tok.Type == TokenType.LineCommentBegin)
             {
-                while(hasWork && tok.Type != TokenType.NewLine)
-                {
+                while (hasWork && tok.Type != TokenType.NewLine)
                     nextTok();
-                }
                 nextTok();
             }
             if (tok.Type == TokenType.CommentBegin)
             {
                 while (hasWork && tok.Type != TokenType.CommentEnd)
-                {
                     nextTok();
-                }
                 nextTok();
             }
         }
@@ -95,7 +91,6 @@ namespace Efekt
             do
             {
                 nextWithoutComment();
-
             } while (hasWork && tok.Type == TokenType.NewLine);
         }
 

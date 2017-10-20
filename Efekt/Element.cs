@@ -41,9 +41,15 @@ namespace Efekt
             this.items = items;
         }
 
-        public IEnumerator<T> GetEnumerator() => items.GetEnumerator();
+        public IEnumerator<T> GetEnumerator()
+        {
+            return items.GetEnumerator();
+        }
 
-        IEnumerator IEnumerable.GetEnumerator() => items.GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return items.GetEnumerator();
+        }
 
         public int Count => items.Count;
 

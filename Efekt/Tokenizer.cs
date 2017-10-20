@@ -7,27 +7,42 @@ namespace Efekt
 {
     public sealed class Tokenizer
     {
-        [NotNull]
-        private static readonly string[] keywords =
-            {"var", "fn", "if", "else", "return", "loop", "break", "continue", "label", "goto", "true", "false", "new" };
+        [NotNull] private static readonly string[] keywords =
+            {"var", "fn", "if", "else", "return", "loop", "break", "continue", "label", "goto", "true", "false", "new"};
 
-        [NotNull]
-        public IEnumerable<Token> Tokenize([NotNull] string code)
+
+        private string code;
+        private char ch;
+        private int ix;
+        private TokenType tokType;
+
+        private void next()
         {
-            var ix = -1;
-            char ch;
-            var tokType = TokenType.Int;
-
-            void next()
+            ++ix;
+            // ReSharper disable once PossibleNullReferenceException
+            if (ix >= code.Length)
             {
-                ++ix;
-                if (ix >= code.Length)
-                {
-                    ch = '\0';
-                    return;
-                }
-                ch = code[ix];
+                ch = '\0';
+                return;
             }
+            ch = code[ix];
+        }
+
+
+        private void mark(TokenType tokenType)
+        {
+            tokType = tokenType;
+            next();
+        }
+
+
+        [NotNull]
+        public IEnumerable<Token> Tokenize([NotNull] string codeText)
+        {
+            var tokens = new List<Token>();
+            code = codeText;
+            ix = -1;
+            tokType = TokenType.Terminal;
 
             next();
 
@@ -35,10 +50,15 @@ namespace Efekt
             {
                 var startIx = ix;
 
+                if (ch == ' ' || ch == '\t')
+                {
+                    next();
+                    continue;
+                }
+
                 if (ch == '\r')
                 {
-                    tokType = TokenType.NewLine;
-                    next();
+                    mark(TokenType.NewLine);
                     if (ch == '\n')
                         next();
                     goto final;
@@ -46,20 +66,13 @@ namespace Efekt
 
                 if (ch == '\n')
                 {
-                    tokType = TokenType.NewLine;
-                    next();
+                    mark(TokenType.NewLine);
                     goto final;
-                }
-
-                if (ch == ' ' || ch == '\t')
-                {
-                    next();
-                    continue;
                 }
 
                 if (ch >= '0' && ch <= '9')
                 {
-                    tokType = TokenType.Int;
+                    mark(TokenType.Int);
                     while (ch >= '0' && ch <= '9' || ch == '_')
                         next();
                     goto final;
@@ -67,24 +80,23 @@ namespace Efekt
 
                 if (ch >= 'a' && ch <= 'z')
                 {
-                    tokType = TokenType.Ident;
+                    mark(TokenType.Ident);
                     while (ch >= 'a' && ch <= 'z' || ch >= 'A' && ch <= 'Z' || ch >= '0' && ch <= '9' || ch == '_')
                         next();
                     goto final;
                 }
-                
+
                 if (ch == '{' || ch == '}' || ch == '(' || ch == ')' || ch == ',' || ch == ';' || ch == '[' ||
                     ch == ']')
                 {
-                    tokType = TokenType.Markup;
-                    next();
+                    mark(TokenType.Markup);
                     goto final;
                 }
 
                 const string opChars = "<>~`\\@#$%^&*+-=./:?!|";
                 if (opChars.Contains(ch.ToString()))
                 {
-                    tokType = TokenType.Op;
+                    mark(TokenType.Op);
                     while (true)
                     {
                         if (ix - startIx == 3)
@@ -102,7 +114,7 @@ namespace Efekt
                 }
 
                 final:
-                
+
                 if (startIx != ix)
                 {
                     var text = code.Substring(startIx, ix - startIx);
@@ -119,7 +131,7 @@ namespace Efekt
                     }
 
                     var t = new Token(tokType, text);
-                    yield return t;
+                    tokens.Add(t);
                 }
 
                 if (ch == '\0')
@@ -128,6 +140,8 @@ namespace Efekt
                 if (startIx == ix)
                     throw new NotSupportedException("Character not supported '" + ch + "'.");
             }
+
+            return tokens;
         }
     }
 

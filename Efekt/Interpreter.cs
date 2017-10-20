@@ -9,14 +9,15 @@ namespace Efekt
     {
         [NotNull]
         Value Get([NotNull] string name);
-        void Declare([NotNull] string name, [NotNull]  Value value);
+
+        void Declare([NotNull] string name, [NotNull] Value value);
+
         //void Alias(string name, string newName);
         void Set([NotNull] string name, [NotNull] Value value);
     }
 
     public sealed class Env : IEnv
     {
-
         [NotNull] private readonly Dictionary<string, Value> dict = new Dictionary<string, Value>();
 
         private Env()
@@ -122,9 +123,7 @@ namespace Efekt
                     // ReSharper disable once AssignNullToNotNullAttribute
                     var eArgs = fna.Arguments.Select(a => eval(a, env)).ToArray();
                     if (builtin != null)
-                    {
                         return builtin.Fn(new FnArguments(eArgs));
-                    }
                     var fn2 = fn as Fn;
                     if (fn2 == null)
                         throw new Exception();
@@ -198,7 +197,6 @@ namespace Efekt
                 case Value ve:
                     return ve;
                 case Sequence seq:
-                    
                     var scopeEnv = Env.Create(env);
                     foreach (var item in seq)
                     {

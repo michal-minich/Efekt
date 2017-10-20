@@ -17,7 +17,7 @@ namespace Efekt.Tests
         public static void RunAllTests()
         {
             //test("var a = + return a(1, 2)", "3");
-            
+
             //error("~");
             test("1", "1");
             test("(1)", "1");
@@ -114,7 +114,7 @@ namespace Efekt.Tests
             test("var a = 1 return --*2*-- a", "1");
             test("return ---\n  1", "<Void>");
             test("var a = 1 return --*a*-- 2", "2");
-            test("var --*a = 1*--a = 2  return a ", "2"); 
+            test("var --*a = 1*--a = 2  return a ", "2");
             test("var a = ---1\n2 return a", "2");
             test("--- return  1", "<Void>");
             test("var a = 1 return a --**--", "1");
@@ -124,7 +124,6 @@ namespace Efekt.Tests
             test("var c = 1 + 2 return [c + 1, c + 1, c + 1]", "[4, 4, 4]");
             test("var c = 1 + 2 return [c = c + 1, c = c + 1, c = c + 1]", "[4, 5, 6]");
             test("var c = 3 var a = [c = c + 1, c = c + 1] c = 5 var b = a return a", "[4, 5]");
-
         }
 
         /*
@@ -148,8 +147,9 @@ namespace Efekt.Tests
 
 
         // ReSharper disable ParameterOnlyUsedForPreconditionCheck.Local
-        private static void test([NotNull] string code, [NotNull] string expectedResult, [NotNull] string expectedOutput = "")
-        // ReSharper restore ParameterOnlyUsedForPreconditionCheck.Local
+        private static void test([NotNull] string code, [NotNull] string expectedResult,
+                [NotNull] string expectedOutput = "")
+            // ReSharper restore ParameterOnlyUsedForPreconditionCheck.Local
         {
             var tokens = t.Tokenize(code).ToList();
             if (tokens.Count != 0 && code.Length == 0 || tokens.Count == 0 && code.Length > 0)

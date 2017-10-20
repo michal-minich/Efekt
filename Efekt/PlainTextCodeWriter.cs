@@ -5,10 +5,9 @@ namespace Efekt
 {
     public sealed class PlainTextCodeWriter
     {
-        [NotNull]
-        private readonly TextWriter writer;
+        [NotNull] private readonly TextWriter writer;
 
-        public PlainTextCodeWriter([NotNull]TextWriter writer)
+        public PlainTextCodeWriter([NotNull] TextWriter writer)
         {
             this.writer = writer;
         }

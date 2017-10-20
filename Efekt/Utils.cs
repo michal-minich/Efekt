@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
+using System.Diagnostics;
 using System.Linq;
 using JetBrains.Annotations;
 
@@ -16,6 +16,7 @@ namespace Efekt
 
     public static class C
     {
+        [Conditional("DEBUG")]
         [ContractAnnotation("false => halt", true)]
         // ReSharper disable once ParameterOnlyUsedForPreconditionCheck.Global
         public static void Assert(bool condition)
@@ -25,6 +26,7 @@ namespace Efekt
         }
 
 
+        [Conditional("DEBUG")]
         [ContractAnnotation("false => halt", true)]
         // ReSharper disable once ParameterOnlyUsedForPreconditionCheck.Global
         public static void Assume(bool condition)
@@ -34,8 +36,8 @@ namespace Efekt
         }
 
 
+        [Conditional("DEBUG")]
         [ContractAnnotation("null => halt", true)]
-        [ContractAbbreviator]
         // ReSharper disable once ParameterOnlyUsedForPreconditionCheck.Global
         public static void Nn([CanBeNull] object value)
         {
@@ -44,7 +46,7 @@ namespace Efekt
         }
 
 
-        [ContractAbbreviator]
+        [Conditional("DEBUG")]
         [ContractAnnotation("null => halt")]
         public static void AllNotNull<T>([CanBeNull] IEnumerable<T> items)
         {

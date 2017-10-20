@@ -5,8 +5,7 @@ namespace Efekt
 {
     public sealed class Printer
     {
-        [NotNull]
-        private readonly PlainTextCodeWriter w;
+        [NotNull] private readonly PlainTextCodeWriter w;
 
         public Printer([NotNull] PlainTextCodeWriter codeWriter)
         {
