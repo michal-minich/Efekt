@@ -13,6 +13,7 @@ namespace Efekt
 
         private readonly List<char> opChars = "<>~`\\@#$%^&*+-=./:?!|".ToList();
 
+        // ReSharper disable once NotNullMemberIsNotInitialized
         [NotNull] private string code;
         private char ch;
         private int ix;
@@ -37,6 +38,14 @@ namespace Efekt
         }
 
 
+        private bool markIf(bool condition, TokenType tokenType)
+        {
+            if (condition)
+                mark(tokenType);
+            return condition;
+        }
+
+
         public IEnumerable<Token> Tokenize(string codeText)
         {
             var tokens = new List<Token>();
@@ -50,91 +59,78 @@ namespace Efekt
             {
                 var startIx = ix;
 
+                if (ch == '\0')
+                    break;
+
                 if (ch == ' ' || ch == '\t')
                 {
                     next();
                     continue;
                 }
 
-                if (ch == '\r')
+                if (markIf(ch == '\r', TokenType.NewLine))
                 {
-                    mark(TokenType.NewLine);
                     if (ch == '\n')
                         next();
                     goto final;
                 }
 
-                if (ch == '\n')
-                {
-                    mark(TokenType.NewLine);
+                if (markIf(ch == '\n', TokenType.NewLine))
                     goto final;
-                }
 
-                if (ch >= '0' && ch <= '9')
+                if (markIf(ch >= '0' && ch <= '9', TokenType.Int))
                 {
-                    mark(TokenType.Int);
                     while (ch >= '0' && ch <= '9' || ch == '_')
                         next();
                     goto final;
                 }
 
-                if (ch >= 'a' && ch <= 'z')
+                if (markIf(ch >= 'a' && ch <= 'z', TokenType.Ident))
                 {
-                    mark(TokenType.Ident);
                     while (ch >= 'a' && ch <= 'z' || ch >= 'A' && ch <= 'Z' || ch >= '0' && ch <= '9' || ch == '_')
                         next();
                     goto final;
                 }
 
-                if (ch == '{' || ch == '}' || ch == '(' || ch == ')' || ch == ',' || ch == ';' || ch == '[' ||
-                    ch == ']')
-                {
-                    mark(TokenType.Markup);
+                if (markIf(ch == '{' || ch == '}' || ch == '(' || ch == ')' || ch == ','
+                           || ch == ';' || ch == '[' || ch == ']', TokenType.Markup))
                     goto final;
+
+                if (ch == '-')
+                {
+                    var text = code.Substring(startIx, 3);
+                    if (markIf(text == "---", TokenType.LineCommentBegin))
+                    {
+                        next();
+                        next();
+                        goto final;
+                    }
+                    if (markIf(text == "--*", TokenType.CommentBegin))
+                    {
+                        next();
+                        next();
+                        goto final;
+                    }
                 }
 
                 if (ch == '-')
                 {
                     var text = code.Substring(startIx, 3);
-                    if (text == "---")
+                    if (markIf(text == "*--", TokenType.CommentEnd))
                     {
-                        mark(TokenType.LineCommentBegin);
-                        next();
-                        next();
-                        goto final;
-                    }
-                    if (text == "--*")
-                    {
-                        mark(TokenType.CommentBegin);
                         next();
                         next();
                         goto final;
                     }
                 }
 
-                if (ch == '-')
+                if (markIf(opChars.Contains(ch), TokenType.Op))
                 {
-                    var text = code.Substring(startIx, 3);
-                    if (text == "*--")
-                    {
-                        mark(TokenType.CommentEnd);
-                        next();
-                        next();
-                        goto final;
-                    }
-                }
-
-                if (opChars.Contains(ch))
-                {
-                    mark(TokenType.Op);
                     while (opChars.Contains(ch))
                         next();
                 }
 
                 final:
-
-                if (ch == '\0')
-                    break;
 
                 if (startIx == ix)
                     throw new NotSupportedException("Character not supported '" + ch + "'.");
