@@ -55,20 +55,22 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Builtins.cs" />
-    <Compile Include="PlainTextCodeWriter.cs" />
-    <Compile Include="Printer.cs" />
-    <Compile Include="ConsoleWriter.cs" />
-    <Compile Include="Interpreter.cs" />
-    <Compile Include="Parser.cs" />
-    <Compile Include="Program.cs" />
+    <Compile Include="Evaluating\Builtins.cs" />
+    <Compile Include="Error.cs" />
+    <Compile Include="Printing\PlainTextCodeWriter.cs" />
+    <Compile Include="Printing\Printer.cs" />
+    <Compile Include="Printing\ConsoleWriter.cs" />
+    <Compile Include="Evaluating\Interpreter.cs" />
+    <Compile Include="Parsing\Parser.cs" />
+    <Compile Include="Console\Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Element.cs" />
-    <Compile Include="StringWriter.cs" />
-    <Compile Include="Tests.cs" />
-    <Compile Include="Tokenizer.cs" />
-    <Compile Include="Utils.cs" />
-    <Compile Include="TextWriter.cs" />
+    <Compile Include="Utils\StringWriter.cs" />
+    <Compile Include="Testing\Tests.cs" />
+    <Compile Include="Parsing\TokenIterator.cs" />
+    <Compile Include="Parsing\Tokenizer.cs" />
+    <Compile Include="Utils\Utils.cs" />
+    <Compile Include="Utils\TextWriter.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
@@ -89,5 +91,6 @@
     <None Include="packages.config" />
     <None Include="test.ef" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

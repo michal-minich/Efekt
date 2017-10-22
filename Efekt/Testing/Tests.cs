@@ -1,5 +1,4 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 
 // ReSharper disable once CheckNamespace
 namespace Efekt.Tests
@@ -18,6 +17,7 @@ namespace Efekt.Tests
             //test("var a = + return a(1, 2)", "3");
 
             //error("~");
+            test(" ", "");
             test("1", "1");
             test("(1)", "1");
 
@@ -139,7 +139,7 @@ namespace Efekt.Tests
                 e = ex;
             }
             if (e == null)
-                throw new Exception();
+                throw Error.Fail();
            
         }
         */
@@ -152,16 +152,16 @@ namespace Efekt.Tests
         {
             var tokens = t.Tokenize(code).ToList();
             if (tokens.Count != 0 && code.Length == 0 || tokens.Count == 0 && code.Length > 0)
-                throw new Exception();
+                throw Error.Fail();
             var se = p.Parse(tokens);
             var r = i.Eval(se);
             cw.Write(r);
             var val = sw.GetAndReset();
             if (val != expectedResult)
-                throw new Exception();
+                throw Error.Fail();
             var acutalOutput = Builtins.Writer.GetAndReset();
             if (acutalOutput != expectedOutput)
-                throw new Exception();
+                throw Error.Fail();
         }
     }
 }

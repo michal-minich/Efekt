@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -22,7 +21,7 @@ namespace Efekt
         public static void Assert(bool condition)
         {
             if (!condition)
-                throw new Exception();
+                throw Error.Fail();
         }
 
 
@@ -32,7 +31,7 @@ namespace Efekt
         public static void Assume(bool condition)
         {
             if (!condition)
-                throw new Exception();
+                throw Error.Fail();
         }
 
 
@@ -42,7 +41,7 @@ namespace Efekt
         public static void Nn([CanBeNull] object value)
         {
             if (value == null)
-                throw new Exception();
+                throw Error.Fail();
         }
 
 
@@ -53,7 +52,7 @@ namespace Efekt
             Nn(items);
             foreach (var i in items)
                 if (i == null)
-                    throw new Exception();
+                    throw Error.Fail();
         }
     }
 }

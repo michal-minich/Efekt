@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 
 namespace Efekt
@@ -51,13 +50,13 @@ namespace Efekt
 
         private static Int AsInt(this Exp exp)
         {
-            return exp is Int i ? i : throw new Exception();
+            return exp is Int i ? i : throw Error.Fail();
         }
 
 
         private static Arr AsArr(this Exp exp)
         {
-            return exp is Arr a ? a : throw new Exception();
+            return exp is Arr a ? a : throw Error.Fail();
         }
 
 

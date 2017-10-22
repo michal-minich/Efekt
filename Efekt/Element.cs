@@ -37,22 +37,12 @@ namespace Efekt
         protected ElementList(IReadOnlyList<T> items)
         {
             C.AllNotNull(items);
-
             this.items = items;
         }
 
-        public IEnumerator<T> GetEnumerator()
-        {
-            return items.GetEnumerator();
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return items.GetEnumerator();
-        }
-
+        public IEnumerator<T> GetEnumerator() => items.GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator() => items.GetEnumerator();
         public int Count => items.Count;
-
         public T this[int index] => items[index];
     }
 
@@ -61,6 +51,32 @@ namespace Efekt
     {
         public ElementList(params Element[] items) : base(items)
         {
+        }
+    }
+
+
+    public sealed class ElementListBuilder
+    {
+        private readonly List<Element> items = new List<Element>();
+
+        public void Add(Element e)
+        {
+            C.Nn(e);
+            items.Add(e);
+        }
+
+        public ElementList GetAndReset()
+        {
+            var res = new ElementList(items.ToArray());
+            items.Clear();
+            return res;
+        }
+
+        public Sequence GetSequenceAndReset()
+        {
+            var res = new Sequence(items.ToArray());
+            items.Clear();
+            return res;
         }
     }
 
@@ -75,7 +91,11 @@ namespace Efekt
 
     public sealed class ClassBody : ElementList<Var>
     {
-        public ClassBody(params Var[] items) : base(items)
+        public ClassBody() : base(new Var[0])
+        {
+        }
+
+        public ClassBody(IReadOnlyList<Var> items) : base(items)
         {
         }
     }
@@ -83,7 +103,11 @@ namespace Efekt
 
     public sealed class FnArguments : ElementList<Exp>
     {
-        public FnArguments(params Exp[] items) : base(items)
+        public FnArguments() : base(new Exp[0])
+        {
+        }
+
+        public FnArguments(IReadOnlyList<Exp> items) : base(items)
         {
         }
     }
@@ -91,7 +115,11 @@ namespace Efekt
 
     public sealed class FnParameters : ElementList<Ident>
     {
-        public FnParameters(params Ident[] items) : base(items)
+        public FnParameters() : base(new Ident[0])
+        {
+        }
+
+        public FnParameters(IReadOnlyList<Ident> items) : base(items)
         {
         }
     }
@@ -99,7 +127,11 @@ namespace Efekt
 
     public sealed class Values : ElementList<Value>
     {
-        public Values(params Value[] items) : base(items)
+        public Values() : base(new Value[0])
+        {
+        }
+
+        public Values(IReadOnlyList<Value> items) : base(items)
         {
         }
     }
@@ -117,26 +149,24 @@ namespace Efekt
             Fn = fn;
         }
 
-
         public string Name { get; }
-
-
         public Func<FnArguments, Value> Fn { get; }
     }
 
 
     public sealed class Ident : Exp
     {
-        public Ident(string name)
+        public Ident(string name, TokenType tokenType)
         {
             C.Assert(!string.IsNullOrWhiteSpace(name));
             C.Assert(name.Trim().Length == name.Length);
 
             Name = name;
+            TokenType = tokenType;
         }
-
-
+        
         public string Name { get; }
+        public TokenType TokenType { get; }
     }
 
 
@@ -150,11 +180,8 @@ namespace Efekt
             Ident = ident;
             Exp = exp;
         }
-
-
+        
         public Ident Ident { get; }
-
-
         public Exp Exp { get; }
     }
 
@@ -169,11 +196,8 @@ namespace Efekt
             Ident = ident;
             Exp = exp;
         }
-
-
+        
         public Ident Ident { get; }
-
-
         public Exp Exp { get; }
     }
 
@@ -192,10 +216,7 @@ namespace Efekt
 
 
         public Exp Test { get; }
-
-
         public Element Then { get; }
-
         [CanBeNull]
         public Element Otherwise { get; }
     }
@@ -208,8 +229,7 @@ namespace Efekt
             C.AllNotNull(body);
             Body = body;
         }
-
-
+        
         public Sequence Body { get; }
     }
 
@@ -222,7 +242,6 @@ namespace Efekt
             Exp = exp;
         }
 
-
         public Exp Exp { get; }
     }
 
@@ -232,7 +251,6 @@ namespace Efekt
         private Break()
         {
         }
-
 
         public static Break Instance { get; } = new Break();
     }
@@ -257,13 +275,8 @@ namespace Efekt
             Env = env;
         }
 
-
         public FnParameters Parameters { get; }
-
-
         public Sequence Sequence { get; }
-
-
         public Env Env { get; }
     }
 
@@ -287,11 +300,7 @@ namespace Efekt
         }
 
         public bool Value { get; }
-
-
         public static Bool True { get; } = new Bool(true);
-
-
         public static Bool False { get; } = new Bool(false);
     }
 
@@ -301,8 +310,7 @@ namespace Efekt
         private Void()
         {
         }
-
-
+        
         public static Void Instance { get; } = new Void();
     }
 
@@ -318,10 +326,7 @@ namespace Efekt
             Arguments = arguments;
         }
 
-
         public Exp Fn { get; }
-
-
         public FnArguments Arguments { get; }
     }
 
@@ -334,7 +339,6 @@ namespace Efekt
 
             Arguments = arguments;
         }
-
 
         public FnArguments Arguments { get; }
     }
@@ -349,7 +353,6 @@ namespace Efekt
             Values = values;
         }
 
-
         public Values Values { get; }
     }
 
@@ -362,7 +365,6 @@ namespace Efekt
 
             Body = body;
         }
-
 
         public ClassBody Body { get; }
     }
@@ -378,11 +380,8 @@ namespace Efekt
             Body = body;
             Env = env;
         }
-
-
+        
         public ClassBody Body { get; }
-
-
         public Env Env { get; }
     }
 
@@ -397,11 +396,8 @@ namespace Efekt
             Exp = exp;
             Ident = ident;
         }
-
-
+        
         public Exp Exp { get; }
-
-
         public Ident Ident { get; }
     }
 }

@@ -1,5 +1,3 @@
-using System;
-
 namespace Efekt
 {
     public sealed class Printer
@@ -127,8 +125,6 @@ namespace Efekt
                 default:
                     w.Markup("<" + se.GetType().Name + ">");
                     break;
-                case null:
-                    throw new Exception();
             }
 
             return w;

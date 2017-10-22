@@ -52,13 +52,13 @@ namespace Efekt
                 return value;
             if (Parent != null)
                 return Parent.Get(name);
-            throw new Exception();
+            throw Error.Fail();
         }
 
         public void Declare(string name, Value value)
         {
             if (dict.ContainsKey(name))
-                throw new Exception();
+                throw Error.Fail();
             dict.Add(name, value);
         }
 
@@ -74,7 +74,7 @@ namespace Efekt
                 }
                 e = e.Parent;
             } while (e != null);
-            throw new Exception();
+            throw Error.Fail();
         }
     }
 
@@ -125,7 +125,7 @@ namespace Efekt
                         return builtin.Fn(new FnArguments(eArgs));
                     var fn2 = fn as Fn;
                     if (fn2 == null)
-                        throw new Exception();
+                        throw Error.Fail();
                     var paramsEnv = Env.Create(fn2.Env);
                     var ix = 0;
                     foreach (var p in fn2.Parameters)
@@ -185,7 +185,7 @@ namespace Efekt
                     var exp = eval(ma.Exp, env);
                     if (exp is Obj o)
                         return o.Env.Get(ma.Ident.Name);
-                    throw new Exception();
+                    throw Error.Fail();
                 case New n:
                     var objEnv = Env.Create(env);
                     foreach (var v in n.Body)
@@ -205,7 +205,7 @@ namespace Efekt
                     }
                     return Void.Instance;
                 default:
-                    throw new Exception();
+                    throw Error.Fail();
             }
         }
     }
