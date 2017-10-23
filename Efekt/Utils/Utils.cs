@@ -15,6 +15,7 @@ namespace Efekt
 
     public static class C
     {
+        [DebuggerStepThrough]
         [Conditional("DEBUG")]
         [ContractAnnotation("false => halt", true)]
         // ReSharper disable once ParameterOnlyUsedForPreconditionCheck.Global
@@ -23,8 +24,9 @@ namespace Efekt
             if (!condition)
                 throw Error.Fail();
         }
+        
 
-
+        [DebuggerStepThrough]
         [Conditional("DEBUG")]
         [ContractAnnotation("false => halt", true)]
         // ReSharper disable once ParameterOnlyUsedForPreconditionCheck.Global
@@ -35,6 +37,7 @@ namespace Efekt
         }
 
 
+        [DebuggerStepThrough]
         [Conditional("DEBUG")]
         [ContractAnnotation("null => halt", true)]
         // ReSharper disable once ParameterOnlyUsedForPreconditionCheck.Global
@@ -45,6 +48,7 @@ namespace Efekt
         }
 
 
+        [DebuggerStepThrough]
         [Conditional("DEBUG")]
         [ContractAnnotation("null => halt")]
         public static void AllNotNull<T>([CanBeNull] IEnumerable<T> items)

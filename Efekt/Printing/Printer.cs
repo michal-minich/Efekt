@@ -88,7 +88,7 @@ namespace Efekt
                     writeAssign(v.Ident, v.Exp);
                     break;
                 case Assign a:
-                    writeAssign(a.Ident, a.Exp);
+                    writeAssign(a.To, a.Exp);
                     break;
                 case Arr arr:
                     w.Markup("[");
@@ -130,9 +130,9 @@ namespace Efekt
             return w;
         }
 
-        private void writeAssign(Ident i, Exp e)
+        private void writeAssign(Exp to, Exp e)
         {
-            Write(i).Space().Op("=").Space();
+            Write(to).Space().Op("=").Space();
             Write(e);
         }
     }

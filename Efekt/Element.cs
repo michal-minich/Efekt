@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using JetBrains.Annotations;
 
 namespace Efekt
@@ -34,56 +35,38 @@ namespace Efekt
     {
         private readonly IReadOnlyList<T> items;
 
+        [DebuggerStepThrough]
         protected ElementList(IReadOnlyList<T> items)
         {
             C.AllNotNull(items);
             this.items = items;
         }
-
+        
         public IEnumerator<T> GetEnumerator() => items.GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => items.GetEnumerator();
         public int Count => items.Count;
+        [NotNull]
         public T this[int index] => items[index];
-    }
-
-
-    public sealed class ElementList : ElementList<Element>, Element
-    {
-        public ElementList(params Element[] items) : base(items)
-        {
-        }
     }
 
 
     public sealed class ElementListBuilder
     {
-        private readonly List<Element> items = new List<Element>();
+        public List<Element> Items { get; } = new List<Element>();
 
+        [DebuggerStepThrough]
         public void Add(Element e)
         {
             C.Nn(e);
-            items.Add(e);
-        }
-
-        public ElementList GetAndReset()
-        {
-            var res = new ElementList(items.ToArray());
-            items.Clear();
-            return res;
-        }
-
-        public Sequence GetSequenceAndReset()
-        {
-            var res = new Sequence(items.ToArray());
-            items.Clear();
-            return res;
+            Items.Add(e);
         }
     }
 
 
     public sealed class Sequence : ElementList<Element>, Stm
     {
-        public Sequence(params Element[] items) : base(items)
+        [DebuggerStepThrough]
+        public Sequence(IReadOnlyList<Element> items) : base(items)
         {
         }
     }
@@ -91,10 +74,7 @@ namespace Efekt
 
     public sealed class ClassBody : ElementList<Var>
     {
-        public ClassBody() : base(new Var[0])
-        {
-        }
-
+        [DebuggerStepThrough]
         public ClassBody(IReadOnlyList<Var> items) : base(items)
         {
         }
@@ -103,10 +83,12 @@ namespace Efekt
 
     public sealed class FnArguments : ElementList<Exp>
     {
+        [DebuggerStepThrough]
         public FnArguments() : base(new Exp[0])
         {
         }
 
+        [DebuggerStepThrough]
         public FnArguments(IReadOnlyList<Exp> items) : base(items)
         {
         }
@@ -115,10 +97,12 @@ namespace Efekt
 
     public sealed class FnParameters : ElementList<Ident>
     {
+        [DebuggerStepThrough]
         public FnParameters() : base(new Ident[0])
         {
         }
 
+        [DebuggerStepThrough]
         public FnParameters(IReadOnlyList<Ident> items) : base(items)
         {
         }
@@ -127,10 +111,7 @@ namespace Efekt
 
     public sealed class Values : ElementList<Value>
     {
-        public Values() : base(new Value[0])
-        {
-        }
-
+        [DebuggerStepThrough]
         public Values(IReadOnlyList<Value> items) : base(items)
         {
         }
@@ -139,6 +120,7 @@ namespace Efekt
 
     public sealed class Builtin : Value
     {
+        [DebuggerStepThrough]
         public Builtin(string name, Func<FnArguments, Value> fn)
         {
             C.Assert(!string.IsNullOrWhiteSpace(name));
@@ -156,6 +138,7 @@ namespace Efekt
 
     public sealed class Ident : Exp
     {
+        [DebuggerStepThrough]
         public Ident(string name, TokenType tokenType)
         {
             C.Assert(!string.IsNullOrWhiteSpace(name));
@@ -166,12 +149,15 @@ namespace Efekt
         }
         
         public string Name { get; }
+        // ReSharper disable once UnusedAutoPropertyAccessor.Global
+        // ReSharper disable once MemberCanBePrivate.Global
         public TokenType TokenType { get; }
     }
 
 
     public sealed class Var : Stm
     {
+        [DebuggerStepThrough]
         public Var(Ident ident, Exp exp)
         {
             C.Nn(ident);
@@ -188,22 +174,24 @@ namespace Efekt
 
     public sealed class Assign : Stm
     {
-        public Assign(Ident ident, Exp exp)
+        [DebuggerStepThrough]
+        public Assign(Exp to, Exp exp)
         {
-            C.Nn(ident);
+            C.Nn(to);
             C.Nn(exp);
 
-            Ident = ident;
+            To = to;
             Exp = exp;
         }
         
-        public Ident Ident { get; }
+        public Exp To { get; }
         public Exp Exp { get; }
     }
 
 
     public sealed class When : Exp
     {
+        [DebuggerStepThrough]
         public When(Exp test, Element then, [CanBeNull] Element otherwise)
         {
             C.Nn(test);
@@ -224,9 +212,10 @@ namespace Efekt
 
     public sealed class Loop : Stm
     {
+        [DebuggerStepThrough]
         public Loop(Sequence body)
         {
-            C.AllNotNull(body);
+            C.Nn(body);
             Body = body;
         }
         
@@ -236,6 +225,7 @@ namespace Efekt
 
     public sealed class Return : Stm
     {
+        [DebuggerStepThrough]
         public Return(Exp exp)
         {
             C.Nn(exp);
@@ -248,6 +238,7 @@ namespace Efekt
 
     public sealed class Break : Stm
     {
+        [DebuggerStepThrough]
         private Break()
         {
         }
@@ -258,15 +249,17 @@ namespace Efekt
 
     public sealed class Fn : Value
     {
+        [DebuggerStepThrough]
         public Fn(FnParameters parameters, Sequence sequence)
         {
-            C.AllNotNull(parameters);
-            C.AllNotNull(sequence);
+            C.Nn(parameters);
+            C.Nn(sequence);
 
             Parameters = parameters;
             Sequence = sequence;
         }
 
+        [DebuggerStepThrough]
         public Fn(FnParameters parameters, Sequence sequence, Env env)
             : this(parameters, sequence)
         {
@@ -283,6 +276,7 @@ namespace Efekt
 
     public sealed class Int : Value
     {
+        [DebuggerStepThrough]
         public Int(int value)
         {
             Value = value;
@@ -294,6 +288,7 @@ namespace Efekt
 
     public sealed class Bool : Value
     {
+        [DebuggerStepThrough]
         private Bool(bool value)
         {
             Value = value;
@@ -307,6 +302,7 @@ namespace Efekt
 
     public sealed class Void : Value
     {
+        [DebuggerStepThrough]
         private Void()
         {
         }
@@ -317,10 +313,11 @@ namespace Efekt
 
     public sealed class FnApply : Exp
     {
+        [DebuggerStepThrough]
         public FnApply(Exp fn, FnArguments arguments)
         {
             C.Nn(fn);
-            C.AllNotNull(arguments);
+            C.Nn(arguments);
 
             Fn = fn;
             Arguments = arguments;
@@ -333,9 +330,10 @@ namespace Efekt
 
     public sealed class ArrConstructor : Exp
     {
+        [DebuggerStepThrough]
         public ArrConstructor(FnArguments arguments)
         {
-            C.AllNotNull(arguments);
+            C.Nn(arguments);
 
             Arguments = arguments;
         }
@@ -346,9 +344,10 @@ namespace Efekt
 
     public sealed class Arr : Value
     {
+        [DebuggerStepThrough]
         public Arr(Values values)
         {
-            C.AllNotNull(values);
+            C.Nn(values);
 
             Values = values;
         }
@@ -361,7 +360,7 @@ namespace Efekt
     {
         public New(ClassBody body)
         {
-            C.AllNotNull(body);
+            C.Nn(body);
 
             Body = body;
         }
@@ -372,15 +371,18 @@ namespace Efekt
 
     public sealed class Obj : Value
     {
+        [DebuggerStepThrough]
         public Obj(ClassBody body, Env env)
         {
-            C.AllNotNull(body);
+            C.Nn(body);
             C.Nn(env);
 
             Body = body;
             Env = env;
         }
         
+        // ReSharper disable once UnusedAutoPropertyAccessor.Global
+        // ReSharper disable once MemberCanBePrivate.Global
         public ClassBody Body { get; }
         public Env Env { get; }
     }
@@ -388,6 +390,7 @@ namespace Efekt
 
     public sealed class MemberAccess : Exp
     {
+        [DebuggerStepThrough]
         public MemberAccess(Exp exp, Ident ident)
         {
             C.Nn(exp);

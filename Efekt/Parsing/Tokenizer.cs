@@ -113,7 +113,7 @@ namespace Efekt
                     }
                 }
 
-                if (ch == '-')
+                if (ch == '*')
                 {
                     var text = code.Substring(startIx, 3);
                     if (markIf(text == "*--", TokenType.CommentEnd))

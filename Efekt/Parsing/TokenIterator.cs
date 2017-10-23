@@ -1,5 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace Efekt
 {
@@ -8,16 +8,13 @@ namespace Efekt
         private readonly IEnumerator<Token> te;
         internal Token Current { get; private set; }
         internal int LineIndex { get; private set; }
+
+
         internal bool Finished => Current.Type == TokenType.Terminal;
-
-
         internal bool HasWork => !Finished;
 
 
-        internal TokenIterator(IEnumerable<Token> tokens)
-        {
-            te = tokens.GetEnumerator();
-        }
+        internal TokenIterator(IEnumerable<Token> tokens) => te = tokens.GetEnumerator();
 
 
         private void MoveNext()
@@ -35,7 +32,8 @@ namespace Efekt
         }
 
 
-        private void nextSkippingWhiteAndComments()
+        [DebuggerStepThrough]
+        internal void Next()
         {
             again:
             MoveNext();
@@ -55,25 +53,6 @@ namespace Efekt
                 || Current.Type == TokenType.LineCommentBegin
                 || Current.Type == TokenType.CommentBegin)
                 goto again;
-        }
-
-
-        internal void Next()
-        {
-            do
-            {
-                nextSkippingWhiteAndComments();
-            } while (HasWork);
-        }
-
-
-        internal void NextAndMatch(string text)
-        {
-            Next();
-            if (Current.Text == text)
-                Next();
-            else
-                throw new Exception("Expected '" + text + "', found '" + Current.Text + "'.");
         }
     }
 }

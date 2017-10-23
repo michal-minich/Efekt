@@ -1,84 +1,9 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
 
 namespace Efekt
 {
-    public interface IEnv
-    {
-        Value Get(string name);
-
-        void Declare(string name, Value value);
-
-        //void Alias(string name, string newName);
-        void Set(string name, Value value);
-    }
-
-    public sealed class Env : IEnv
-    {
-        private readonly Dictionary<string, Value> dict = new Dictionary<string, Value>();
-
-        private Env()
-        {
-            Parent = null;
-            foreach (var b in Builtins.Values)
-                dict.Add(b.Name, b);
-        }
-
-        private Env(Env parent)
-        {
-            Parent = parent;
-        }
-
-        [CanBeNull]
-        public Env Parent { get; }
-
-
-        public static Env CreateRoot()
-        {
-            return new Env();
-        }
-
-
-        public static Env Create(Env parent)
-        {
-            return new Env(parent);
-        }
-
-        public Value Get(string name)
-        {
-            if (dict.TryGetValue(name, out var value))
-                return value;
-            if (Parent != null)
-                return Parent.Get(name);
-            throw Error.Fail();
-        }
-
-        public void Declare(string name, Value value)
-        {
-            if (dict.ContainsKey(name))
-                throw Error.Fail();
-            dict.Add(name, value);
-        }
-
-        public void Set(string name, Value value)
-        {
-            var e = this;
-            do
-            {
-                if (e.dict.ContainsKey(name))
-                {
-                    e.dict[name] = value;
-                    return;
-                }
-                e = e.Parent;
-            } while (e != null);
-            throw Error.Fail();
-        }
-    }
-
-
     public class Interpreter
     {
         [CanBeNull] private Value ret;
@@ -88,7 +13,7 @@ namespace Efekt
         public Value Eval(Element se)
         {
             if (se is Exp exp)
-                se = new Sequence(new Return(exp));
+                se = new Sequence(new[] {new Return(exp)});
 
             if (se is Sequence body)
                 se = new FnApply(
@@ -109,8 +34,12 @@ namespace Efekt
                     return Void.Instance;
                 case Assign a:
                     var val2 = eval(a.Exp, env);
-                    env.Set(a.Ident.Name, val2);
-                    return Void.Instance;
+                    if (a.To is Ident ident)
+                    {
+                        env.Set(ident.Name, val2);
+                        return Void.Instance;
+                    }
+                    throw Error.Fail();
                 case Ident i:
                     return env.Get(i.Name);
                 case Return r:
@@ -142,8 +71,8 @@ namespace Efekt
                         // ReSharper disable once UnusedVariable
                         var bodyVal = eval(bodyElement, fnEnv);
                         //if (bodyVal != Void.Instance)
-                        if (bodyElement is Value)
-                            throw new Exception("Unused value");
+                        //if (bodyElement is Value)
+                        //    throw new Exception("Unused value");
                         if (ret != null)
                         {
                             var tmp = ret;

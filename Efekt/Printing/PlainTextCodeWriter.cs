@@ -11,6 +11,7 @@ namespace Efekt
             this.writer = writer;
         }
 
+        // ReSharper disable once MemberCanBePrivate.Global
         public int IndentLevel { get; private set; }
 
 

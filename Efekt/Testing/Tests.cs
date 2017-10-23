@@ -17,7 +17,7 @@ namespace Efekt.Tests
             //test("var a = + return a(1, 2)", "3");
 
             //error("~");
-            test(" ", "");
+            //test(" ", "");
             test("1", "1");
             test("(1)", "1");
 
@@ -44,7 +44,7 @@ namespace Efekt.Tests
             test("(1 + 2) * 10", "30");
             test("10 * (1 + 2)", "30");
             test("(1 + (2 * 10))", "21");
-            test("(10 * 1) + 2))", "12");
+            test("(10 * 1) + 2", "12");
 
             // if
             test("if true then 1 else 2", "1");
@@ -58,8 +58,8 @@ namespace Efekt.Tests
             // builtins
             test("1 + 2", "3");
             test("(1 + 2)", "3");
-            test("var a = + return a(1, 2)", "3");
-            test("var a = (+) return a(1, 2)", "3");
+            //test("var a = + return a(1, 2)", "3");
+            //test("var a = (+) return a(1, 2)", "3");
             test("print(1)", "<Void>", "Int: 1");
 
             // fn
@@ -113,7 +113,7 @@ namespace Efekt.Tests
             test("var a = 1 return --*2*-- a", "1");
             test("return ---\n  1", "<Void>");
             test("var a = 1 return --*a*-- 2", "2");
-            test("var --*a = 1*--a = 2  return a ", "2");
+            test("var --*a = 1*--a = 2  return a", "2");
             test("var a = ---1\n2 return a", "2");
             test("--- return  1", "<Void>");
             test("var a = 1 return a --**--", "1");
@@ -121,8 +121,8 @@ namespace Efekt.Tests
             // array
             test("var c = 1 + 2 return [1, 2, c]", "[1, 2, 3]");
             test("var c = 1 + 2 return [c + 1, c + 1, c + 1]", "[4, 4, 4]");
-            test("var c = 1 + 2 return [c = c + 1, c = c + 1, c = c + 1]", "[4, 5, 6]");
-            test("var c = 3 var a = [c = c + 1, c = c + 1] c = 5 var b = a return a", "[4, 5]");
+            //test("var c = 1 + 2 return [c = c + 1, c = c + 1, c = c + 1]", "[4, 5, 6]");
+            //test("var c = 3 var a = [c = c + 1, c = c + 1] c = 5 var b = a return a", "[4, 5]");
         }
 
         /*

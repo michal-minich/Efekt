@@ -7,20 +7,16 @@ namespace Efekt
     [CanBeNull]
     internal delegate Element ParseElement();
 
+
     [CanBeNull]
     internal delegate Element ParseOpElement(Exp prev);
 
 
-    internal sealed class Parser
+    internal sealed class Parser : ElementIterator
     {
-        private readonly List<ParseOpElement> opOparsers;
-        private readonly List<ParseElement> parsers;
-        private TokenIterator ti;
-
-
         internal Parser()
         {
-            parsers = new List<ParseElement>
+            Parsers = new List<ParseElement>
             {
                 ParseIdent,
                 ParseInt,
@@ -31,213 +27,164 @@ namespace Efekt
                 ParseLoop,
                 ParseBreak,
                 ParseReturn,
-                ParseCurly,
+                ParseSequence,
                 ParseSingleBraced,
                 ParseArr,
                 ParseNew
             };
 
-            opOparsers = new List<ParseOpElement>
+            OpOparsers = new List<ParseOpElement>
             {
                 ParseFnApply,
                 ParseOpApply
             };
         }
+        
 
-        private string text => ti.Current.Text;
-        private TokenType type => ti.Current.Type;
-
-
-        internal Element Parse(IEnumerable<Token> tokens)
+        private Sequence ParseMandatorySequence()
         {
-            ti = new TokenIterator(tokens);
-            var elements = new ElementListBuilder();
-            ti.Next();
-            while (ti.HasWork)
-            {
-                var e = ParseOne();
-                elements.Add(e);
-            }
-            var seq = elements.GetSequenceAndReset();
-            return seq.Count == 1 ? seq[0] : seq;
+            var elb = ParseBracedList('}', false);
+            if (elb == null)
+                throw Error.Fail();
+            return new Sequence(elb.Items);
+        }
+
+        
+        private ClassBody ParseClassBody()
+        {
+            return new ClassBody(ParseBracedList('}', false).Items.Cast<Var>().ToArray());
+        }
+
+
+        private FnArguments ParseFnArguments(char end)
+        {
+            return new FnArguments(ParseBracedList(end, true).Items.Cast<Exp>().ToArray());
+        }
+
+
+        private FnParameters ParseFnParameters()
+        {
+            return new FnParameters(ParseList('{', true).Items.Cast<Ident>().ToArray());
         }
 
 
         [CanBeNull]
-        // ReSharper disable once ParameterOnlyUsedForPreconditionCheck.Local
-        private ElementList ParseBracedList(char? stopOnBrace = null, bool skipComa = false)
+        private Sequence ParseSequence()
         {
-            char end;
-            if (text == "(")
-                end = ')';
-            else if (text == "{")
-                end = '}';
-            else if (text == "[")
-                end = ']';
-            else
+            if (Text[0] != '{')
                 return null;
-            if (stopOnBrace != end)
-                throw Error.Fail();
-            ti.Next();
-            return ParseList(skipComa, end);
-        }
-
-
-        private ElementList ParseList(bool skipComa, char end)
-        {
-            var elements = new ElementListBuilder();
-            while (ti.HasWork)
-            {
-                var e = ParseOne();
-                elements.Add(e);
-                if (text[0] == end)
-                {
-                    ti.Next();
-                    break;
-                }
-                if (skipComa)
-                {
-                    if (text == ",")
-                        ti.Next();
-                    else
-                        break;
-                }
-            }
-            return elements.GetAndReset();
-        }
-
-
-        [NotNull]
-        private Element ParseOne(bool withOps = true)
-        {
-            foreach (var p in parsers)
-            {
-                C.Nn(p);
-                var e = p();
-                if (e == null)
-                    continue;
-                if (withOps)
-                    e = ParseWithOp(e);
-                return e;
-            }
-            throw Error.Fail();
-        }
-
-
-        private Element ParseWithOp(Element e)
-        {
-            if (ti.Finished || text != "(" && type != TokenType.Op)
-                return e;
-            var prev = e as Exp;
-            if (prev == null)
-            {
-                if (text == "(")
-                    return e;
-                throw Error.Fail();
-            }
-            foreach (var opar in opOparsers)
-            {
-                C.Nn(opar);
-                e = opar(prev);
-                if (e != null)
-                    return ParseWithOp(e);
-            }
-            throw Error.Fail();
+            return ParseMandatorySequence();
         }
 
 
         [CanBeNull]
-        private FnApply ParseFnApply(Exp prev)
+        private Loop ParseLoop()
         {
-            var args = ParseBracedList(')', true);
-            if (args == null)
+            if (Text != "loop")
                 return null;
-            var argsExpList = args.Select(a => a as Exp).ToArray();
-            if (argsExpList.Any(a => a == null))
+            Ti.Next();
+            var s = ParseMandatorySequence();
+            return new Loop(s);
+        }
+
+
+        [CanBeNull]
+        private Fn ParseFn()
+        {
+            if (Text != "fn")
+                return null;
+            Ti.Next();
+            var p = Text == "{" ? new FnParameters() : ParseFnParameters();
+            var s = ParseMandatorySequence();
+            if (s == null)
                 throw Error.Fail();
-            return new FnApply(prev, new FnArguments(argsExpList));
+            return new Fn(p, s);
         }
 
 
         [CanBeNull]
         private Element ParseOpApply(Exp prev)
         {
-            if (type != TokenType.Op)
+            if (Type != TokenType.Op)
                 return null;
-            var opText = text;
-            ti.Next();
+            var opText = Text;
+            Ti.Next();
             var second = ParseOne(false);
-            var secondExp = second as Exp;
-            if (secondExp == null)
-                throw Error.Fail();
-            if (opText == "=")
-            {
-                var i = prev as Ident;
-                if (i == null)
-                    throw Error.Fail();
-                return new Assign(i, secondExp);
-            }
             if (opText == ".")
             {
-                if (secondExp is Ident i)
+                if (second is Ident i)
                     return new MemberAccess(prev, i);
                 throw Error.Fail();
             }
-            return new FnApply(new Ident(opText, TokenType.Op), new FnArguments(new[] {prev, secondExp}));
+            var e2 = second as Exp;
+            if (e2 == null)
+                throw Error.Fail();
+            if (opText == "=")
+                return new Assign(prev, e2);
+            return new FnApply(new Ident(opText, TokenType.Op), new FnArguments(new[] { prev, e2 }));
         }
 
 
         [CanBeNull]
-        private ElementList ParseCurly()
+        private FnApply ParseFnApply(Exp prev)
         {
-            return ParseBracedList('}');
-        }
-
-
-        [CanBeNull]
-        private Element ParseSingleBraced()
-        {
-            var es = ParseBracedList(')');
-            if (es == null)
+            if (Text[0] != '(')
                 return null;
-            if (es.Count == 1)
-                return es.First();
-            throw Error.Fail();
+            var args = ParseFnArguments(')');
+            return new FnApply(prev, args);
         }
 
 
         [CanBeNull]
         private ArrConstructor ParseArr()
         {
-            if (text != "[")
+            if (Text[0] != '[')
                 return null;
-            var elements = ParseBracedList(']', true);
-            if (elements == null)
-                throw Error.Fail();
-            return new ArrConstructor(new FnArguments(elements.Cast<Exp>().ToArray()));
+            var args = ParseFnArguments(']');
+            return new ArrConstructor(args);
+        }
+
+
+        [CanBeNull]
+        private Element ParseSingleBraced()
+        {
+            if (Text[0] != '(')
+                return null;
+            var elb = ParseBracedList(')', false);
+            if (elb.Items.Count == 1)
+                return elb.Items.First();
+            throw Error.Fail();
         }
 
 
         [CanBeNull]
         private New ParseNew()
         {
-            if (text != "new")
+            if (Text != "new")
                 return null;
-            ti.Next();
-            var e = ParseOne();
-            if (e is ElementList el)
-                return new New(new ClassBody(el.Cast<Var>().ToArray()));
-            throw Error.Fail();
+            Ti.Next();
+            var body = ParseClassBody();
+            return new New(body);
+        }
+
+
+        [CanBeNull]
+        private Break ParseBreak()
+        {
+            if (Text != "break")
+                return null;
+            Ti.Next();
+            return Break.Instance;
         }
 
 
         [CanBeNull]
         private Ident ParseIdent()
         {
-            if (type != TokenType.Ident && type != TokenType.Op)
+            if (Type != TokenType.Ident && Type != TokenType.Op)
                 return null;
-            var i = new Ident(text, type);
-            ti.Next();
+            var i = new Ident(Text, Type);
+            Ti.Next();
             return i;
         }
 
@@ -245,10 +192,10 @@ namespace Efekt
         [CanBeNull]
         private Int ParseInt()
         {
-            if (type != TokenType.Int)
+            if (Type != TokenType.Int)
                 return null;
-            var i = new Int(int.Parse(text.Replace("_", "")));
-            ti.Next();
+            var i = new Int(int.Parse(Text.Replace("_", "")));
+            Ti.Next();
             return i;
         }
 
@@ -256,13 +203,13 @@ namespace Efekt
         [CanBeNull]
         private Bool ParseBool()
         {
-            switch (text)
+            switch (Text)
             {
                 case "true":
-                    ti.Next();
+                    Ti.Next();
                     return Bool.True;
                 case "false":
-                    ti.Next();
+                    Ti.Next();
                     return Bool.False;
                 default:
                     return null;
@@ -271,55 +218,58 @@ namespace Efekt
 
 
         [CanBeNull]
+        private Var ParseVar()
+        {
+            if (Text != "var")
+                return null;
+            Ti.Next();
+            var se = ParseOne();
+            if (se is Ident i2)
+                return new Var(i2, Void.Instance);
+            if (se is Assign a)
+            {
+                if (a.To is Ident i)
+                    return new Var(i, a.Exp);
+                throw Error.Fail();
+            }
+            throw Error.Fail();
+        }
+
+
+        [CanBeNull]
         private Return ParseReturn()
         {
-            if (text != "return")
+            if (Text != "return")
                 return null;
-            var lineIndexOnReturn = ti.LineIndex;
-            ti.Next();
-            if (ti.Finished || lineIndexOnReturn != ti.LineIndex)
+            var lineIndexOnReturn = Ti.LineIndex;
+            Ti.Next();
+            if (Ti.Finished || lineIndexOnReturn != Ti.LineIndex)
                 return new Return(Void.Instance);
             var se = ParseOne();
             if (se is Exp exp)
                 return new Return(exp);
             throw Error.Fail();
         }
-
-
-        [CanBeNull]
-        private Fn ParseFn()
-        {
-            if (text != "fn")
-                return null;
-            ti.Next();
-            var @params = text == "{" 
-                ? new FnParameters() 
-                : new FnParameters(ParseList(false, '{').Cast<Ident>().ToArray());
-            var se = ParseBracedList('}');
-            if (se is ElementList sel)
-                return new Fn(@params, new Sequence(sel.ToArray()));
-            throw Error.Fail();
-        }
-
+        
 
         [CanBeNull]
         private When ParseWhen()
         {
-            if (text != "if")
+            if (Text != "if")
                 return null;
-            ti.Next();
+            Ti.Next();
             var test = ParseOne();
             var testExp = test as Exp;
             if (testExp == null)
                 throw Error.Fail();
-            if (text != "then")
+            if (Text != "then")
                 throw Error.Fail();
-            ti.Next();
+            Ti.Next();
             var then = ParseOne();
             Element otherwise;
-            if (text == "else")
+            if (Text == "else")
             {
-                ti.Next();
+                Ti.Next();
                 otherwise = ParseOne();
             }
             else
@@ -327,46 +277,6 @@ namespace Efekt
                 otherwise = null;
             }
             return new When(testExp, then, otherwise);
-        }
-
-
-        [CanBeNull]
-        private Loop ParseLoop()
-        {
-            if (text != "loop")
-                return null;
-            ti.Next();
-            var body = ParseBracedList('}');
-            if (body == null)
-                throw Error.Fail();
-            return new Loop(new Sequence(body.ToArray()));
-        }
-
-
-        [CanBeNull]
-        private Break ParseBreak()
-        {
-            if (text != "break")
-                return null;
-            ti.Next();
-            return Break.Instance;
-        }
-
-
-        [CanBeNull]
-        private Var ParseVar()
-        {
-            if (text != "var")
-                return null;
-            ti.Next();
-            var i = type == TokenType.Ident
-                ? new Ident(text, TokenType.Ident)
-                : throw Error.Fail();
-            ti.NextAndMatch("=");
-            var se = ParseOne();
-            if (se is Exp exp)
-                return new Var(i, exp);
-            throw Error.Fail();
         }
     }
 }

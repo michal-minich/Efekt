@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
@@ -16,14 +17,14 @@ namespace Efekt
         {
             C.Nn(args);
 
+            Tests.Tests.RunAllTests();
+
             if (args.Length != 0)
             {
                 processInput(args);
                 return;
             }
-
-            Tests.Tests.RunAllTests();
-
+            
             const string code = "";
             debug(code);
 
@@ -59,7 +60,7 @@ namespace Efekt
         }
 
 
-        private static void processInput(string[] args)
+        private static void processInput(IReadOnlyList<string> args)
         {
             var filePath = args[0];
             C.Nn(filePath);

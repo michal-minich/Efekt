@@ -57,6 +57,8 @@
   <ItemGroup>
     <Compile Include="Evaluating\Builtins.cs" />
     <Compile Include="Error.cs" />
+    <Compile Include="Evaluating\Env.cs" />
+    <Compile Include="Parsing\ElementIterator.cs" />
     <Compile Include="Printing\PlainTextCodeWriter.cs" />
     <Compile Include="Printing\Printer.cs" />
     <Compile Include="Printing\ConsoleWriter.cs" />
