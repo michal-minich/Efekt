@@ -39,6 +39,16 @@ namespace Efekt
                         env.Set(ident.Name, val2);
                         return Void.Instance;
                     }
+                    else if (a.To is MemberAccess ma)
+                    {
+                        var obj = eval(ma.Exp, env);
+                        if (obj is Obj o2)
+                        {
+                            o2.Env.Set(ma.Ident.Name, val2);
+                            return Void.Instance;
+                        }
+                        throw Error.Fail();
+                    }
                     throw Error.Fail();
                 case Ident i:
                     return env.Get(i.Name);
