@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using JetBrains.Annotations;
 
@@ -8,19 +10,28 @@ namespace Efekt
     {
         [CanBeNull] private Value ret;
         private bool isBreak;
-
-
-        public Value Eval(Element se)
+        public Stack<FnApply> CallStack { get; private set; }
+        
+        public Value Eval(Prog prog)
         {
-            if (se is Exp exp)
-                se = new Sequence(new[] {new Return(exp)});
+            CallStack = new Stack<FnApply>();
 
-            if (se is Sequence body)
-                se = new FnApply(
-                    new Fn(new FnParameters(), body),
-                    new FnArguments());
-
-            return eval(se, Env.CreateRoot());
+            try
+            {
+                return eval(prog.RootElement, Env.CreateRoot());
+            }
+            catch (EfektException ex)
+            {
+                var f = Utils.GetFilePathRelativeToBase(prog.FilePath);
+                var msg = ex.Message
+                          + Environment.NewLine
+                          + string.Join(
+                              Environment.NewLine,
+                              new[] {ex.Element.LineIndex}
+                                  .Concat(CallStack.Select(cs => cs.LineIndex))
+                                  .Select(ix => f + ":" + (ix + 1)));
+                throw new EfektException(msg, ex, ex.Element);
+            }
         }
 
 
@@ -30,13 +41,13 @@ namespace Efekt
             {
                 case Var v:
                     var val = eval(v.Exp, env);
-                    env.Declare(v.Ident.Name, val);
+                    env.Declare(v.Ident, val);
                     return Void.Instance;
                 case Assign a:
                     var val2 = eval(a.Exp, env);
                     if (a.To is Ident ident)
                     {
-                        env.Set(ident.Name, val2);
+                        env.Set(ident, val2);
                         return Void.Instance;
                     }
                     else if (a.To is MemberAccess ma)
@@ -44,27 +55,30 @@ namespace Efekt
                         var obj = eval(ma.Exp, env);
                         if (obj is Obj o2)
                         {
-                            o2.Env.Set(ma.Ident.Name, val2);
+                            o2.Env.Set(ma.Ident, val2);
                             return Void.Instance;
                         }
-                        throw Error.Fail();
+                        throw Error.OnlyObjectsHaveMembers(obj);
                     }
-                    throw Error.Fail();
+                    throw Error.AssignTargetIsInvalid(a.To);
                 case Ident i:
-                    return env.Get(i.Name);
+                    return env.Get(i);
                 case Return r:
                     ret = eval(r.Exp, env);
                     return Void.Instance;
                 case FnApply fna:
+                    CallStack.Push(fna);
                     var fn = eval(fna.Fn, env);
                     var builtin = fn as Builtin;
-                    // ReSharper disable once AssignNullToNotNullAttribute
                     var eArgs = fna.Arguments.Select(a => eval(a, env)).ToArray();
                     if (builtin != null)
+                    {
+                        CallStack.Pop();
                         return builtin.Fn(new FnArguments(eArgs));
+                    }
                     var fn2 = fn as Fn;
                     if (fn2 == null)
-                        throw Error.Fail();
+                        throw Error.OnlyFunctionsCanBeApplied(fn);
                     var paramsEnv = Env.Create(fn2.Env);
                     var ix = 0;
                     foreach (var p in fn2.Parameters)
@@ -72,7 +86,7 @@ namespace Efekt
                         C.Nn(p);
                         var eArg = eArgs[ix++];
                         C.Nn(eArg);
-                        paramsEnv.Declare(p.Name, eArg);
+                        paramsEnv.Declare(p, eArg);
                     }
                     var fnEnv = Env.Create(paramsEnv);
                     foreach (var bodyElement in fn2.Sequence)
@@ -87,9 +101,11 @@ namespace Efekt
                         {
                             var tmp = ret;
                             ret = null;
+                            CallStack.Pop();
                             return tmp;
                         }
                     }
+                    CallStack.Pop();
                     return Void.Instance;
                 case Fn f:
                     return new Fn(f.Parameters, f.Sequence, env);
@@ -123,8 +139,8 @@ namespace Efekt
                 case MemberAccess ma:
                     var exp = eval(ma.Exp, env);
                     if (exp is Obj o)
-                        return o.Env.Get(ma.Ident.Name);
-                    throw Error.Fail();
+                        return o.Env.Get(ma.Ident);
+                    throw Error.OnlyObjectsHaveMembers(exp);
                 case New n:
                     var objEnv = Env.Create(env);
                     foreach (var v in n.Body)

@@ -8,8 +8,20 @@ namespace Efekt
 {
     public interface Element
     {
+        int LineIndex { get; }
     }
 
+
+    public abstract class AElement : Element
+    {
+        protected AElement()
+        {
+            if (TokenIterator.Instance != null)
+                LineIndex = TokenIterator.Instance.LineIndex;
+        }
+
+        public int LineIndex { get; }
+    }
 
     public interface Exp : Element
     {
@@ -68,7 +80,11 @@ namespace Efekt
         [DebuggerStepThrough]
         public Sequence(IReadOnlyList<Element> items) : base(items)
         {
+            if (TokenIterator.Instance != null)
+                LineIndex = TokenIterator.Instance.LineIndex;
         }
+
+        public int LineIndex { get; }
     }
 
 
@@ -118,7 +134,7 @@ namespace Efekt
     }
 
 
-    public sealed class Builtin : Value
+    public sealed class Builtin : AElement, Value
     {
         [DebuggerStepThrough]
         public Builtin(string name, Func<FnArguments, Value> fn)
@@ -136,7 +152,7 @@ namespace Efekt
     }
 
 
-    public sealed class Ident : Exp
+    public sealed class Ident : AElement, Exp
     {
         [DebuggerStepThrough]
         public Ident(string name, TokenType tokenType)
@@ -155,7 +171,7 @@ namespace Efekt
     }
 
 
-    public sealed class Var : Stm
+    public sealed class Var : AElement, Stm
     {
         [DebuggerStepThrough]
         public Var(Ident ident, Exp exp)
@@ -172,7 +188,7 @@ namespace Efekt
     }
 
 
-    public sealed class Assign : Stm
+    public sealed class Assign : AElement, Stm
     {
         [DebuggerStepThrough]
         public Assign(Exp to, Exp exp)
@@ -189,7 +205,7 @@ namespace Efekt
     }
 
 
-    public sealed class When : Exp
+    public sealed class When : AElement, Exp
     {
         [DebuggerStepThrough]
         public When(Exp test, Element then, [CanBeNull] Element otherwise)
@@ -210,7 +226,7 @@ namespace Efekt
     }
 
 
-    public sealed class Loop : Stm
+    public sealed class Loop : AElement, Stm
     {
         [DebuggerStepThrough]
         public Loop(Sequence body)
@@ -223,7 +239,7 @@ namespace Efekt
     }
 
 
-    public sealed class Return : Stm
+    public sealed class Return : AElement, Stm
     {
         [DebuggerStepThrough]
         public Return(Exp exp)
@@ -236,7 +252,7 @@ namespace Efekt
     }
 
 
-    public sealed class Break : Stm
+    public sealed class Break : AElement, Stm
     {
         [DebuggerStepThrough]
         private Break()
@@ -247,7 +263,7 @@ namespace Efekt
     }
 
 
-    public sealed class Fn : Value
+    public sealed class Fn : AElement, Value
     {
         [DebuggerStepThrough]
         public Fn(FnParameters parameters, Sequence sequence)
@@ -274,7 +290,7 @@ namespace Efekt
     }
 
 
-    public sealed class Int : Value
+    public sealed class Int : AElement, Value
     {
         [DebuggerStepThrough]
         public Int(int value)
@@ -286,7 +302,7 @@ namespace Efekt
     }
 
 
-    public sealed class Bool : Value
+    public sealed class Bool : AElement, Value
     {
         [DebuggerStepThrough]
         private Bool(bool value)
@@ -300,7 +316,7 @@ namespace Efekt
     }
 
 
-    public sealed class Void : Value
+    public sealed class Void : AElement, Value
     {
         [DebuggerStepThrough]
         private Void()
@@ -311,7 +327,7 @@ namespace Efekt
     }
 
 
-    public sealed class FnApply : Exp
+    public sealed class FnApply : AElement, Exp
     {
         [DebuggerStepThrough]
         public FnApply(Exp fn, FnArguments arguments)
@@ -328,7 +344,7 @@ namespace Efekt
     }
 
 
-    public sealed class ArrConstructor : Exp
+    public sealed class ArrConstructor : AElement, Exp
     {
         [DebuggerStepThrough]
         public ArrConstructor(FnArguments arguments)
@@ -342,7 +358,7 @@ namespace Efekt
     }
 
 
-    public sealed class Arr : Value
+    public sealed class Arr : AElement, Value
     {
         [DebuggerStepThrough]
         public Arr(Values values)
@@ -356,7 +372,7 @@ namespace Efekt
     }
 
 
-    public sealed class New : Exp
+    public sealed class New : AElement, Exp
     {
         public New(ClassBody body)
         {
@@ -369,7 +385,7 @@ namespace Efekt
     }
 
 
-    public sealed class Obj : Value
+    public sealed class Obj : AElement, Value
     {
         [DebuggerStepThrough]
         public Obj(ClassBody body, Env env)
@@ -388,7 +404,7 @@ namespace Efekt
     }
 
 
-    public sealed class MemberAccess : Exp
+    public sealed class MemberAccess : AElement, Exp
     {
         [DebuggerStepThrough]
         public MemberAccess(Exp exp, Ident ident)

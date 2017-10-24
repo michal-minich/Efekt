@@ -70,48 +70,5 @@ namespace Efekt
             }
             return e;
         }
-
-
-        protected ElementListBuilder ParseBracedList(char endBrace, bool isComaSeparated)
-        {
-            char end;
-            var t = Text[0];
-            if (t == '(')
-                end = ')';
-            else if (t == '{')
-                end = '}';
-            else if (t == '[')
-                end = ']';
-            else
-                throw Error.Fail();
-            if (endBrace != end)
-                throw Error.Fail();
-            Ti.Next();
-            var elb = ParseList(endBrace, isComaSeparated);
-            if (Text[0] != end)
-                throw Error.Fail();
-            Ti.Next();
-            return elb;
-        }
-        
-        protected ElementListBuilder ParseList(char end, bool isComaSeparated)
-        {
-            var elb = new ElementListBuilder();
-            while (Ti.HasWork)
-            {
-                if (Text[0] == end)
-                    break;
-                var e = ParseOne();
-                elb.Add(e);
-                if (isComaSeparated)
-                {
-                    if (Text == ",")
-                        Ti.Next();
-                    else
-                        break;
-                }
-            }
-            return elb;
-        }
     }
 }

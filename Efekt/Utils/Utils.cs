@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using JetBrains.Annotations;
 
@@ -10,6 +12,32 @@ namespace Efekt
         public static string RepeatString(string value, int count)
         {
             return string.Concat(Enumerable.Repeat(value, count));
+        }
+
+
+        public static string GetFilePathRelativeToBase(string filePath)
+        {
+            return GetFilePathRelativeToBase(Directory.GetCurrentDirectory(), filePath);
+        }
+
+
+        public static string GetFilePathRelativeToBase(string basePath, string filePath)
+        {
+            var fromUri = new Uri(basePath);
+            var toUri = new Uri(fromUri, filePath);
+
+            if (fromUri.Scheme != toUri.Scheme)
+            {
+                return filePath;
+            } // path can't be made relative.
+
+            var relativeUri = fromUri.MakeRelativeUri(toUri);
+            var relativePath = Uri.UnescapeDataString(relativeUri.ToString());
+
+            if (toUri.Scheme.Equals("file", StringComparison.InvariantCultureIgnoreCase))
+                relativePath = relativePath.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
+
+            return relativePath;
         }
     }
 

@@ -5,16 +5,21 @@ namespace Efekt
 {
     internal sealed class TokenIterator
     {
+        internal static TokenIterator Instance { get; private set; }
+
         private readonly IEnumerator<Token> te;
         internal Token Current { get; private set; }
         internal int LineIndex { get; private set; }
-
 
         internal bool Finished => Current.Type == TokenType.Terminal;
         internal bool HasWork => !Finished;
 
 
-        internal TokenIterator(IEnumerable<Token> tokens) => te = tokens.GetEnumerator();
+        internal TokenIterator(IEnumerable<Token> tokens)
+        {
+            te = tokens.GetEnumerator();
+            Instance = this;
+        }
 
 
         private void MoveNext()

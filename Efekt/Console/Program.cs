@@ -15,19 +15,27 @@ namespace Efekt
 
         private static void Main(string[] args)
         {
-            C.Nn(args);
-
-            Tests.Tests.RunAllTests();
-
-            if (args.Length != 0)
+            try
             {
-                processInput(args);
-                return;
-            }
-            
-            const string code = "";
-            debug(code);
+                C.Nn(args);
 
+                Tests.Tests.RunAllTests();
+
+                if (args.Length != 0)
+                {
+                    var prog = Prog.Load(args[0]);
+                    prog.Run();
+                    return;
+                }
+
+                const string code = "";
+                debug(code);
+
+            }
+            catch (EfektException ex)
+            {
+                Console.Write("Error: " + ex.Message);
+            }
             Console.ReadLine();
         }
 
@@ -39,7 +47,7 @@ namespace Efekt
             foreach (var tok in ts)
             {
                 Console.Write(tok.Type.ToString().PadRight(8));
-                Console.WriteLine("'" + tok.Text + "'");
+                Console.WriteLine("'" + tok.Text.Replace("\n", "\\n").Replace("\r", "\\r") + "'");
             }
 
             Console.WriteLine();
@@ -49,7 +57,8 @@ namespace Efekt
 
             Console.WriteLine();
             Console.WriteLine("EVAL");
-            var res = i.Eval(pse);
+            var prog = Prog.Init(pse);
+            var res = i.Eval(prog);
             cw.Write(res);
 
             Console.WriteLine();
@@ -57,15 +66,6 @@ namespace Efekt
             Console.WriteLine("OUT");
             var text = Builtins.Writer.GetAndReset();
             Console.WriteLine(text);
-        }
-
-
-        private static void processInput(IReadOnlyList<string> args)
-        {
-            var filePath = args[0];
-            C.Nn(filePath);
-            debug(File.ReadAllText(filePath));
-            Console.ReadLine();
         }
     }
 }

@@ -154,7 +154,8 @@ namespace Efekt.Tests
             if (tokens.Count != 0 && code.Length == 0 || tokens.Count == 0 && code.Length > 0)
                 throw Error.Fail();
             var se = p.Parse(tokens);
-            var r = i.Eval(se);
+            var prog = Prog.Init(se);
+            var r = i.Eval(prog);
             cw.Write(r);
             var val = sw.GetAndReset();
             if (val != expectedResult)

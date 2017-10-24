@@ -30,35 +30,35 @@ namespace Efekt
             return new Env(parent);
         }
 
-        public Value Get(string name)
+        public Value Get(Ident ident)
         {
-            if (dict.TryGetValue(name, out var value))
+            if (dict.TryGetValue(ident.Name, out var value))
                 return value;
             if (parent != null)
-                return parent.Get(name);
-            throw Error.Fail();
+                return parent.Get(ident);
+            throw Error.VariableIsNotDeclared(ident);
         }
 
-        public void Declare(string name, Value value)
+        public void Declare(Ident ident, Value value)
         {
-            if (dict.ContainsKey(name))
-                throw Error.Fail();
-            dict.Add(name, value);
+            if (dict.ContainsKey(ident.Name))
+                throw Error.VariableIsAlreadyDeclared(ident);
+            dict.Add(ident.Name, value);
         }
 
-        public void Set(string name, Value value)
+        public void Set(Ident ident, Value value)
         {
             var e = this;
             do
             {
-                if (e.dict.ContainsKey(name))
+                if (e.dict.ContainsKey(ident.Name))
                 {
-                    e.dict[name] = value;
+                    e.dict[ident.Name] = value;
                     return;
                 }
                 e = e.parent;
             } while (e != null);
-            throw Error.Fail();
+            throw Error.VariableIsNotDeclared(ident);
         }
     }
 }

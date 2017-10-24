@@ -1,6 +1,15 @@
-﻿var x = new {
-  var a = 1
+﻿var a = fn {
+
+return x
+
 }
 
-x.a = x.a + 5
-print(x.a + 2)
+var b = fn { a() }
+
+var c = fn { b() }
+
+var d = fn { }
+
+d()
+
+c()
