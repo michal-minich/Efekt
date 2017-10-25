@@ -105,15 +105,7 @@ namespace Efekt
                     var fnEnv = Env.Create(prog.Remark, paramsEnv);
                     foreach (var bodyElement in fn2.Sequence)
                     {
-                        C.Nn(bodyElement);
-                        var bodyVal = eval(bodyElement, fnEnv);
-                        if (bodyVal != Void.Instance)
-                        {
-                            if (bodyElement is FnApply fna2)
-                                prog.Remark.Warn.ValueReturnedFromFunctionNotUsed(fna2);
-                            else
-                                prog.Remark.Warn.ValueIsNotAssigned(bodyElement);
-                        }
+                        evalSequenceItem(bodyElement, fnEnv);
                         if (ret != null)
                         {
                             var tmp = ret;
@@ -140,20 +132,19 @@ namespace Efekt
                     while (true)
                         foreach (var e in l.Body)
                         {
-                            C.Nn(e);
+                            evalSequenceItem(e, loopEnv);
                             if (isBreak)
                             {
                                 isBreak = false;
                                 return Void.Instance;
                             }
-                            eval(e, loopEnv);
+                            if (ret != null)
+                                return Void.Instance;
                         }
-                // ReSharper disable once UnusedVariable
-                case Break b:
+                case Break _:
                     isBreak = true;
                     return Void.Instance;
                 case ArrConstructor ae:
-                    // ReSharper disable once AssignNullToNotNullAttribute
                     return new Arr(new Values(ae.Arguments.Select(e => eval(e, env)).ToArray()));
                 case MemberAccess ma:
                     var exp = eval(ma.Exp, env);
@@ -171,15 +162,26 @@ namespace Efekt
                     var scopeEnv = Env.Create(prog.Remark, env);
                     foreach (var item in seq)
                     {
-                        var bodyVal = eval(item, scopeEnv);
-                        if (bodyVal != Void.Instance)
-                            throw new Exception("Unused value");
+                        evalSequenceItem(item, scopeEnv);
                         if (ret != null)
                             return Void.Instance;
                     }
                     return Void.Instance;
                 default:
                     throw new Exception();
+            }
+        }
+
+        private void evalSequenceItem(Element bodyElement, Env env)
+        {
+            C.Nn(bodyElement);
+            var bodyVal = eval(bodyElement, env);
+            if (bodyVal != Void.Instance)
+            {
+                if (bodyElement is FnApply fna2)
+                    prog.Remark.Warn.ValueReturnedFromFunctionNotUsed(fna2);
+                else
+                    prog.Remark.Warn.ValueIsNotAssigned(bodyElement);
             }
         }
 
