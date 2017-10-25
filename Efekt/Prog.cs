@@ -13,11 +13,8 @@ namespace Efekt
         private static readonly Printer cw = new Printer(ctw);
 
         public Element RootElement { get; private set; }
-        public string FilePath { get; private set; }
         public Remark Remark { get; }
-
-        public string RelativeFilePath => Utils.GetFilePathRelativeToBase(FilePath);
-
+        
         private Prog(TextWriter remarkWriter)
         {
             Remark = new Remark(remarkWriter);
@@ -28,17 +25,15 @@ namespace Efekt
         public static Prog Init(TextWriter remarkWriter, Element parsedElement)
         {
             var prog = new Prog(remarkWriter);
-            prog.FilePath = "";
             prog.RootElement = Tranform(parsedElement);
             return prog;
         }
 
-        
+
         public static Prog Load(TextWriter remarkWriter, string filePath)
         {
             C.Nn(filePath);
             var prog = new Prog(remarkWriter);
-            prog.FilePath = filePath;
             var code = File.ReadAllText(filePath);
 
             var ts = t.Tokenize(code);
@@ -65,11 +60,19 @@ namespace Efekt
         {
             if (e is Exp exp)
                 e = new Sequence(new[] {new Return(exp)});
-
+            /*
             if (e is Sequence body)
+                e = new Sequence(new Element[]
+                {
+                    new Var(new Ident("start", TokenType.Ident), new Fn(new FnParameters(), body)),
+                    new FnApply(new Ident("start", TokenType.Ident), new FnArguments())
+                });
+            */
+            if (e is Sequence body2)
                 e = new FnApply(
-                    new Fn(new FnParameters(), body),
+                    new Fn(new FnParameters(), body2),
                     new FnArguments());
+
             return e;
         }
     }

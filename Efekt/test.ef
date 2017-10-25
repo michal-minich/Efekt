@@ -1,4 +1,4 @@
-﻿var a = fn { return 1 }
+﻿var a = fn { 1 + fn {} }
 var b = fn { return a() }
 var c = fn { return b() }
 print(c())

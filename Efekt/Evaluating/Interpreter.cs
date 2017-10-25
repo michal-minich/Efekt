@@ -7,12 +7,14 @@ namespace Efekt
 {
     public sealed class StackItem
     {
-        public readonly int LineIndex;
-        public readonly string FnName;
+        public int LineIndex { get; }
+        public string FnName { get; }
+        public string FilePath { get; }
 
-        public StackItem(int lineIndex, string fnName)
+    public StackItem(Element e, string fnName)
         {
-            LineIndex = lineIndex;
+            LineIndex = e.LineIndex;
+            FilePath = e.FilePath;
             FnName = fnName;
         }
     }
@@ -35,13 +37,15 @@ namespace Efekt
             }
             catch (EfektException ex)
             {
-                var msg = ex.Message
-                          + Environment.NewLine
-                          + string.Join(
-                              Environment.NewLine,
-                              new[] {new StackItem(ex.Element.LineIndex, getVarName(getParentFunction(ex.Element)) ?? "(runtime)") }
-                                  .Concat(CallStack.Select(cs => cs).DistinctBy(cs => cs.LineIndex))
-                                  .Select(cs => "  " + program.RelativeFilePath + ":" + (cs.LineIndex + 1) + " " + cs.FnName));
+                var msg =
+                    ex.Message
+                    + Environment.NewLine
+                    + string.Join(
+                        Environment.NewLine,
+                        new[] {new StackItem(ex.Element, getVarName(getParentFunction(ex.Element)) ?? "(runtime)")}
+                            .Concat(CallStack.Select(cs => cs).DistinctBy(cs => cs.LineIndex))
+                            .Select(cs => "  " + Utils.GetFilePathRelativeToBase(cs.FilePath)
+                                          + ":" + (cs.LineIndex + 1) + " " + cs.FnName));
                 throw new EfektException(msg, ex, ex.Element);
             }
         }
@@ -84,7 +88,7 @@ namespace Efekt
                     var eArgs = fna.Arguments.Select(a => eval(a, env)).ToArray();
                     if (builtin != null)
                     {
-                        CallStack.Push(new StackItem(fna.LineIndex, builtin.Name));
+                        CallStack.Push(new StackItem(fna, builtin.Name));
                         var res = builtin.Fn(prog.Remark, new FnArguments(eArgs));
                         CallStack.Pop();
                         return res;
@@ -92,7 +96,7 @@ namespace Efekt
                     var fn2 = fn as Fn;
                     if (fn2 == null)
                         throw prog.Remark.Error.OnlyFunctionsCanBeApplied(fn);
-                    CallStack.Push(new StackItem(fna.LineIndex, getVarName(getParentFunction(fna)) ?? "(anonymous)"));
+                    CallStack.Push(new StackItem(fna, getVarName(getParentFunction(fna)) ?? "(anonymous)"));
                     var paramsEnv = Env.Create(prog.Remark, fn2.Env);
                     var ix = 0;
                     foreach (var p in fn2.Parameters)
