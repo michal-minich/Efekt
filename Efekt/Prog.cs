@@ -23,7 +23,7 @@ namespace Efekt
             return prog;
         }
 
-
+        
         public static Prog Load(string filePath)
         {
             C.Nn(filePath);
@@ -43,8 +43,11 @@ namespace Efekt
             var res = i.Eval(this);
             var text = Builtins.Writer.GetAndReset();
             Console.WriteLine(text);
-            Console.Write("Output: ");
-            cw.Write(res);
+            if (res != Void.Instance)
+            {
+                Console.Write("Output: ");
+                cw.Write(res);
+            }
         }
 
 

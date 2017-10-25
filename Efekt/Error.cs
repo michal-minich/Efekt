@@ -40,5 +40,11 @@ namespace Efekt
         {
             return new EfektException("Variable '" + ident.Name + "' is already declared", ident);
         }
+
+        [Pure]
+        public static Exception ValueIsNotAssigned(Element unusedValue)
+        {
+            return new EfektException("Value of expression is not used", unusedValue);
+        }
     }
 }

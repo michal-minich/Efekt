@@ -9,6 +9,7 @@ namespace Efekt
     public interface Element
     {
         int LineIndex { get; }
+        Element Parent { get; set; }
     }
 
 
@@ -21,6 +22,7 @@ namespace Efekt
         }
 
         public int LineIndex { get; }
+        public Element Parent { get; set; }
     }
 
     public interface Exp : Element
@@ -38,12 +40,12 @@ namespace Efekt
     }
 
 
-    public interface IElementList<out T> : IReadOnlyList<T> where T : Element
+    public interface IElementList<out T> : IReadOnlyList<T> where T : class, Element
     {
     }
 
 
-    public abstract class ElementList<T> : IElementList<T> where T : Element
+    public abstract class ElementList<T> : IElementList<T> where T : class, Element
     {
         private readonly IReadOnlyList<T> items;
 
@@ -82,9 +84,12 @@ namespace Efekt
         {
             if (TokenIterator.Instance != null)
                 LineIndex = TokenIterator.Instance.LineIndex;
+            foreach (var i in items)
+                i.Parent = this;
         }
 
         public int LineIndex { get; }
+        public Element Parent { get; set; }
     }
 
 
@@ -181,6 +186,9 @@ namespace Efekt
 
             Ident = ident;
             Exp = exp;
+
+            ident.Parent = this;
+            exp.Parent = this;
         }
         
         public Ident Ident { get; }
@@ -198,6 +206,9 @@ namespace Efekt
 
             To = to;
             Exp = exp;
+
+            to.Parent = this;
+            exp.Parent = this;
         }
         
         public Exp To { get; }
@@ -216,6 +227,11 @@ namespace Efekt
             Test = test;
             Then = then;
             Otherwise = otherwise;
+
+            test.Parent = this;
+            then.Parent = this;
+            if (otherwise != null)
+                otherwise.Parent = this;
         }
 
 
@@ -233,6 +249,7 @@ namespace Efekt
         {
             C.Nn(body);
             Body = body;
+            body.Parent = this;
         }
         
         public Sequence Body { get; }
@@ -246,6 +263,7 @@ namespace Efekt
         {
             C.Nn(exp);
             Exp = exp;
+            exp.Parent = this;
         }
 
         public Exp Exp { get; }
@@ -273,6 +291,8 @@ namespace Efekt
 
             Parameters = parameters;
             Sequence = sequence;
+
+            sequence.Parent = this;
         }
 
         [DebuggerStepThrough]
@@ -280,7 +300,6 @@ namespace Efekt
             : this(parameters, sequence)
         {
             C.Nn(env);
-
             Env = env;
         }
 
@@ -337,6 +356,8 @@ namespace Efekt
 
             Fn = fn;
             Arguments = arguments;
+
+            fn.Parent = this;
         }
 
         public Exp Fn { get; }
@@ -350,7 +371,6 @@ namespace Efekt
         public ArrConstructor(FnArguments arguments)
         {
             C.Nn(arguments);
-
             Arguments = arguments;
         }
 
@@ -364,7 +384,6 @@ namespace Efekt
         public Arr(Values values)
         {
             C.Nn(values);
-
             Values = values;
         }
 
@@ -377,7 +396,6 @@ namespace Efekt
         public New(ClassBody body)
         {
             C.Nn(body);
-
             Body = body;
         }
 
@@ -414,6 +432,9 @@ namespace Efekt
 
             Exp = exp;
             Ident = ident;
+
+            exp.Parent = this;
+            ident.Parent = this;
         }
         
         public Exp Exp { get; }

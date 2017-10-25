@@ -1,20 +1,31 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using JetBrains.Annotations;
 
 namespace Efekt
 {
-    public class Interpreter
+    public sealed class StackItem
+    {
+        public readonly int LineIndex;
+        public readonly string FnName;
+
+        public StackItem(int lineIndex, string fnName)
+        {
+            LineIndex = lineIndex;
+            FnName = fnName;
+        }
+    }
+
+    public sealed class Interpreter
     {
         [CanBeNull] private Value ret;
         private bool isBreak;
-        public Stack<FnApply> CallStack { get; private set; }
+        public Stack<StackItem> CallStack { get; private set; }
         
         public Value Eval(Prog prog)
         {
-            CallStack = new Stack<FnApply>();
+            CallStack = new Stack<StackItem>();
 
             try
             {
@@ -27,9 +38,9 @@ namespace Efekt
                           + Environment.NewLine
                           + string.Join(
                               Environment.NewLine,
-                              new[] {ex.Element.LineIndex}
-                                  .Concat(CallStack.Select(cs => cs.LineIndex))
-                                  .Select(ix => f + ":" + (ix + 1)));
+                              new[] {new StackItem(ex.Element.LineIndex, getVarName(getParentFunction(ex.Element)) ?? "(runtime)") }
+                                  .Concat(CallStack.Select(cs => cs).DistinctBy(cs => cs.LineIndex))
+                                  .Select(cs => "  " + f + ":" + (cs.LineIndex + 1) + " " + cs.FnName));
                 throw new EfektException(msg, ex, ex.Element);
             }
         }
@@ -67,18 +78,20 @@ namespace Efekt
                     ret = eval(r.Exp, env);
                     return Void.Instance;
                 case FnApply fna:
-                    CallStack.Push(fna);
                     var fn = eval(fna.Fn, env);
                     var builtin = fn as Builtin;
                     var eArgs = fna.Arguments.Select(a => eval(a, env)).ToArray();
                     if (builtin != null)
                     {
+                        CallStack.Push(new StackItem(fna.LineIndex, builtin.Name));
+                        var res = builtin.Fn(new FnArguments(eArgs));
                         CallStack.Pop();
-                        return builtin.Fn(new FnArguments(eArgs));
+                        return res;
                     }
                     var fn2 = fn as Fn;
                     if (fn2 == null)
                         throw Error.OnlyFunctionsCanBeApplied(fn);
+                    CallStack.Push(new StackItem(fna.LineIndex, getVarName(getParentFunction(fna)) ?? "(anonymous)"));
                     var paramsEnv = Env.Create(fn2.Env);
                     var ix = 0;
                     foreach (var p in fn2.Parameters)
@@ -92,11 +105,14 @@ namespace Efekt
                     foreach (var bodyElement in fn2.Sequence)
                     {
                         C.Nn(bodyElement);
-                        // ReSharper disable once UnusedVariable
                         var bodyVal = eval(bodyElement, fnEnv);
-                        //if (bodyVal != Void.Instance)
-                        //if (bodyElement is Value)
-                        //    throw new Exception("Unused value");
+                        if (bodyVal != Void.Instance)
+                        {
+                            if (bodyElement is FnApply fna2)
+                                Warn.ValueReturnedFromFunctionNotUsed(fna2);
+                            else
+                                throw Error.ValueIsNotAssigned(bodyElement);
+                        }
                         if (ret != null)
                         {
                             var tmp = ret;
@@ -108,7 +124,9 @@ namespace Efekt
                     CallStack.Pop();
                     return Void.Instance;
                 case Fn f:
-                    return new Fn(f.Parameters, f.Sequence, env);
+                    var fn3 = new Fn(f.Parameters, f.Sequence, env);
+                    fn3.Parent = f.Parent;
+                    return fn3;
                 case When w:
                     if (eval(w.Test, env) == Bool.True)
                         return eval(w.Then, Env.Create(env));
@@ -162,6 +180,27 @@ namespace Efekt
                 default:
                     throw Error.Fail();
             }
+        }
+
+
+        [CanBeNull]
+        private Fn getParentFunction([CanBeNull] Element e)
+        {
+            while (true)
+            {
+                if (e == null)
+                    return null;
+                if (e.Parent is Fn fn)
+                    return fn;
+                e = e.Parent;
+            }
+        }
+
+
+        [CanBeNull]
+        private string getVarName([CanBeNull] Fn fn)
+        {
+            return fn == null ? null : (fn.Parent is Var v ? v.Ident.Name : null);
         }
     }
 }

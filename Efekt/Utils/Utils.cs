@@ -25,12 +25,7 @@ namespace Efekt
         {
             var fromUri = new Uri(basePath);
             var toUri = new Uri(fromUri, filePath);
-
-            if (fromUri.Scheme != toUri.Scheme)
-            {
-                return filePath;
-            } // path can't be made relative.
-
+            
             var relativeUri = fromUri.MakeRelativeUri(toUri);
             var relativePath = Uri.UnescapeDataString(relativeUri.ToString());
 
@@ -39,7 +34,16 @@ namespace Efekt
 
             return relativePath;
         }
+
+
+        public static IEnumerable<TSource> DistinctBy<TSource, TDistictKey>(
+            this IEnumerable<TSource> source,
+            Func<TSource, TDistictKey> selector)
+        {
+            return source.GroupBy(selector).Select(g => g.First());
+        }
     }
+
 
     public static class C
     {
