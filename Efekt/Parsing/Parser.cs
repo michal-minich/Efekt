@@ -14,7 +14,7 @@ namespace Efekt
 
     internal sealed class Parser : ElementIterator
     {
-        internal Parser()
+        internal Parser(Remark remark) : base (remark)
         {
             Parsers = new List<ParseElement>
             {
@@ -45,7 +45,7 @@ namespace Efekt
         {
             var elb = ParseBracedList('}', false);
             if (elb == null)
-                throw Error.Fail();
+                throw remark.Error.Fail();
             return new Sequence(elb.Items);
         }
 
@@ -79,13 +79,13 @@ namespace Efekt
             else if (t == '[')
                 end = ']';
             else
-                throw Error.Fail();
+                throw remark.Error.Fail();
             if (endBrace != end)
-                throw Error.Fail();
+                throw remark.Error.Fail();
             Ti.Next();
             var elb = ParseList(endBrace, isComaSeparated);
             if (Text[0] != end)
-                throw Error.Fail();
+                throw remark.Error.Fail();
             Ti.Next();
             return elb;
         }
@@ -140,7 +140,7 @@ namespace Efekt
             var p = Text == "{" ? new FnParameters() : ParseFnParameters();
             var s = ParseMandatorySequence();
             if (s == null)
-                throw Error.Fail();
+                throw remark.Error.Fail();
             return new Fn(p, s);
         }
 
@@ -157,11 +157,11 @@ namespace Efekt
             {
                 if (second is Ident i)
                     return new MemberAccess(prev, i);
-                throw Error.Fail();
+                throw remark.Error.Fail();
             }
             var e2 = second as Exp;
             if (e2 == null)
-                throw Error.Fail();
+                throw remark.Error.Fail();
             if (opText == "=")
                 return new Assign(prev, e2);
             return new FnApply(new Ident(opText, TokenType.Op), new FnArguments(new[] { prev, e2 }));
@@ -196,7 +196,7 @@ namespace Efekt
             var elb = ParseBracedList(')', false);
             if (elb.Items.Count == 1)
                 return elb.Items.First();
-            throw Error.Fail();
+            throw remark.Error.Fail();
         }
 
 
@@ -273,9 +273,9 @@ namespace Efekt
             {
                 if (a.To is Ident i)
                     return new Var(i, a.Exp);
-                throw Error.Fail();
+                throw remark.Error.Fail();
             }
-            throw Error.Fail();
+            throw remark.Error.Fail();
         }
 
 
@@ -291,7 +291,7 @@ namespace Efekt
             var se = ParseOne();
             if (se is Exp exp)
                 return new Return(exp);
-            throw Error.Fail();
+            throw remark.Error.Fail();
         }
         
 
@@ -304,9 +304,9 @@ namespace Efekt
             var test = ParseOne();
             var testExp = test as Exp;
             if (testExp == null)
-                throw Error.Fail();
+                throw remark.Error.Fail();
             if (Text != "then")
-                throw Error.Fail();
+                throw remark.Error.Fail();
             Ti.Next();
             var then = ParseOne();
             Element otherwise;

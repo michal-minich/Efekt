@@ -7,27 +7,30 @@ namespace Efekt
     {
         private readonly Dictionary<string, Value> dict = new Dictionary<string, Value>();
         [CanBeNull] private readonly Env parent;
+        private readonly Remark remark;
 
-        private Env()
+        private Env(Remark remark)
         {
+            this.remark = remark;
             parent = null;
             foreach (var b in Builtins.Values)
                 dict.Add(b.Name, b);
         }
 
-        private Env(Env parent)
+        private Env(Remark remark, Env parent)
         {
+            this.remark = remark;
             this.parent = parent;
         }
 
-        public static Env CreateRoot()
+        public static Env CreateRoot(Remark remark)
         {
-            return new Env();
+            return new Env(remark);
         }
 
-        public static Env Create(Env parent)
+        public static Env Create(Remark remark, Env parent)
         {
-            return new Env(parent);
+            return new Env(remark, parent);
         }
 
         public Value Get(Ident ident)
@@ -36,13 +39,13 @@ namespace Efekt
                 return value;
             if (parent != null)
                 return parent.Get(ident);
-            throw Error.VariableIsNotDeclared(ident);
+            throw remark.Error.VariableIsNotDeclared(ident);
         }
 
         public void Declare(Ident ident, Value value)
         {
             if (dict.ContainsKey(ident.Name))
-                throw Error.VariableIsAlreadyDeclared(ident);
+                throw remark.Error.VariableIsAlreadyDeclared(ident);
             dict.Add(ident.Name, value);
         }
 
@@ -53,12 +56,17 @@ namespace Efekt
             {
                 if (e.dict.ContainsKey(ident.Name))
                 {
+                    var old = e.dict[ident.Name];
+                    if (old.GetType() != value.GetType())
+                    {
+                        remark.Warn.AssigningDifferntType(ident, old, value);
+                    }
                     e.dict[ident.Name] = value;
                     return;
                 }
                 e = e.parent;
             } while (e != null);
-            throw Error.VariableIsNotDeclared(ident);
+            throw remark.Error.VariableIsNotDeclared(ident);
         }
     }
 }

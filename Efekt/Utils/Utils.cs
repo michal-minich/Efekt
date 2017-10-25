@@ -54,7 +54,7 @@ namespace Efekt
         public static void Assert(bool condition)
         {
             if (!condition)
-                throw Error.Fail();
+                throw new Exception();
         }
         
 
@@ -65,7 +65,7 @@ namespace Efekt
         public static void Assume(bool condition)
         {
             if (!condition)
-                throw Error.Fail();
+                throw new Exception();
         }
 
 
@@ -76,7 +76,7 @@ namespace Efekt
         public static void Nn([CanBeNull] object value)
         {
             if (value == null)
-                throw Error.Fail();
+                throw new Exception(); ;
         }
 
 
@@ -88,7 +88,7 @@ namespace Efekt
             Nn(items);
             foreach (var i in items)
                 if (i == null)
-                    throw Error.Fail();
+                    throw new Exception();
         }
     }
 }

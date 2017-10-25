@@ -21,26 +21,27 @@ namespace Efekt
     {
         [CanBeNull] private Value ret;
         private bool isBreak;
+        private Prog prog;
         public Stack<StackItem> CallStack { get; private set; }
         
-        public Value Eval(Prog prog)
+        public Value Eval(Prog program)
         {
+            prog = program;
             CallStack = new Stack<StackItem>();
 
             try
             {
-                return eval(prog.RootElement, Env.CreateRoot());
+                return eval(program.RootElement, Env.CreateRoot(program.Remark));
             }
             catch (EfektException ex)
             {
-                var f = Utils.GetFilePathRelativeToBase(prog.FilePath);
                 var msg = ex.Message
                           + Environment.NewLine
                           + string.Join(
                               Environment.NewLine,
                               new[] {new StackItem(ex.Element.LineIndex, getVarName(getParentFunction(ex.Element)) ?? "(runtime)") }
                                   .Concat(CallStack.Select(cs => cs).DistinctBy(cs => cs.LineIndex))
-                                  .Select(cs => "  " + f + ":" + (cs.LineIndex + 1) + " " + cs.FnName));
+                                  .Select(cs => "  " + program.RelativeFilePath + ":" + (cs.LineIndex + 1) + " " + cs.FnName));
                 throw new EfektException(msg, ex, ex.Element);
             }
         }
@@ -69,9 +70,9 @@ namespace Efekt
                             o2.Env.Set(ma.Ident, val2);
                             return Void.Instance;
                         }
-                        throw Error.OnlyObjectsHaveMembers(obj);
+                        throw prog.Remark.Error.OnlyObjectsHaveMembers(obj);
                     }
-                    throw Error.AssignTargetIsInvalid(a.To);
+                    throw prog.Remark.Error.AssignTargetIsInvalid(a.To);
                 case Ident i:
                     return env.Get(i);
                 case Return r:
@@ -84,15 +85,15 @@ namespace Efekt
                     if (builtin != null)
                     {
                         CallStack.Push(new StackItem(fna.LineIndex, builtin.Name));
-                        var res = builtin.Fn(new FnArguments(eArgs));
+                        var res = builtin.Fn(prog.Remark, new FnArguments(eArgs));
                         CallStack.Pop();
                         return res;
                     }
                     var fn2 = fn as Fn;
                     if (fn2 == null)
-                        throw Error.OnlyFunctionsCanBeApplied(fn);
+                        throw prog.Remark.Error.OnlyFunctionsCanBeApplied(fn);
                     CallStack.Push(new StackItem(fna.LineIndex, getVarName(getParentFunction(fna)) ?? "(anonymous)"));
-                    var paramsEnv = Env.Create(fn2.Env);
+                    var paramsEnv = Env.Create(prog.Remark, fn2.Env);
                     var ix = 0;
                     foreach (var p in fn2.Parameters)
                     {
@@ -101,7 +102,7 @@ namespace Efekt
                         C.Nn(eArg);
                         paramsEnv.Declare(p, eArg);
                     }
-                    var fnEnv = Env.Create(paramsEnv);
+                    var fnEnv = Env.Create(prog.Remark, paramsEnv);
                     foreach (var bodyElement in fn2.Sequence)
                     {
                         C.Nn(bodyElement);
@@ -109,9 +110,9 @@ namespace Efekt
                         if (bodyVal != Void.Instance)
                         {
                             if (bodyElement is FnApply fna2)
-                                Warn.ValueReturnedFromFunctionNotUsed(fna2);
+                                prog.Remark.Warn.ValueReturnedFromFunctionNotUsed(fna2);
                             else
-                                throw Error.ValueIsNotAssigned(bodyElement);
+                                prog.Remark.Warn.ValueIsNotAssigned(bodyElement);
                         }
                         if (ret != null)
                         {
@@ -129,13 +130,13 @@ namespace Efekt
                     return fn3;
                 case When w:
                     if (eval(w.Test, env) == Bool.True)
-                        return eval(w.Then, Env.Create(env));
+                        return eval(w.Then, Env.Create(prog.Remark, env));
                     else if (w.Otherwise != null)
-                        return eval(w.Otherwise, Env.Create(env));
+                        return eval(w.Otherwise, Env.Create(prog.Remark, env));
                     else
                         return Void.Instance;
                 case Loop l:
-                    var loopEnv = Env.Create(env);
+                    var loopEnv = Env.Create(prog.Remark, env);
                     while (true)
                         foreach (var e in l.Body)
                         {
@@ -158,16 +159,16 @@ namespace Efekt
                     var exp = eval(ma.Exp, env);
                     if (exp is Obj o)
                         return o.Env.Get(ma.Ident);
-                    throw Error.OnlyObjectsHaveMembers(exp);
+                    throw prog.Remark.Error.OnlyObjectsHaveMembers(exp);
                 case New n:
-                    var objEnv = Env.Create(env);
+                    var objEnv = Env.Create(prog.Remark, env);
                     foreach (var v in n.Body)
                         eval(v, objEnv);
                     return new Obj(n.Body, objEnv);
                 case Value ve:
                     return ve;
                 case Sequence seq:
-                    var scopeEnv = Env.Create(env);
+                    var scopeEnv = Env.Create(prog.Remark, env);
                     foreach (var item in seq)
                     {
                         var bodyVal = eval(item, scopeEnv);
@@ -178,7 +179,7 @@ namespace Efekt
                     }
                     return Void.Instance;
                 default:
-                    throw Error.Fail();
+                    throw new Exception();
             }
         }
 

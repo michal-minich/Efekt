@@ -5,34 +5,44 @@ namespace Efekt
 {
     public sealed class Prog
     {
+        public static Prog Instance { get; private set; }
+
         private static readonly Tokenizer t = new Tokenizer();
-        private static readonly Parser p = new Parser();
         private static readonly Interpreter i = new Interpreter();
         private static readonly PlainTextCodeWriter ctw = new PlainTextCodeWriter(new ConsoleWriter());
         private static readonly Printer cw = new Printer(ctw);
 
         public Element RootElement { get; private set; }
         public string FilePath { get; private set; }
+        public Remark Remark { get; }
 
+        public string RelativeFilePath => Utils.GetFilePathRelativeToBase(FilePath);
 
-        public static Prog Init(Element parsedElement)
+        private Prog(TextWriter remarkWriter)
         {
-            var prog = new Prog();
+            Remark = new Remark(remarkWriter);
+            Instance = this;
+        }
+
+
+        public static Prog Init(TextWriter remarkWriter, Element parsedElement)
+        {
+            var prog = new Prog(remarkWriter);
             prog.FilePath = "";
             prog.RootElement = Tranform(parsedElement);
             return prog;
         }
 
         
-        public static Prog Load(string filePath)
+        public static Prog Load(TextWriter remarkWriter, string filePath)
         {
             C.Nn(filePath);
-            var prog = new Prog();
+            var prog = new Prog(remarkWriter);
             prog.FilePath = filePath;
             var code = File.ReadAllText(filePath);
 
             var ts = t.Tokenize(code);
-            var e = p.Parse(ts);
+            var e = new Parser(prog.Remark).Parse(filePath, ts);
             prog.RootElement = Tranform(e);
             return prog;
         }

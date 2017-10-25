@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 
 // ReSharper disable once CheckNamespace
 namespace Efekt.Tests
@@ -6,7 +7,6 @@ namespace Efekt.Tests
     internal static class Tests
     {
         private static readonly Tokenizer t = new Tokenizer();
-        private static readonly Parser p = new Parser();
         private static readonly Interpreter i = new Interpreter();
         private static readonly StringWriter sw = new StringWriter();
         private static readonly PlainTextCodeWriter ctw = new PlainTextCodeWriter(sw);
@@ -152,17 +152,18 @@ namespace Efekt.Tests
         {
             var tokens = t.Tokenize(code).ToList();
             if (tokens.Count != 0 && code.Length == 0 || tokens.Count == 0 && code.Length > 0)
-                throw Error.Fail();
-            var se = p.Parse(tokens);
-            var prog = Prog.Init(se);
+                throw new Exception();
+            var remarkWriter = new StringWriter();
+            var se = new Parser(new Remark(remarkWriter)).Parse("unittest.ef", tokens);
+            var prog = Prog.Init(remarkWriter, se);
             var r = i.Eval(prog);
             cw.Write(r);
             var val = sw.GetAndReset();
             if (val != expectedResult)
-                throw Error.Fail();
+                throw prog.Remark.Error.Fail();
             var acutalOutput = Builtins.Writer.GetAndReset();
             if (acutalOutput != expectedOutput)
-                throw Error.Fail();
+                throw prog.Remark.Error.Fail();
         }
     }
 }

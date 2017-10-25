@@ -6,7 +6,6 @@ namespace Efekt
     public static class Program
     {
         private static readonly Tokenizer t = new Tokenizer();
-        private static readonly Parser p = new Parser();
         private static readonly Interpreter i = new Interpreter();
         private static readonly PlainTextCodeWriter ctw = new PlainTextCodeWriter(new ConsoleWriter());
         private static readonly Printer cw = new Printer(ctw);
@@ -21,7 +20,7 @@ namespace Efekt
 
                 if (args.Length != 0)
                 {
-                    var prog = Prog.Load(args[0]);
+                    var prog = Prog.Load(new ConsoleWriter(), args[0]);
                     prog.Run();
                     return;
                 }
@@ -50,12 +49,13 @@ namespace Efekt
 
             Console.WriteLine();
             Console.WriteLine("PARSE");
-            var pse = p.Parse(ts);
+            var remarkWriter = new ConsoleWriter();
+            var pse = new Parser(new Remark(remarkWriter)).Parse("debug.ef", ts);
             cw.Write(pse);
 
             Console.WriteLine();
             Console.WriteLine("EVAL");
-            var prog = Prog.Init(pse);
+            var prog = Prog.Init(remarkWriter, pse);
             var res = i.Eval(prog);
             cw.Write(res);
 

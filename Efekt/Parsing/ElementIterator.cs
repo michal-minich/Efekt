@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using JetBrains.Annotations;
 
 namespace Efekt
@@ -11,11 +12,16 @@ namespace Efekt
         
         protected string Text => Ti.Current.Text;
         protected TokenType Type => Ti.Current.Type;
+        protected readonly Remark remark;
 
-
-        internal Element Parse(IEnumerable<Token> tokens)
+        public ElementIterator(Remark remark)
         {
-            Ti = new TokenIterator(tokens);
+            this.remark = remark;
+        }
+
+        internal Element Parse(string filePath, IEnumerable<Token> tokens)
+        {
+            Ti = new TokenIterator(filePath, tokens);
             var elb = new ElementListBuilder();
             Ti.Next();
             while (Ti.HasWork)
@@ -41,7 +47,7 @@ namespace Efekt
                     e = parseWithOp(e);
                 return e;
             }
-            throw Error.Fail();
+            throw new Exception();
         }
 
         private Element parseWithOp(Element e)
@@ -64,7 +70,7 @@ namespace Efekt
                 {
                     if (e2 is Exp ee)
                         return parseWithOp(new Assign(a.To, ee));
-                    throw Error.Fail();
+                    throw remark.Error.Fail();
                 }
                 return parseWithOp(e2);
             }

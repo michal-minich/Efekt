@@ -9,6 +9,7 @@ namespace Efekt
     public interface Element
     {
         int LineIndex { get; }
+        string FilePath { get; }
         Element Parent { get; set; }
     }
 
@@ -18,10 +19,14 @@ namespace Efekt
         protected AElement()
         {
             if (TokenIterator.Instance != null)
+            {
                 LineIndex = TokenIterator.Instance.LineIndex;
+                FilePath = TokenIterator.Instance.FilePath;
+            }
         }
 
         public int LineIndex { get; }
+        public string FilePath { get; }
         public Element Parent { get; set; }
     }
 
@@ -83,12 +88,16 @@ namespace Efekt
         public Sequence(IReadOnlyList<Element> items) : base(items)
         {
             if (TokenIterator.Instance != null)
+            {
                 LineIndex = TokenIterator.Instance.LineIndex;
+                FilePath = TokenIterator.Instance.FilePath;
+            }
             foreach (var i in items)
                 i.Parent = this;
         }
 
         public int LineIndex { get; }
+        public string FilePath { get; }
         public Element Parent { get; set; }
     }
 
@@ -142,7 +151,7 @@ namespace Efekt
     public sealed class Builtin : AElement, Value
     {
         [DebuggerStepThrough]
-        public Builtin(string name, Func<FnArguments, Value> fn)
+        public Builtin(string name, Func<Remark, FnArguments, Value> fn)
         {
             C.Assert(!string.IsNullOrWhiteSpace(name));
             C.Assert(name.Trim().Length == name.Length);
@@ -153,7 +162,7 @@ namespace Efekt
         }
 
         public string Name { get; }
-        public Func<FnArguments, Value> Fn { get; }
+        public Func<Remark, FnArguments, Value> Fn { get; }
     }
 
 

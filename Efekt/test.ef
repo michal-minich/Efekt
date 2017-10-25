@@ -2,3 +2,4 @@
 var b = fn { return a() }
 var c = fn { return b() }
 print(c())
+a = 1 + fn {}

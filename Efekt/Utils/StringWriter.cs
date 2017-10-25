@@ -11,6 +11,11 @@ namespace Efekt
             sb.Append(value);
         }
 
+        public void WriteLine(string value)
+        {
+            sb.AppendLine(value);
+        }
+
         public string GetAndReset()
         {
             var s = sb.ToString();

@@ -13,10 +13,12 @@ namespace Efekt
 
         internal bool Finished => Current.Type == TokenType.Terminal;
         internal bool HasWork => !Finished;
+        public string FilePath { get; }
 
 
-        internal TokenIterator(IEnumerable<Token> tokens)
+        internal TokenIterator(string filePath, IEnumerable<Token> tokens)
         {
+            FilePath = filePath;
             te = tokens.GetEnumerator();
             Instance = this;
         }

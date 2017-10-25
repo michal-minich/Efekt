@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+    using System.Collections.Generic;
 
 namespace Efekt
 {
@@ -8,25 +8,25 @@ namespace Efekt
 
         public static readonly IReadOnlyList<Builtin> Values = new List<Builtin>
         {
-            new Builtin("+", @params =>
+            new Builtin("+", (remark, @params) =>
             {
                 C.Nn(@params);
                 C.Assume(@params.Count == 2);
-                var a = @params[0].AsInt();
-                var b = @params[1].AsInt();
+                var a = @params[0].AsInt(remark);
+                var b = @params[1].AsInt(remark);
                 return new Int(a.Value + b.Value);
             }),
 
-            new Builtin("*", @params =>
+            new Builtin("*", (remark, @params)  =>
             {
                 C.Nn(@params);
                 C.Assume(@params.Count == 2);
-                var a = @params[0].AsInt();
-                var b = @params[1].AsInt();
+                var a = @params[0].AsInt(remark);
+                var b = @params[1].AsInt(remark);
                 return new Int(a.Value * b.Value);
             }),
 
-            new Builtin("print", @params =>
+            new Builtin("print", (remark, @params)  =>
             {
                 C.Nn(@params);
                 C.Assume(@params.Count == 1);
@@ -36,10 +36,10 @@ namespace Efekt
                 return Void.Instance;
             }),
 
-            new Builtin("cons", @params =>
+            new Builtin("cons", (remark, @params)  =>
             {
                 C.AllNotNull(@params);
-                var xs = @params[0].AsArr().Values;
+                var xs = @params[0].AsArr(remark).Values;
                 var list = new List<Value>(xs.Count + 1);
                 list.AddRange(xs);
                 list.Add((Value) @params[1]);
@@ -48,15 +48,15 @@ namespace Efekt
         };
 
 
-        private static Int AsInt(this Exp exp)
+        private static Int AsInt(this Exp exp, Remark remark)
         {
-            return exp is Int i ? i : throw Error.Fail();
+            return exp is Int i ? i : throw remark.Error.DifferntTypeExpected(exp, typeof(Int).Name);
         }
 
 
-        private static Arr AsArr(this Exp exp)
+        private static Arr AsArr(this Exp exp, Remark remark)
         {
-            return exp is Arr a ? a : throw Error.Fail();
+            return exp is Arr a ? a : throw remark.Error.DifferntTypeExpected(exp, typeof(Arr).Name);
         }
 
 
