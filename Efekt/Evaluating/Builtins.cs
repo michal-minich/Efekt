@@ -8,25 +8,25 @@ namespace Efekt
 
         public static readonly IReadOnlyList<Builtin> Values = new List<Builtin>
         {
-            new Builtin("+", (remark, @params) =>
+            new Builtin("+", (remark, @params, inExp) =>
             {
                 C.Nn(@params);
                 C.Assume(@params.Count == 2);
-                var a = @params[0].AsInt(remark);
-                var b = @params[1].AsInt(remark);
+                var a = @params[0].AsInt(remark, inExp);
+                var b = @params[1].AsInt(remark, inExp);
                 return new Int(a.Value + b.Value);
             }),
 
-            new Builtin("*", (remark, @params)  =>
+            new Builtin("*", (remark, @params, inExp)  =>
             {
                 C.Nn(@params);
                 C.Assume(@params.Count == 2);
-                var a = @params[0].AsInt(remark);
-                var b = @params[1].AsInt(remark);
+                var a = @params[0].AsInt(remark, inExp);
+                var b = @params[1].AsInt(remark, inExp);
                 return new Int(a.Value * b.Value);
             }),
 
-            new Builtin("print", (remark, @params)  =>
+            new Builtin("print", (remark, @params, inExp)  =>
             {
                 C.Nn(@params);
                 C.Assume(@params.Count == 1);
@@ -36,34 +36,16 @@ namespace Efekt
                 return Void.Instance;
             }),
 
-            new Builtin("cons", (remark, @params)  =>
+            new Builtin("cons", (remark, @params, inExp)  =>
             {
                 C.AllNotNull(@params);
-                var xs = @params[0].AsArr(remark).Values;
+                var xs = @params[0].AsArr(remark, inExp).Values;
                 var list = new List<Value>(xs.Count + 1);
                 list.AddRange(xs);
-                list.Add(@params[1].AsValue(remark));
+                list.Add(@params[1].AsValue(remark, inExp));
                 return new Arr(new Values(list.ToArray()));
             })
         };
-
-
-        private static Int AsInt(this Exp exp, Remark remark)
-        {
-            return exp is Int i ? i : throw remark.Error.DifferentTypeExpected(exp, nameof(Int));
-        }
-
-
-        private static Arr AsArr(this Exp exp, Remark remark)
-        {
-            return exp is Arr a ? a : throw remark.Error.DifferentTypeExpected(exp, nameof(Arr));
-        }
-
-
-        private static Value AsValue(this Exp exp, Remark remark)
-        {
-            return exp is Value v ? v : throw remark.Error.DifferentTypeExpected(exp, nameof(Value));
-        }
 
 
         private static readonly StringWriter sw = new StringWriter();

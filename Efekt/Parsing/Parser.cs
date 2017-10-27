@@ -29,8 +29,8 @@ namespace Efekt
 
         private T post<T>(T element) where T : Element
         {
-            element.LineIndex = StartLineIndex.Pop();
             element.FilePath = Ti.FilePath;
+            element.LineIndex = StartLineIndex.Pop();
             return element;
         }
 
@@ -177,6 +177,8 @@ namespace Efekt
             markStart();
             var opText = Text;
             Ti.Next();
+            var ident = post(new Ident(opText, TokenType.Op));
+            markStart();
             var second = ParseOne(false);
             if (opText == ".")
             {
@@ -189,7 +191,7 @@ namespace Efekt
                 throw remark.Error.Fail();
             if (opText == "=")
                 return post(new Assign(prev, e2));
-            return post(new FnApply(new Ident(opText, TokenType.Op), new FnArguments(new[] { prev, e2 })));
+            return post(new FnApply(ident, new FnArguments(new[] { prev, e2 })));
         }
 
 
@@ -308,7 +310,7 @@ namespace Efekt
             {
                 if (a.To is Ident i)
                     return post(new Var(i, a.Exp));
-                throw remark.Error.Fail();
+                throw remark.Error.AssignTargetIsInvalid(a.To);
             }
             throw remark.Error.Fail();
         }

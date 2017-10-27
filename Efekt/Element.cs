@@ -20,17 +20,6 @@ namespace Efekt
         {
             LineIndex = -1;
             FilePath = "runtime.ef";
-
-            if (TokenIterator.Instance != null)
-            {
-                //LineIndex = TokenIterator.Instance.LineIndex;
-                //FilePath = TokenIterator.Instance.FilePath;
-            }
-            else
-            {
-                //LineIndex = -1;
-                //FilePath = "runtime.ef";
-            }
         }
 
         public int LineIndex { get; set; }
@@ -161,7 +150,7 @@ namespace Efekt
     public sealed class Builtin : AElement, Value
     {
         [DebuggerStepThrough]
-        public Builtin(string name, Func<Remark, FnArguments, Value> fn)
+        public Builtin(string name, Func<Remark, FnArguments, Exp, Value> fn)
         {
             C.Assert(!string.IsNullOrWhiteSpace(name));
             C.Assert(name.Trim().Length == name.Length);
@@ -172,7 +161,7 @@ namespace Efekt
         }
 
         public string Name { get; }
-        public Func<Remark, FnArguments, Value> Fn { get; }
+        public Func<Remark, FnArguments, Exp, Value> Fn { get; }
     }
 
 

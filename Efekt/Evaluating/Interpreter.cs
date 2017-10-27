@@ -7,57 +7,18 @@ namespace Efekt
 {
     public sealed class StackItem
     {
-        public Element e;
+        private readonly Element e;
         private string fnName;
         public int LineIndex { get; internal set; }
+        public string FilePath => e.FilePath;
+        public string FnName => fnName ?? (fnName = (((Fn) e).Parent is Var v ? v.Ident.Name : null) ?? "(anonymous)");
 
-        public string FnName
+        public StackItem(Fn fn) => e = fn;
+
+        public StackItem(Builtin b, string fnName)
         {
-            get
-            {
-                if (fnName == null)
-                    fnName = getVarName((Fn)e) ?? "(anonymous)";
-                return fnName;
-            }
-        }
-
-        public string FilePath { get; }
-
-        public StackItem(Element fna)
-        {
-            LineIndex = fna.LineIndex;
-            FilePath = fna.FilePath;
-            this.e = fna;
-        }
-
-        public StackItem(Element fna, string fnName)
-        {
-            LineIndex = fna.LineIndex;
-            FilePath = fna.FilePath;
-            this.e = fna;
+            e = b;
             this.fnName = fnName;
-        }
-
-
-
-        [CanBeNull]
-        private static Fn getParentFunction([CanBeNull] Element e)
-        {
-            while (true)
-            {
-                if (e == null)
-                    return null;
-                if (e.Parent is Fn fn)
-                    return fn;
-                e = e.Parent;
-            }
-        }
-
-
-        [CanBeNull]
-        public  static string getVarName([CanBeNull] Fn fn)
-        {
-            return fn == null ? null : (fn.Parent is Var v ? v.Ident.Name : null);
         }
     }
 
@@ -67,7 +28,11 @@ namespace Efekt
         private bool isBreak;
         private Prog prog;
         public Stack<StackItem> CallStack { get; private set; }
-        
+
+        private static readonly StringWriter sw = new StringWriter();
+        private static readonly PlainTextCodeWriter ctw = new PlainTextCodeWriter(sw);
+        private static readonly Printer cw = new Printer(ctw);
+
         public Value Eval(Prog program)
         {
             prog = program;
@@ -79,13 +44,13 @@ namespace Efekt
             }
             catch (EfektException ex)
             {
+                cw.Write(ex.Element);
                 var msg =
-                    ex.Message
+                    ex.Message + " in '" + sw.GetAndReset() + "'"
                     + Environment.NewLine
                     + string.Join(
                         Environment.NewLine,
-                        /*new[] {new StackItem(ex.Element, getVarName(getParentFunction(ex.Element)) ?? "(runtime)")}
-                            .Concat(*/CallStack.Select(cs => cs)/*.DistinctBy(cs => cs.LineIndex)*//*)*/
+                        CallStack
                             .Select(cs => "  " + Utils.GetFilePathRelativeToBase(cs.FilePath)
                                           + ":" + (cs.LineIndex + 1) + " " + cs.FnName));
                 throw new EfektException(msg, ex, ex.Element);
@@ -111,12 +76,9 @@ namespace Efekt
                     else if (a.To is MemberAccess ma)
                     {
                         var obj = eval(ma.Exp, env);
-                        if (obj is Obj o2)
-                        {
-                            o2.Env.Set(ma.Ident, val2);
-                            return Void.Instance;
-                        }
-                        throw prog.Remark.Error.OnlyObjectsHaveMembers(obj);
+                        var o2 = obj.AsObj(prog.Remark, ma);
+                        o2.Env.Set(ma.Ident, val2);
+                        return Void.Instance;
                     }
                     throw prog.Remark.Error.AssignTargetIsInvalid(a.To);
                 case Ident i:
@@ -130,14 +92,12 @@ namespace Efekt
                     var eArgs = fna.Arguments.Select(a => eval(a, env)).ToArray();
                     if (builtin != null)
                     {
-                        CallStack.Push(new StackItem(fna, builtin.Name));
-                        var res = builtin.Fn(prog.Remark, new FnArguments(eArgs));
+                        CallStack.Push(new StackItem(builtin, builtin.Name));
+                        var res = builtin.Fn(prog.Remark, new FnArguments(eArgs), fna);
                         CallStack.Pop();
                         return res;
                     }
-                    var fn2 = fn as Fn;
-                    if (fn2 == null)
-                        throw prog.Remark.Error.OnlyFunctionsCanBeApplied(fn);
+                    var fn2 = fn.AsFn(prog.Remark, fna);
                     var paramsEnv = Env.Create(prog.Remark, fn2.Env);
                     var ix = 0;
                     foreach (var p in fn2.Parameters)
@@ -146,7 +106,7 @@ namespace Efekt
                         paramsEnv.Declare(p, eArg);
                     }
                     var fnEnv = Env.Create(prog.Remark, paramsEnv);
-                    CallStack.Push(new StackItem(fn2, StackItem.getVarName(fn2)));
+                    CallStack.Push(new StackItem(fn2));
                     foreach (var bodyElement in fn2.Sequence)
                     {
                         evalSequenceItem(bodyElement, fnEnv);
@@ -163,12 +123,12 @@ namespace Efekt
                 case Fn f:
                     var fn3 = new Fn(f.Parameters, f.Sequence, env);
                     fn3.Parent = f.Parent;
+                    fn3.LineIndex = f.LineIndex;
+                    fn3.FilePath = f.FilePath;
                     return fn3;
                 case When w:
                     var test = eval(w.Test, env);
-                    var testB = test as Bool;
-                    if (testB == null)
-                        throw prog.Remark.Error.Fail();
+                    var testB = test.AsBool(prog.Remark, w.Test);
                     if (testB.Value)
                         return eval(w.Then, Env.Create(prog.Remark, env));
                     else if (w.Otherwise != null)
@@ -196,9 +156,8 @@ namespace Efekt
                     return new Arr(new Values(ae.Arguments.Select(e => eval(e, env)).ToArray()));
                 case MemberAccess ma:
                     var exp = eval(ma.Exp, env);
-                    if (exp is Obj o)
-                        return o.Env.Get(ma.Ident);
-                    throw prog.Remark.Error.OnlyObjectsHaveMembers(exp);
+                    var o = exp.AsObj(prog.Remark, ma);
+                    return o.Env.Get(ma.Ident);
                 case New n:
                     var objEnv = Env.Create(prog.Remark, env);
                     foreach (var v in n.Body)

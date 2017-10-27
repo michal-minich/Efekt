@@ -35,9 +35,9 @@ namespace Efekt
             }
             else
             {
-                //LineIndex = -1;
+                LineIndex = -1;
                 Current = Token.Terminal;
-                //Instance = null;
+                Instance = null;
             }
         }
 
