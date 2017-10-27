@@ -7,15 +7,57 @@ namespace Efekt
 {
     public sealed class StackItem
     {
-        public int LineIndex { get; }
-        public string FnName { get; }
+        public Element e;
+        private string fnName;
+        public int LineIndex { get; internal set; }
+
+        public string FnName
+        {
+            get
+            {
+                if (fnName == null)
+                    fnName = getVarName((Fn)e) ?? "(anonymous)";
+                return fnName;
+            }
+        }
+
         public string FilePath { get; }
 
-    public StackItem(Element e, string fnName)
+        public StackItem(Element fna)
         {
-            LineIndex = e.LineIndex;
-            FilePath = e.FilePath;
-            FnName = fnName;
+            LineIndex = fna.LineIndex;
+            FilePath = fna.FilePath;
+            this.e = fna;
+        }
+
+        public StackItem(Element fna, string fnName)
+        {
+            LineIndex = fna.LineIndex;
+            FilePath = fna.FilePath;
+            this.e = fna;
+            this.fnName = fnName;
+        }
+
+
+
+        [CanBeNull]
+        private static Fn getParentFunction([CanBeNull] Element e)
+        {
+            while (true)
+            {
+                if (e == null)
+                    return null;
+                if (e.Parent is Fn fn)
+                    return fn;
+                e = e.Parent;
+            }
+        }
+
+
+        [CanBeNull]
+        public  static string getVarName([CanBeNull] Fn fn)
+        {
+            return fn == null ? null : (fn.Parent is Var v ? v.Ident.Name : null);
         }
     }
 
@@ -42,8 +84,8 @@ namespace Efekt
                     + Environment.NewLine
                     + string.Join(
                         Environment.NewLine,
-                        new[] {new StackItem(ex.Element, getVarName(getParentFunction(ex.Element)) ?? "(runtime)")}
-                            .Concat(CallStack.Select(cs => cs).DistinctBy(cs => cs.LineIndex))
+                        /*new[] {new StackItem(ex.Element, getVarName(getParentFunction(ex.Element)) ?? "(runtime)")}
+                            .Concat(*/CallStack.Select(cs => cs)/*.DistinctBy(cs => cs.LineIndex)*//*)*/
                             .Select(cs => "  " + Utils.GetFilePathRelativeToBase(cs.FilePath)
                                           + ":" + (cs.LineIndex + 1) + " " + cs.FnName));
                 throw new EfektException(msg, ex, ex.Element);
@@ -96,17 +138,15 @@ namespace Efekt
                     var fn2 = fn as Fn;
                     if (fn2 == null)
                         throw prog.Remark.Error.OnlyFunctionsCanBeApplied(fn);
-                    CallStack.Push(new StackItem(fna, getVarName(getParentFunction(fna)) ?? "(anonymous)"));
                     var paramsEnv = Env.Create(prog.Remark, fn2.Env);
                     var ix = 0;
                     foreach (var p in fn2.Parameters)
                     {
-                        C.Nn(p);
                         var eArg = eArgs[ix++];
-                        C.Nn(eArg);
                         paramsEnv.Declare(p, eArg);
                     }
                     var fnEnv = Env.Create(prog.Remark, paramsEnv);
+                    CallStack.Push(new StackItem(fn2, StackItem.getVarName(fn2)));
                     foreach (var bodyElement in fn2.Sequence)
                     {
                         evalSequenceItem(bodyElement, fnEnv);
@@ -125,7 +165,11 @@ namespace Efekt
                     fn3.Parent = f.Parent;
                     return fn3;
                 case When w:
-                    if (eval(w.Test, env) == Bool.True)
+                    var test = eval(w.Test, env);
+                    var testB = test as Bool;
+                    if (testB == null)
+                        throw prog.Remark.Error.Fail();
+                    if (testB.Value)
                         return eval(w.Then, Env.Create(prog.Remark, env));
                     else if (w.Otherwise != null)
                         return eval(w.Otherwise, Env.Create(prog.Remark, env));
@@ -168,7 +212,12 @@ namespace Efekt
                     {
                         evalSequenceItem(item, scopeEnv);
                         if (ret != null)
+                        {
                             return Void.Instance;
+                            //var tmp = ret;
+                            //ret = null;
+                            //return tmp;
+                        }
                     }
                     return Void.Instance;
                 default:
@@ -178,7 +227,7 @@ namespace Efekt
 
         private void evalSequenceItem(Element bodyElement, Env env)
         {
-            C.Nn(bodyElement);
+            CallStack.Peek().LineIndex = bodyElement.LineIndex;
             var bodyVal = eval(bodyElement, env);
             if (bodyVal != Void.Instance)
             {
@@ -187,27 +236,6 @@ namespace Efekt
                 else
                     prog.Remark.Warn.ValueIsNotAssigned(bodyElement);
             }
-        }
-
-
-        [CanBeNull]
-        private Fn getParentFunction([CanBeNull] Element e)
-        {
-            while (true)
-            {
-                if (e == null)
-                    return null;
-                if (e.Parent is Fn fn)
-                    return fn;
-                e = e.Parent;
-            }
-        }
-
-
-        [CanBeNull]
-        private string getVarName([CanBeNull] Fn fn)
-        {
-            return fn == null ? null : (fn.Parent is Var v ? v.Ident.Name : null);
         }
     }
 }

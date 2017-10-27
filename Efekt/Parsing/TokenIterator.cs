@@ -1,19 +1,20 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics;
+using JetBrains.Annotations;
 
 namespace Efekt
 {
     internal sealed class TokenIterator
     {
-        internal static TokenIterator Instance { get; private set; }
+        [CanBeNull] internal static TokenIterator Instance { get; private set; }
 
         private readonly IEnumerator<Token> te;
+
         internal Token Current { get; private set; }
         internal int LineIndex { get; private set; }
-
+        internal string FilePath { get; }
         internal bool Finished => Current.Type == TokenType.Terminal;
         internal bool HasWork => !Finished;
-        public string FilePath { get; }
 
 
         internal TokenIterator(string filePath, IEnumerable<Token> tokens)
@@ -34,7 +35,9 @@ namespace Efekt
             }
             else
             {
+                //LineIndex = -1;
                 Current = Token.Terminal;
+                //Instance = null;
             }
         }
 

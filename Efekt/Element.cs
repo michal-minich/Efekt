@@ -8,8 +8,8 @@ namespace Efekt
 {
     public interface Element
     {
-        int LineIndex { get; }
-        string FilePath { get; }
+        int LineIndex { get; set; }
+        string FilePath { get; set; }
         Element Parent { get; set; }
     }
 
@@ -18,15 +18,23 @@ namespace Efekt
     {
         protected AElement()
         {
+            LineIndex = -1;
+            FilePath = "runtime.ef";
+
             if (TokenIterator.Instance != null)
             {
-                LineIndex = TokenIterator.Instance.LineIndex;
-                FilePath = TokenIterator.Instance.FilePath;
+                //LineIndex = TokenIterator.Instance.LineIndex;
+                //FilePath = TokenIterator.Instance.FilePath;
+            }
+            else
+            {
+                //LineIndex = -1;
+                //FilePath = "runtime.ef";
             }
         }
 
-        public int LineIndex { get; }
-        public string FilePath { get; }
+        public int LineIndex { get; set; }
+        public string FilePath { get; set; }
         public Element Parent { get; set; }
     }
 
@@ -89,15 +97,17 @@ namespace Efekt
         {
             if (TokenIterator.Instance != null)
             {
-                LineIndex = TokenIterator.Instance.LineIndex;
-                FilePath = TokenIterator.Instance.FilePath;
+                //LineIndex = TokenIterator.Instance.LineIndex;
+                //FilePath = TokenIterator.Instance.FilePath;
             }
+            LineIndex = -1;
+            FilePath = "runtime.ef";
             foreach (var i in items)
                 i.Parent = this;
         }
 
-        public int LineIndex { get; }
-        public string FilePath { get; }
+        public int LineIndex { get; set; }
+        public string FilePath { get; set; }
         public Element Parent { get; set; }
     }
 
@@ -282,11 +292,9 @@ namespace Efekt
     public sealed class Break : AElement, Stm
     {
         [DebuggerStepThrough]
-        private Break()
+        public Break()
         {
         }
-
-        public static Break Instance { get; } = new Break();
     }
 
 
@@ -333,14 +341,12 @@ namespace Efekt
     public sealed class Bool : AElement, Value
     {
         [DebuggerStepThrough]
-        private Bool(bool value)
+        public Bool(bool value)
         {
             Value = value;
         }
 
         public bool Value { get; }
-        public static Bool True { get; } = new Bool(true);
-        public static Bool False { get; } = new Bool(false);
     }
 
 

@@ -59,7 +59,7 @@ namespace Efekt
                     var old = e.dict[ident.Name];
                     if (old.GetType() != value.GetType())
                     {
-                        remark.Warn.AssigningDifferntType(ident, old, value);
+                        remark.Warn.AssigningDifferentType(ident, old, value);
                     }
                     e.dict[ident.Name] = value;
                     return;

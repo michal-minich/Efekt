@@ -41,7 +41,8 @@ namespace Efekt
             return new EfektException("Variable '" + ident.Name + "' is already declared", ident);
         }
 
-        public Exception DifferntTypeExpected(Exp exp, string expectedTypeName)
+        [Pure]
+        public Exception DifferentTypeExpected(Exp exp, string expectedTypeName)
         {
             return new EfektException("Expected type '" + expectedTypeName
                                       + "' but the expression is of type '" + exp.GetType().Name + "'", exp);

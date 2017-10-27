@@ -14,6 +14,27 @@ namespace Efekt
 
     internal sealed class Parser : ElementIterator
     {
+        private readonly Stack<int> StartLineIndex = new Stack<int>();
+
+
+        private void markStart()
+        {
+            StartLineIndex.Push(Ti.LineIndex);
+        }
+
+        private void pop()
+        {
+            StartLineIndex.Pop();
+        }
+
+        private T post<T>(T element) where T : Element
+        {
+            element.LineIndex = StartLineIndex.Pop();
+            element.FilePath = Ti.FilePath;
+            return element;
+        }
+
+
         internal Parser(Remark remark) : base (remark)
         {
             Parsers = new List<ParseElement>
@@ -43,10 +64,11 @@ namespace Efekt
 
         private Sequence ParseMandatorySequence()
         {
+            markStart();
             var elb = ParseBracedList('}', false);
             if (elb == null)
                 throw remark.Error.Fail();
-            return new Sequence(elb.Items);
+            return post(new Sequence(elb.Items));
         }
 
         
@@ -125,9 +147,10 @@ namespace Efekt
         {
             if (Text != "loop")
                 return null;
+            markStart();
             Ti.Next();
             var s = ParseMandatorySequence();
-            return new Loop(s);
+            return post(new Loop(s));
         }
 
 
@@ -136,12 +159,13 @@ namespace Efekt
         {
             if (Text != "fn")
                 return null;
+            markStart();
             Ti.Next();
             var p = Text == "{" ? new FnParameters() : ParseFnParameters();
             var s = ParseMandatorySequence();
             if (s == null)
                 throw remark.Error.Fail();
-            return new Fn(p, s);
+            return post(new Fn(p, s));
         }
 
 
@@ -150,21 +174,22 @@ namespace Efekt
         {
             if (Type != TokenType.Op)
                 return null;
+            markStart();
             var opText = Text;
             Ti.Next();
             var second = ParseOne(false);
             if (opText == ".")
             {
                 if (second is Ident i)
-                    return new MemberAccess(prev, i);
+                    return post(new MemberAccess(prev, i));
                 throw remark.Error.Fail();
             }
             var e2 = second as Exp;
             if (e2 == null)
                 throw remark.Error.Fail();
             if (opText == "=")
-                return new Assign(prev, e2);
-            return new FnApply(new Ident(opText, TokenType.Op), new FnArguments(new[] { prev, e2 }));
+                return post(new Assign(prev, e2));
+            return post(new FnApply(new Ident(opText, TokenType.Op), new FnArguments(new[] { prev, e2 })));
         }
 
 
@@ -173,8 +198,9 @@ namespace Efekt
         {
             if (Text[0] != '(')
                 return null;
+            markStart();
             var args = ParseFnArguments(')');
-            return new FnApply(prev, args);
+            return post(new FnApply(prev, args));
         }
 
 
@@ -183,8 +209,9 @@ namespace Efekt
         {
             if (Text[0] != '[')
                 return null;
+            markStart();
             var args = ParseFnArguments(']');
-            return new ArrConstructor(args);
+            return post(new ArrConstructor(args));
         }
 
 
@@ -193,9 +220,10 @@ namespace Efekt
         {
             if (Text[0] != '(')
                 return null;
+            markStart();
             var elb = ParseBracedList(')', false);
             if (elb.Items.Count == 1)
-                return elb.Items.First();
+                return post(elb.Items.First());
             throw remark.Error.Fail();
         }
 
@@ -205,9 +233,10 @@ namespace Efekt
         {
             if (Text != "new")
                 return null;
+            markStart();
             Ti.Next();
             var body = ParseClassBody();
-            return new New(body);
+            return post(new New(body));
         }
 
 
@@ -216,8 +245,9 @@ namespace Efekt
         {
             if (Text != "break")
                 return null;
+            markStart();
             Ti.Next();
-            return Break.Instance;
+            return post(new Break());
         }
 
 
@@ -226,7 +256,8 @@ namespace Efekt
         {
             if (Type != TokenType.Ident && Type != TokenType.Op)
                 return null;
-            var i = new Ident(Text, Type);
+            markStart();
+            var i = post(new Ident(Text, Type));
             Ti.Next();
             return i;
         }
@@ -237,7 +268,8 @@ namespace Efekt
         {
             if (Type != TokenType.Int)
                 return null;
-            var i = new Int(int.Parse(Text.Replace("_", "")));
+            markStart();
+            var i = post(new Int(int.Parse(Text.Replace("_", ""))));
             Ti.Next();
             return i;
         }
@@ -246,17 +278,19 @@ namespace Efekt
         [CanBeNull]
         private Bool ParseBool()
         {
-            switch (Text)
+            markStart();
+            if (Text == "true")
             {
-                case "true":
-                    Ti.Next();
-                    return Bool.True;
-                case "false":
-                    Ti.Next();
-                    return Bool.False;
-                default:
-                    return null;
+                Ti.Next();
+                return post(new Bool(true));
             }
+            else if (Text == "false")
+            {
+                Ti.Next();
+                return post(new Bool(false));
+            }
+            pop();
+            return null;
         }
 
 
@@ -265,14 +299,15 @@ namespace Efekt
         {
             if (Text != "var")
                 return null;
+            markStart();
             Ti.Next();
             var se = ParseOne();
             if (se is Ident i2)
-                return new Var(i2, Void.Instance);
+                return post(new Var(i2, Void.Instance));
             if (se is Assign a)
             {
                 if (a.To is Ident i)
-                    return new Var(i, a.Exp);
+                    return post(new Var(i, a.Exp));
                 throw remark.Error.Fail();
             }
             throw remark.Error.Fail();
@@ -285,12 +320,13 @@ namespace Efekt
             if (Text != "return")
                 return null;
             var lineIndexOnReturn = Ti.LineIndex;
+            markStart();
             Ti.Next();
             if (Ti.Finished || lineIndexOnReturn != Ti.LineIndex)
-                return new Return(Void.Instance);
+                return post(new Return(Void.Instance));
             var se = ParseOne();
             if (se is Exp exp)
-                return new Return(exp);
+                return post(new Return(exp));
             throw remark.Error.Fail();
         }
         
@@ -300,6 +336,7 @@ namespace Efekt
         {
             if (Text != "if")
                 return null;
+            markStart();
             Ti.Next();
             var test = ParseOne();
             var testExp = test as Exp;
@@ -319,7 +356,7 @@ namespace Efekt
             {
                 otherwise = null;
             }
-            return new When(testExp, then, otherwise);
+            return post(new When(testExp, then, otherwise));
         }
     }
 }

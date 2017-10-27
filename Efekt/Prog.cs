@@ -14,7 +14,7 @@ namespace Efekt
 
         public Element RootElement { get; private set; }
         public Remark Remark { get; }
-        
+
         private Prog(TextWriter remarkWriter)
         {
             Remark = new Remark(remarkWriter);
@@ -25,7 +25,7 @@ namespace Efekt
         public static Prog Init(TextWriter remarkWriter, Element parsedElement)
         {
             var prog = new Prog(remarkWriter);
-            prog.RootElement = Tranform(parsedElement);
+            prog.RootElement = Tranform(parsedElement, prog.Remark);
             return prog;
         }
 
@@ -38,7 +38,7 @@ namespace Efekt
 
             var ts = t.Tokenize(code);
             var e = new Parser(prog.Remark).Parse(filePath, ts);
-            prog.RootElement = Tranform(e);
+            prog.RootElement = Tranform(e, prog.Remark);
             return prog;
         }
 
@@ -56,24 +56,35 @@ namespace Efekt
         }
 
 
-        public static Element Tranform(Element e)
+        public static Element Tranform(Element e, Remark remark)
         {
             if (e is Exp exp)
                 e = new Sequence(new[] {new Return(exp)});
-            /*
-            if (e is Sequence body)
-                e = new Sequence(new Element[]
-                {
-                    new Var(new Ident("start", TokenType.Ident), new Fn(new FnParameters(), body)),
-                    new FnApply(new Ident("start", TokenType.Ident), new FnArguments())
-                });
-            */
+
             if (e is Sequence body2)
                 e = new FnApply(
                     new Fn(new FnParameters(), body2),
                     new FnArguments());
 
             return e;
+        }
+
+
+        public static Element Tranform2(Element e, Remark remark)
+        {
+            Sequence seq;
+
+            if (e is Exp exp)
+                return e;
+            else if (e is Sequence s)
+                seq = s;
+            else
+                seq = new Sequence(new[] {e});
+
+            return new Sequence(new Element[]
+            {
+                new Var(new Ident("start", TokenType.Ident), new Fn(new FnParameters(), seq)),
+            });
         }
     }
 }

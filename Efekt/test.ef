@@ -1,4 +1,25 @@
-﻿var a = fn { 1 + fn {} }
-var b = fn { return a() }
-var c = fn { return b() }
-print(c())
+﻿
+var a = 1
+
+var b = fn
+{
+  a()
+  a()
+}
+
+var c = fn
+{
+  b()
+
+}
+
+var d = fn
+{
+
+  c()
+
+
+}
+
+d()
+

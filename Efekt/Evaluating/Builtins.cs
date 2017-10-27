@@ -42,7 +42,7 @@ namespace Efekt
                 var xs = @params[0].AsArr(remark).Values;
                 var list = new List<Value>(xs.Count + 1);
                 list.AddRange(xs);
-                list.Add((Value) @params[1]);
+                list.Add(@params[1].AsValue(remark));
                 return new Arr(new Values(list.ToArray()));
             })
         };
@@ -50,13 +50,19 @@ namespace Efekt
 
         private static Int AsInt(this Exp exp, Remark remark)
         {
-            return exp is Int i ? i : throw remark.Error.DifferntTypeExpected(exp, typeof(Int).Name);
+            return exp is Int i ? i : throw remark.Error.DifferentTypeExpected(exp, nameof(Int));
         }
 
 
         private static Arr AsArr(this Exp exp, Remark remark)
         {
-            return exp is Arr a ? a : throw remark.Error.DifferntTypeExpected(exp, typeof(Arr).Name);
+            return exp is Arr a ? a : throw remark.Error.DifferentTypeExpected(exp, nameof(Arr));
+        }
+
+
+        private static Value AsValue(this Exp exp, Remark remark)
+        {
+            return exp is Value v ? v : throw remark.Error.DifferentTypeExpected(exp, nameof(Value));
         }
 
 

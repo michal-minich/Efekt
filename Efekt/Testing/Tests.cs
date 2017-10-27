@@ -17,7 +17,7 @@ namespace Efekt.Tests
             //test("var a = + return a(1, 2)", "3");
 
             //error("~");
-            //test(" ", "");
+            test(" ", "<Void>");
             test("1", "1");
             test("(1)", "1");
 
@@ -151,8 +151,6 @@ namespace Efekt.Tests
             // ReSharper restore ParameterOnlyUsedForPreconditionCheck.Local
         {
             var tokens = t.Tokenize(code).ToList();
-            if (tokens.Count != 0 && code.Length == 0 || tokens.Count == 0 && code.Length > 0)
-                throw new Exception();
             var remarkWriter = new StringWriter();
             var se = new Parser(new Remark(remarkWriter)).Parse("unittest.ef", tokens);
             var prog = Prog.Init(remarkWriter, se);
