@@ -73,8 +73,9 @@ namespace Efekt.Tests
             // builtins
             test("1 + 2", "3");
             test("(1 + 2)", "3");
-            //test("var a = + return a(1, 2)", "3");
-            //test("var a = (+) return a(1, 2)", "3");
+            test("var a = + return a(1, 2)", "3");
+            test("var a = (+) return a(1, 2)", "3");
+            test("var + = fn a, b { return a * b } return 3 + 2", "6");
             test("print(1)", "<Void>", "Int: 1");
 
             // fn

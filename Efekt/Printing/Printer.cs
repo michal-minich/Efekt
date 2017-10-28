@@ -101,6 +101,9 @@ namespace Efekt
                     }
                     w.Markup("]");
                     break;
+                case Char ch:
+                    w.Markup("\'").Text(ch.Value.ToString()).Markup("\'");
+                    break;
                 case MemberAccess ma:
                     Write(ma.Exp).Op(".");
                     Write(ma.Ident);

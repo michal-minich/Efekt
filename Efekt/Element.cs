@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using JetBrains.Annotations;
 
 namespace Efekt
@@ -330,6 +331,31 @@ namespace Efekt
     }
 
 
+    public sealed class Char : AElement, Value
+    {
+        [DebuggerStepThrough]
+        public Char(char value)
+        {
+            Value = value;
+        }
+
+        public char Value { get; }
+    }
+
+
+    public sealed class Text : Arr, Value
+    {
+        [DebuggerStepThrough]
+        public Text(string value) 
+            : base(new Values(value.Select(v=>new Char(v)).ToList()))
+        {
+            Value = value;
+        }
+
+        public string Value { get; }
+    }
+
+
     public sealed class Bool : AElement, Value
     {
         [DebuggerStepThrough]
@@ -385,7 +411,7 @@ namespace Efekt
     }
 
 
-    public sealed class Arr : AElement, Value
+    public class Arr : AElement, Value
     {
         [DebuggerStepThrough]
         public Arr(Values values)

@@ -1,8 +1,5 @@
-﻿op identifer parsing
-redefining builtin ops
-Char type
+﻿string/char escapes
 Double type
-string parsing
 multifile support
 more and thought out builtins
 prelude

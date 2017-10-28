@@ -85,6 +85,22 @@ namespace Efekt
                     goto final;
                 }
 
+                if (markIf(ch == '\'', TokenType.Char))
+                {
+                    while (ch != '\'')
+                        next();
+                    next();
+                    goto final;
+                }
+
+                if (markIf(ch == '\"', TokenType.Text))
+                {
+                    while (ch != '\"')
+                        next();
+                    next();
+                    goto final;
+                }
+
                 if (markIf(ch >= 'a' && ch <= 'z', TokenType.Ident))
                 {
                     while (ch >= 'a' && ch <= 'z' || ch >= 'A' && ch <= 'Z' || ch >= '0' && ch <= '9' || ch == '_')
@@ -178,6 +194,8 @@ namespace Efekt
         NewLine,
         LineCommentBegin,
         CommentBegin,
-        CommentEnd
+        CommentEnd,
+        Char,
+        Text
     }
 }

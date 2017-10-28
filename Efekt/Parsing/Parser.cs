@@ -64,6 +64,8 @@ namespace Efekt
             {
                 ParseIdent,
                 ParseInt,
+                ParseChar,
+                ParseText,
                 ParseBool,
                 ParseVar,
                 ParseFn,
@@ -309,6 +311,32 @@ namespace Efekt
                 return null;
             markStart();
             var i = post(new Int(int.Parse(Text.Replace("_", ""))));
+            Ti.Next();
+            return i;
+        }
+
+
+        [CanBeNull]
+        private Char ParseChar()
+        {
+            if (Type != TokenType.Char)
+                return null;
+            markStart();
+            if (Text.Length != 3)
+                throw remark.Error.Fail();
+            var i = post(new Char(Text[1]));
+            Ti.Next();
+            return i;
+        }
+
+
+        [CanBeNull]
+        private Text ParseText()
+        {
+            if (Type != TokenType.Text)
+                return null;
+            markStart();
+            var i = post(new Text(Text.Substring(1, Text.Length - 2)));
             Ti.Next();
             return i;
         }

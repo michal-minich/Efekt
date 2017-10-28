@@ -1,25 +1,2 @@
-﻿
-var a = 1
-
-var b = fn
-{
-  a()
-  a()
-}
-
-var c = fn
-{
-  b()
-
-}
-
-var d = fn
-{
-
-  c()
-
-
-}
-
----d()
-print(1)
+﻿var a = "aB12"
+return a
