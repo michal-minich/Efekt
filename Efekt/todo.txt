@@ -1,0 +1,14 @@
+﻿op identifer parsing
+redefining builtin ops
+Char type
+Double type
+string parsing
+multifile support
+more and thought out builtins
+prelude
+elements holds its tokens
+rerport elements details on warning
+report line column range with error
+nicer parser errors
+extension methods
+public attribute

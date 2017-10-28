@@ -46,6 +46,21 @@ namespace Efekt.Tests
             test("(1 + (2 * 10))", "21");
             test("(10 * 1) + 2", "12");
 
+            // op precedence
+            test("1 + 2 * 10", "21");
+            test("0 * 1 + 2", "2");
+            test("1 + 2 * 10 + 7", "28");
+            test("2 + 3 * 5 + 7 * 11", "94");
+            test("2 * 3 + 5 * 7 + 11", "52");
+            test("2 * 3 + 5 + 7", "18");
+            test("2 + 3 * 5 * 7", "107");
+            test("2 + 3 + 5 * 7 + 11 + 13 * 17", "272");
+            test("2 * 3 * 5 + 7 * 11 * 13 + 17", "1048");
+            test("var a = 1 + 2 * 10 return a", "21");
+            test("var a = 0 * 1 + 2 return a", "2");
+            test("var a = new { var b = 1 } a.b = 1 + 2 * 10 return a.b", "21");
+            test("var a = new { var b = 1 } a.b = 0 * 1 + 2 return a.b", "2");
+
             // if
             test("if true then 1 else 2", "1");
             test("if false then 1 else 2", "2");

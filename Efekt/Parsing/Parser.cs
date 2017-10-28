@@ -16,6 +16,29 @@ namespace Efekt
     {
         private readonly Stack<int> StartLineIndex = new Stack<int>();
 
+        static readonly List<string> rightAssociativeOps = new List<string>
+            { ":", "=" };
+
+        static readonly Dictionary<string, int> opPrecedence
+            = new Dictionary<string, int>
+            {
+                ["."] = 160,
+                //[":"] = 140,
+                ["*"] = 130,
+                ["/"] = 130,
+                ["+"] = 120,
+                ["-"] = 120,
+                ["<"] = 100,
+                [">"] = 100,
+                [">="] = 100,
+                ["<="] = 100,
+                ["=="] = 60,
+                ["!="] = 60,
+                ["and"] = 20,
+                ["or"] = 10,
+                ["="] = 3,
+            };
+
 
         private void markStart()
         {
@@ -191,7 +214,17 @@ namespace Efekt
                 throw remark.Error.Fail();
             if (opText == "=")
                 return post(new Assign(prev, e2));
-            return post(new FnApply(ident, new FnArguments(new[] { prev, e2 })));
+            if (!prev.IsBraced
+                && prev is FnApply fna
+                && fna.Fn is Ident prevOp
+                && prevOp.TokenType == TokenType.Op
+                && opPrecedence[prevOp.Name] < opPrecedence[opText])
+            {
+                var x = post(new FnApply(ident, new FnArguments(new[] {fna.Arguments.Skip(1).First(), e2})));
+                fna.Arguments = new FnArguments(new[] {fna.Arguments.First(), x});
+                return fna;
+            }
+            return post(new FnApply(ident, new FnArguments(new[] {prev, e2})));
         }
 
 
@@ -225,7 +258,11 @@ namespace Efekt
             markStart();
             var elb = ParseBracedList(')', false);
             if (elb.Items.Count == 1)
-                return post(elb.Items.First());
+            {
+                var e = post(elb.Items.First());
+                e.IsBraced = true;
+                return e;
+            }
             throw remark.Error.Fail();
         }
 

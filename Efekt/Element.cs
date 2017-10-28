@@ -11,6 +11,7 @@ namespace Efekt
         int LineIndex { get; set; }
         string FilePath { get; set; }
         Element Parent { get; set; }
+        bool IsBraced { get; set; }
     }
 
 
@@ -25,6 +26,7 @@ namespace Efekt
         public int LineIndex { get; set; }
         public string FilePath { get; set; }
         public Element Parent { get; set; }
+        public bool IsBraced { get; set; }
     }
 
     public interface Exp : Element
@@ -98,6 +100,7 @@ namespace Efekt
         public int LineIndex { get; set; }
         public string FilePath { get; set; }
         public Element Parent { get; set; }
+        public bool IsBraced { get; set; }
     }
 
 
@@ -365,7 +368,7 @@ namespace Efekt
         }
 
         public Exp Fn { get; }
-        public FnArguments Arguments { get; }
+        public FnArguments Arguments { get; set; }
     }
 
 
