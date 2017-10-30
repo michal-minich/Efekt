@@ -59,10 +59,12 @@
   <ItemGroup>
     <Compile Include="EfektException.cs" />
     <Compile Include="Evaluating\ElementExtensions.cs" />
-    <Compile Include="Remarks\Remark.cs" />
-    <Compile Include="Remarks\Warn.cs" />
+    <Compile Include="Validation\Except.cs" />
+    <Compile Include="Validation\RemarkList.cs" />
+    <Compile Include="Validation\StructureValidator.cs" />
+    <Compile Include="Validation\Warn.cs" />
     <Compile Include="Evaluating\Builtins.cs" />
-    <Compile Include="Remarks\Error.cs" />
+    <Compile Include="Validation\Error.cs" />
     <Compile Include="Evaluating\Env.cs" />
     <Compile Include="Parsing\ElementIterator.cs" />
     <Compile Include="Printing\PlainTextCodeWriter.cs" />

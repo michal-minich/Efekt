@@ -25,7 +25,7 @@ namespace Efekt
         {
             var fromUri = new Uri(basePath);
             var toUri = new Uri(fromUri, filePath);
-            
+
             var relativeUri = fromUri.MakeRelativeUri(toUri);
             var relativePath = Uri.UnescapeDataString(relativeUri.ToString());
 
@@ -56,7 +56,7 @@ namespace Efekt
             if (!condition)
                 throw new Exception();
         }
-        
+
 
         [DebuggerStepThrough]
         [Conditional("DEBUG")]
@@ -76,7 +76,7 @@ namespace Efekt
         public static void Nn([CanBeNull] object value)
         {
             if (value == null)
-                throw new Exception(); ;
+                throw new Exception();
         }
 
 

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
 
@@ -16,10 +17,10 @@ namespace Efekt
     {
         private readonly Stack<int> StartLineIndex = new Stack<int>();
 
-        static readonly List<string> rightAssociativeOps = new List<string>
-            { ":", "=" };
+        private static readonly List<string> rightAssociativeOps = new List<string>
+            {":", "="};
 
-        static readonly Dictionary<string, int> opPrecedence
+        private static readonly Dictionary<string, int> opPrecedence
             = new Dictionary<string, int>
             {
                 ["."] = 160,
@@ -36,7 +37,7 @@ namespace Efekt
                 ["!="] = 60,
                 ["and"] = 20,
                 ["or"] = 10,
-                ["="] = 3,
+                ["="] = 3
             };
 
 
@@ -58,7 +59,7 @@ namespace Efekt
         }
 
 
-        internal Parser(Remark remark) : base (remark)
+        internal Parser(RemarkList remarkList) : base(remarkList)
         {
             Parsers = new List<ParseElement>
             {
@@ -85,18 +86,16 @@ namespace Efekt
                 ParseOpApply
             };
         }
-        
+
 
         private Sequence ParseMandatorySequence()
         {
             markStart();
             var elb = ParseBracedList('}', false);
-            if (elb == null)
-                throw remark.Error.Fail();
             return post(new Sequence(elb.Items));
         }
 
-        
+
         private ClassBody ParseClassBody()
         {
             return new ClassBody(ParseBracedList('}', false).Items.Cast<Var>().ToArray());
@@ -126,13 +125,13 @@ namespace Efekt
             else if (t == '[')
                 end = ']';
             else
-                throw remark.Error.Fail();
+                throw remarkList.StructureValidator.BraceExpected();
             if (endBrace != end)
-                throw remark.Error.Fail();
+                throw new ArgumentException();
             Ti.Next();
             var elb = ParseList(endBrace, isComaSeparated);
             if (Text[0] != end)
-                throw remark.Error.Fail();
+                throw remarkList.StructureValidator.EndBraceDoesNotMatchesStart(null);
             Ti.Next();
             return elb;
         }
@@ -147,12 +146,10 @@ namespace Efekt
                 var e = ParseOne();
                 elb.Add(e);
                 if (isComaSeparated)
-                {
                     if (Text == ",")
                         Ti.Next();
                     else
                         break;
-                }
             }
             return elb;
         }
@@ -188,8 +185,6 @@ namespace Efekt
             Ti.Next();
             var p = Text == "{" ? new FnParameters() : ParseFnParameters();
             var s = ParseMandatorySequence();
-            if (s == null)
-                throw remark.Error.Fail();
             return post(new Fn(p, s));
         }
 
@@ -209,13 +204,17 @@ namespace Efekt
             {
                 if (second is Ident i)
                     return post(new MemberAccess(prev, i));
-                throw remark.Error.Fail();
+                throw remarkList.StructureValidator.ExpectedIdentifierAfterDot(second);
             }
             var e2 = second as Exp;
             if (e2 == null)
-                throw remark.Error.Fail();
+                throw remarkList.StructureValidator.FunctionArgumentMustBeExpression(second);
             if (opText == "=")
-                return post(new Assign(prev, e2));
+            {
+                if (prev is AssignTarget at)
+                    return post(new Assign(at, e2));
+                throw remarkList.StructureValidator.AssignTargetIsInvalid(prev);
+            }
             if (!prev.IsBraced
                 && prev is FnApply fna
                 && fna.Fn is Ident prevOp
@@ -265,7 +264,7 @@ namespace Efekt
                 e.IsBraced = true;
                 return e;
             }
-            throw remark.Error.Fail();
+            throw remarkList.StructureValidator.ExpectedOnlyOneExpressionInsideBraces(elb.Items);
         }
 
 
@@ -323,7 +322,7 @@ namespace Efekt
                 return null;
             markStart();
             if (Text.Length != 3)
-                throw remark.Error.Fail();
+                throw remarkList.StructureValidator.CharShouldHaveOnlyOneChar();
             var i = post(new Char(Text[1]));
             Ti.Next();
             return i;
@@ -351,7 +350,7 @@ namespace Efekt
                 Ti.Next();
                 return post(new Bool(true));
             }
-            else if (Text == "false")
+            if (Text == "false")
             {
                 Ti.Next();
                 return post(new Bool(false));
@@ -375,9 +374,9 @@ namespace Efekt
             {
                 if (a.To is Ident i)
                     return post(new Var(i, a.Exp));
-                throw remark.Error.AssignTargetIsInvalid(a.To);
+                throw remarkList.StructureValidator.OnlyIdentifierCanBeDeclared(a.To);
             }
-            throw remark.Error.Fail();
+            throw remarkList.StructureValidator.InvalidElementAfterVar(se);
         }
 
 
@@ -394,9 +393,9 @@ namespace Efekt
             var se = ParseOne();
             if (se is Exp exp)
                 return post(new Return(exp));
-            throw remark.Error.Fail();
+            throw remarkList.StructureValidator.ExpectedExpressionAfterReturn(se);
         }
-        
+
 
         [CanBeNull]
         private When ParseWhen()
@@ -408,9 +407,9 @@ namespace Efekt
             var test = ParseOne();
             var testExp = test as Exp;
             if (testExp == null)
-                throw remark.Error.Fail();
+                throw remarkList.StructureValidator.MissingTestExpression();
             if (Text != "then")
-                throw remark.Error.Fail();
+                throw remarkList.StructureValidator.ExpectedWordThen(testExp);
             Ti.Next();
             var then = ParseOne();
             Element otherwise;

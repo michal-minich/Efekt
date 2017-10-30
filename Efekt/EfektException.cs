@@ -2,18 +2,14 @@
 
 namespace Efekt
 {
-    internal class EfektException : Exception
+    public class EfektException : Exception
     {
-        public readonly Element Element;
-
-        public EfektException(string message, Element element) : base(message)
+        public EfektException(string message) : base(message)
         {
-            Element = element;
         }
 
-        public EfektException(string message, Exception innerException, Element element) : base(message, innerException)
+        public EfektException(string message, Element inExp) : base(message)
         {
-            Element = element;
         }
     }
 }

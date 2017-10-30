@@ -1,62 +1,53 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 
 namespace Efekt
 {
     public sealed class Prog
     {
-        public static Prog Instance { get; private set; }
-
-        private static readonly Tokenizer t = new Tokenizer();
-        private static readonly Interpreter i = new Interpreter();
-        private static readonly PlainTextCodeWriter ctw = new PlainTextCodeWriter(new ConsoleWriter());
-        private static readonly Printer cw = new Printer(ctw);
+        public readonly Interpreter Interpreter;
+        public readonly TextWriter OutputWriter;
+        public readonly TextWriter ErrorWriter;
+        public readonly Printer OutputPrinter;
+        public readonly Printer ErrorPrinter;
+        public readonly RemarkList RemarkList;
 
         public Element RootElement { get; private set; }
-        public Remark Remark { get; }
 
-        private Prog(TextWriter remarkWriter)
+        private Prog(TextWriter outputWriter, TextWriter errorWriter)
         {
-            Remark = new Remark(remarkWriter);
-            Instance = this;
+            Interpreter = new Interpreter();
+            RemarkList = new RemarkList(this);
+            OutputWriter = outputWriter;
+            ErrorWriter = errorWriter;
+            ErrorPrinter = OutputPrinter;
+            OutputPrinter = new Printer(new PlainTextCodeWriter(OutputWriter));
         }
 
 
-        public static Prog Init(TextWriter remarkWriter, Element parsedElement)
+        public static Prog Init(TextWriter outputWriter, TextWriter errorWriter, string asIfFilePath, string codeText)
         {
-            var prog = new Prog(remarkWriter);
-            prog.RootElement = Tranform(parsedElement, prog.Remark);
+            var prog = new Prog(outputWriter, errorWriter);
+            var ts = new Tokenizer().Tokenize(codeText);
+            var e = new Parser(prog.RemarkList).Parse(asIfFilePath, ts);
+            prog.RootElement = Transform(e);
             return prog;
         }
 
 
-        public static Prog Load(TextWriter remarkWriter, string filePath)
+        public static Prog Load(TextWriter outputWriter, TextWriter errorWriter, string filePath)
         {
-            C.Nn(filePath);
-            var prog = new Prog(remarkWriter);
-            var code = File.ReadAllText(filePath);
-
-            var ts = t.Tokenize(code);
-            var e = new Parser(prog.Remark).Parse(filePath, ts);
-            prog.RootElement = Tranform(e, prog.Remark);
-            return prog;
+            return Init(outputWriter, errorWriter, filePath, File.ReadAllText(filePath));
         }
 
 
-        public void Run()
+        public Exp Run()
         {
-            var res = i.Eval(this);
-            var text = Builtins.Writer.GetAndReset();
-            Console.WriteLine(text);
-            if (res != Void.Instance)
-            {
-                Console.Write("Output: ");
-                cw.Write(res);
-            }
+            var res = Interpreter.Eval(this);
+            return res;
         }
 
 
-        public static Element Tranform(Element e, Remark remark)
+        public static Element Transform(Element e)
         {
             if (e is Exp exp)
                 e = new Sequence(new[] {new Return(exp)});
@@ -67,24 +58,6 @@ namespace Efekt
                     new FnArguments());
 
             return e;
-        }
-
-
-        public static Element Tranform2(Element e, Remark remark)
-        {
-            Sequence seq;
-
-            if (e is Exp exp)
-                return e;
-            else if (e is Sequence s)
-                seq = s;
-            else
-                seq = new Sequence(new[] {e});
-
-            return new Sequence(new Element[]
-            {
-                new Var(new Ident("start", TokenType.Ident), new Fn(new FnParameters(), seq)),
-            });
         }
     }
 }

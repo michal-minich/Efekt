@@ -33,6 +33,13 @@ namespace Efekt
                     w.Num(ii.Value.ToString());
                     break;
                 case FnApply fna:
+                    if (fna.Fn is Ident ident && ident.TokenType == TokenType.Op)
+                    {
+                        Write(fna.Arguments[0]).Space();
+                        Write(fna.Fn).Space();
+                        Write(fna.Arguments[1]);
+                        break;
+                    }
                     Write(fna.Fn);
                     w.Space();
                     var c = 0;
@@ -90,6 +97,12 @@ namespace Efekt
                 case Assign a:
                     writeAssign(a.To, a.Exp);
                     break;
+                case Char ch:
+                    w.Markup("\'").Text(ch.Value.ToString()).Markup("\'");
+                    break;
+                case Text tx:
+                    w.Markup("\"").Text(tx.Value).Markup("\"");
+                    break;
                 case Arr arr:
                     w.Markup("[");
                     var counter = 0;
@@ -100,9 +113,6 @@ namespace Efekt
                             w.Markup(",").Space();
                     }
                     w.Markup("]");
-                    break;
-                case Char ch:
-                    w.Markup("\'").Text(ch.Value.ToString()).Markup("\'");
                     break;
                 case MemberAccess ma:
                     Write(ma.Exp).Op(".");

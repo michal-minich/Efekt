@@ -6,7 +6,8 @@ namespace Efekt
 {
     internal sealed class TokenIterator
     {
-        [CanBeNull] internal static TokenIterator Instance { get; private set; }
+        [CanBeNull]
+        internal static TokenIterator Instance { get; private set; }
 
         private readonly IEnumerator<Token> te;
 

@@ -27,34 +27,16 @@ namespace Efekt
         [CanBeNull] private Value ret;
         private bool isBreak;
         private Prog prog;
-        public Stack<StackItem> CallStack { get; private set; }
+        private Stack<StackItem> callStack { get; set; }
 
-        private static readonly StringWriter sw = new StringWriter();
-        private static readonly PlainTextCodeWriter ctw = new PlainTextCodeWriter(sw);
-        private static readonly Printer cw = new Printer(ctw);
+        public IReadOnlyList<StackItem> CallStack => callStack.ToList();
+
 
         public Value Eval(Prog program)
         {
             prog = program;
-            CallStack = new Stack<StackItem>();
-
-            try
-            {
-                return eval(program.RootElement, Env.CreateRoot(program.Remark));
-            }
-            catch (EfektException ex)
-            {
-                cw.Write(ex.Element);
-                var msg =
-                    ex.Message + " in '" + sw.GetAndReset() + "'"
-                    + Environment.NewLine
-                    + string.Join(
-                        Environment.NewLine,
-                        CallStack
-                            .Select(cs => "  " + Utils.GetFilePathRelativeToBase(cs.FilePath)
-                                          + ":" + (cs.LineIndex + 1) + " " + cs.FnName));
-                throw new EfektException(msg, ex, ex.Element);
-            }
+            callStack = new Stack<StackItem>();
+            return eval(prog.RootElement, Env.CreateRoot(prog));
         }
 
 
@@ -67,20 +49,21 @@ namespace Efekt
                     env.Declare(v.Ident, val);
                     return Void.Instance;
                 case Assign a:
-                    var val2 = eval(a.Exp, env);
-                    if (a.To is Ident ident)
+                    var newValue = eval(a.Exp, env);
+                    switch (a.To)
                     {
-                        env.Set(ident, val2);
-                        return Void.Instance;
+                        case Ident ident:
+                            env.Set(ident, newValue);
+                            break;
+                        case MemberAccess ma:
+                            var obj = eval(ma.Exp, env);
+                            var o2 = obj.AsObj(ma, prog);
+                            o2.Env.Set(ma.Ident, newValue);
+                            break;
+                        default:
+                            throw new NotSupportedException();
                     }
-                    else if (a.To is MemberAccess ma)
-                    {
-                        var obj = eval(ma.Exp, env);
-                        var o2 = obj.AsObj(prog.Remark, ma);
-                        o2.Env.Set(ma.Ident, val2);
-                        return Void.Instance;
-                    }
-                    throw prog.Remark.Error.AssignTargetIsInvalid(a.To);
+                    return Void.Instance;
                 case Ident i:
                     return env.Get(i);
                 case Return r:
@@ -92,21 +75,21 @@ namespace Efekt
                     var eArgs = fna.Arguments.Select(a => eval(a, env)).ToArray();
                     if (builtin != null)
                     {
-                        CallStack.Push(new StackItem(builtin, builtin.Name));
-                        var res = builtin.Fn(prog.Remark, new FnArguments(eArgs), fna);
-                        CallStack.Pop();
+                        callStack.Push(new StackItem(builtin, builtin.Name));
+                        var res = builtin.Fn(new FnArguments(eArgs), fna);
+                        callStack.Pop();
                         return res;
                     }
-                    var fn2 = fn.AsFn(prog.Remark, fna);
-                    var paramsEnv = Env.Create(prog.Remark, fn2.Env);
+                    var fn2 = fn.AsFn(fna, prog);
+                    var paramsEnv = Env.Create(prog, fn2.Env);
                     var ix = 0;
                     foreach (var p in fn2.Parameters)
                     {
                         var eArg = eArgs[ix++];
                         paramsEnv.Declare(p, eArg);
                     }
-                    var fnEnv = Env.Create(prog.Remark, paramsEnv);
-                    CallStack.Push(new StackItem(fn2));
+                    var fnEnv = Env.Create(prog, paramsEnv);
+                    callStack.Push(new StackItem(fn2));
                     foreach (var bodyElement in fn2.Sequence)
                     {
                         evalSequenceItem(bodyElement, fnEnv);
@@ -114,11 +97,11 @@ namespace Efekt
                         {
                             var tmp = ret;
                             ret = null;
-                            CallStack.Pop();
+                            callStack.Pop();
                             return tmp;
                         }
                     }
-                    CallStack.Pop();
+                    callStack.Pop();
                     return Void.Instance;
                 case Fn f:
                     var fn3 = new Fn(f.Parameters, f.Sequence, env);
@@ -128,15 +111,15 @@ namespace Efekt
                     return fn3;
                 case When w:
                     var test = eval(w.Test, env);
-                    var testB = test.AsBool(prog.Remark, w.Test);
+                    var testB = test.AsBool(w.Test, prog);
                     if (testB.Value)
-                        return eval(w.Then, Env.Create(prog.Remark, env));
+                        return eval(w.Then, Env.Create(prog, env));
                     else if (w.Otherwise != null)
-                        return eval(w.Otherwise, Env.Create(prog.Remark, env));
+                        return eval(w.Otherwise, Env.Create(prog, env));
                     else
                         return Void.Instance;
                 case Loop l:
-                    var loopEnv = Env.Create(prog.Remark, env);
+                    var loopEnv = Env.Create(prog, env);
                     while (true)
                         foreach (var e in l.Body)
                         {
@@ -156,44 +139,39 @@ namespace Efekt
                     return new Arr(new Values(ae.Arguments.Select(e => eval(e, env)).ToArray()));
                 case MemberAccess ma:
                     var exp = eval(ma.Exp, env);
-                    var o = exp.AsObj(prog.Remark, ma);
+                    var o = exp.AsObj(ma, prog);
                     return o.Env.Get(ma.Ident);
                 case New n:
-                    var objEnv = Env.Create(prog.Remark, env);
+                    var objEnv = Env.Create(prog, env);
                     foreach (var v in n.Body)
                         eval(v, objEnv);
                     return new Obj(n.Body, objEnv);
                 case Value ve:
                     return ve;
                 case Sequence seq:
-                    var scopeEnv = Env.Create(prog.Remark, env);
+                    var scopeEnv = Env.Create(prog, env);
                     foreach (var item in seq)
                     {
                         evalSequenceItem(item, scopeEnv);
                         if (ret != null)
-                        {
                             return Void.Instance;
-                            //var tmp = ret;
-                            //ret = null;
-                            //return tmp;
-                        }
                     }
                     return Void.Instance;
                 default:
-                    throw new Exception();
+                    throw new NotSupportedException();
             }
         }
 
         private void evalSequenceItem(Element bodyElement, Env env)
         {
-            CallStack.Peek().LineIndex = bodyElement.LineIndex;
+            callStack.Peek().LineIndex = bodyElement.LineIndex;
             var bodyVal = eval(bodyElement, env);
             if (bodyVal != Void.Instance)
             {
                 if (bodyElement is FnApply fna2)
-                    prog.Remark.Warn.ValueReturnedFromFunctionNotUsed(fna2);
+                    prog.RemarkList.Warn.ValueReturnedFromFunctionNotUsed(fna2);
                 else
-                    prog.Remark.Warn.ValueIsNotAssigned(bodyElement);
+                    prog.RemarkList.Warn.ValueIsNotAssigned(bodyElement);
             }
         }
     }

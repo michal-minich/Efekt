@@ -1,2 +1,4 @@
-﻿var a = "aB12"
-return a
+﻿var a = fn a, b, c { return a + b + 'a' }
+return a(1, 2, 3)
+
+

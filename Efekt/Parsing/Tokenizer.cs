@@ -15,6 +15,7 @@ namespace Efekt
 
         // ReSharper disable once NotNullMemberIsNotInitialized
         [NotNull] private string code;
+
         private char ch;
         private int ix;
         private TokenType tokType;

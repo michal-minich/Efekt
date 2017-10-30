@@ -7,30 +7,30 @@ namespace Efekt
     {
         private readonly Dictionary<string, Value> dict = new Dictionary<string, Value>();
         [CanBeNull] private readonly Env parent;
-        private readonly Remark remark;
+        private readonly Prog prog;
 
-        private Env(Remark remark)
+        private Env(Prog prog)
         {
-            this.remark = remark;
+            this.prog = prog;
             parent = null;
-            foreach (var b in Builtins.Values)
+            foreach (var b in new Builtins(prog).Values)
                 dict.Add(b.Name, b);
         }
 
-        private Env(Remark remark, Env parent)
+        private Env(Prog prog, Env parent)
         {
-            this.remark = remark;
+            this.prog = prog;
             this.parent = parent;
         }
 
-        public static Env CreateRoot(Remark remark)
+        public static Env CreateRoot(Prog prog)
         {
-            return new Env(remark);
+            return new Env(prog);
         }
 
-        public static Env Create(Remark remark, Env parent)
+        public static Env Create(Prog prog, Env parent)
         {
-            return new Env(remark, parent);
+            return new Env(prog, parent);
         }
 
         public Value Get(Ident ident)
@@ -39,13 +39,13 @@ namespace Efekt
                 return value;
             if (parent != null)
                 return parent.Get(ident);
-            throw remark.Error.VariableIsNotDeclared(ident);
+            throw prog.RemarkList.Except.VariableIsNotDeclared(ident);
         }
 
         public void Declare(Ident ident, Value value)
         {
             if (dict.ContainsKey(ident.Name))
-                throw remark.Error.VariableIsAlreadyDeclared(ident);
+                throw prog.RemarkList.Except.VariableIsAlreadyDeclared(ident);
             dict.Add(ident.Name, value);
         }
 
@@ -58,15 +58,13 @@ namespace Efekt
                 {
                     var old = e.dict[ident.Name];
                     if (old.GetType() != value.GetType())
-                    {
-                        remark.Warn.AssigningDifferentType(ident, old, value);
-                    }
+                        prog.RemarkList.Warn.AssigningDifferentType(ident, old, value);
                     e.dict[ident.Name] = value;
                     return;
                 }
                 e = e.parent;
             } while (e != null);
-            throw remark.Error.VariableIsNotDeclared(ident);
+            throw prog.RemarkList.Except.VariableIsNotDeclared(ident);
         }
     }
 }

@@ -2,29 +2,32 @@
 {
     public sealed class Warn
     {
-        private readonly TextWriter writer;
+        private readonly Prog prog;
 
-        public Warn(TextWriter writer)
+        public Warn(Prog prog)
         {
-            this.writer = writer;
+            this.prog = prog;
         }
 
-        private void w(string message, Element e)
+        private void w(string message, Element subject)
         {
-            var filePath = Utils.GetFilePathRelativeToBase(e.FilePath);
-            writer.WriteLine(filePath + ":" + (e.LineIndex + 1) + " Warning: " + message);
+            var filePath = Utils.GetFilePathRelativeToBase(subject.FilePath);
+            prog.RemarkList.Add(new Remark(RemarkSerity.Warning, message, filePath, subject.LineIndex, subject));
         }
 
+        // TODO move to structure validation eventually
         internal void ValueReturnedFromFunctionNotUsed(FnApply fna)
         {
             w("Value returned from function is not used", fna);
         }
-        
+
+        // TODO move to structure validation eventually
         public void ValueIsNotAssigned(Element unusedValue)
         {
             w("Value of expression is not used", unusedValue);
         }
 
+        // TODO move to type validation eventually
         public void AssigningDifferentType(Ident ident, Value old, Value @new)
         {
             w("Variable '" + ident.Name + "' of type '"

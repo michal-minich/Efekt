@@ -9,14 +9,14 @@ namespace Efekt
         protected List<ParseOpElement> OpOparsers;
         protected List<ParseElement> Parsers;
         protected TokenIterator Ti;
-        
+
         protected string Text => Ti.Current.Text;
         protected TokenType Type => Ti.Current.Type;
-        protected readonly Remark remark;
+        protected readonly RemarkList remarkList;
 
-        public ElementIterator(Remark remark)
+        public ElementIterator(RemarkList remarkList)
         {
-            this.remark = remark;
+            this.remarkList = remarkList;
         }
 
         internal Element Parse(string filePath, IEnumerable<Token> tokens)
@@ -70,7 +70,7 @@ namespace Efekt
                 {
                     if (e2 is Exp ee)
                         return parseWithOp(new Assign(a.To, ee));
-                    throw remark.Error.Fail();
+                    throw remarkList.StructureValidator.SecondOperandMustBeExpression(e2);
                 }
                 return parseWithOp(e2);
             }

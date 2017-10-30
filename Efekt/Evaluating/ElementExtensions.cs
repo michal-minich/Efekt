@@ -2,39 +2,48 @@ namespace Efekt
 {
     internal static class ElementExtensions
     {
-        public static B As<B>(this Exp element, Remark remark, Exp inExp) where B : Exp
+        public static B As<B>(this Exp element, Exp inExp, Prog prog) where B : Exp
         {
-            return element is B e ? e : throw remark.Error.DifferentTypeExpected(element, typeof(B).Name, inExp);
+            return element is B e
+                ? e
+                : throw prog.RemarkList.Except.DifferentTypeExpected(element, typeof(B).Name, inExp);
         }
 
-        public static Int AsInt(this Exp exp, Remark remark, Exp inExp)
+        public static Int AsInt(this Exp exp, Exp inExp, Prog prog)
         {
-            return exp.As<Int>(remark, inExp);
+            return exp.As<Int>(inExp, prog);
         }
 
-        public static Arr AsArr(this Exp exp, Remark remark, Exp inExp)
+        public static Arr AsArr(this Exp exp, Exp inExp, Prog prog)
         {
-            return exp.As<Arr>(remark, inExp);
+            return exp.As<Arr>(inExp, prog);
         }
 
-        public static Value AsValue(this Exp exp, Remark remark, Exp inExp)
+        public static Value AsValue(this Exp exp, Exp inExp, Prog prog)
         {
-            return exp.As<Value>(remark, inExp);
+            return exp.As<Value>(inExp, prog);
         }
 
-        public static Bool AsBool(this Exp exp, Remark remark, Exp inExp)
+        public static Bool AsBool(this Exp exp, Exp inExp, Prog prog)
         {
-            return exp.As<Bool>(remark, inExp);
+            return exp.As<Bool>(inExp, prog);
         }
 
-        public static Fn AsFn(this Exp exp, Remark remark, Exp inExp)
+        public static Fn AsFn(this Exp exp, Exp inExp, Prog prog)
         {
-            return exp.As<Fn>(remark, inExp);
+            return exp.As<Fn>(inExp, prog);
         }
 
-        public static Obj AsObj(this Exp exp, Remark remark, Exp inExp)
+        public static Obj AsObj(this Exp exp, Exp inExp, Prog prog)
         {
-            return exp.As<Obj>(remark, inExp);
+            return exp.As<Obj>(inExp, prog);
+        }
+
+        public static string ToDebugString(this Element e)
+        {
+            var sw = new StringWriter();
+            new Printer(new PlainTextCodeWriter(sw)).Write(e);
+            return sw.GetAndReset();
         }
     }
 }

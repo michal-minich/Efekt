@@ -44,6 +44,10 @@ namespace Efekt
     {
     }
 
+    public interface AssignTarget : Exp
+    {
+    }
+
 
     public interface IElementList<out T> : IReadOnlyList<T> where T : class, Element
     {
@@ -154,7 +158,7 @@ namespace Efekt
     public sealed class Builtin : AElement, Value
     {
         [DebuggerStepThrough]
-        public Builtin(string name, Func<Remark, FnArguments, Exp, Value> fn)
+        public Builtin(string name, Func<FnArguments, Exp, Value> fn)
         {
             C.Assert(!string.IsNullOrWhiteSpace(name));
             C.Assert(name.Trim().Length == name.Length);
@@ -165,11 +169,11 @@ namespace Efekt
         }
 
         public string Name { get; }
-        public Func<Remark, FnArguments, Exp, Value> Fn { get; }
+        public Func<FnArguments, Exp, Value> Fn { get; }
     }
 
 
-    public sealed class Ident : AElement, Exp
+    public sealed class Ident : AElement, AssignTarget
     {
         [DebuggerStepThrough]
         public Ident(string name, TokenType tokenType)
@@ -180,8 +184,9 @@ namespace Efekt
             Name = name;
             TokenType = tokenType;
         }
-        
+
         public string Name { get; }
+
         // ReSharper disable once UnusedAutoPropertyAccessor.Global
         // ReSharper disable once MemberCanBePrivate.Global
         public TokenType TokenType { get; }
@@ -202,7 +207,7 @@ namespace Efekt
             ident.Parent = this;
             exp.Parent = this;
         }
-        
+
         public Ident Ident { get; }
         public Exp Exp { get; }
     }
@@ -211,7 +216,7 @@ namespace Efekt
     public sealed class Assign : AElement, Stm
     {
         [DebuggerStepThrough]
-        public Assign(Exp to, Exp exp)
+        public Assign(AssignTarget to, Exp exp)
         {
             C.Nn(to);
             C.Nn(exp);
@@ -222,8 +227,8 @@ namespace Efekt
             to.Parent = this;
             exp.Parent = this;
         }
-        
-        public Exp To { get; }
+
+        public AssignTarget To { get; }
         public Exp Exp { get; }
     }
 
@@ -249,6 +254,7 @@ namespace Efekt
 
         public Exp Test { get; }
         public Element Then { get; }
+
         [CanBeNull]
         public Element Otherwise { get; }
     }
@@ -263,7 +269,7 @@ namespace Efekt
             Body = body;
             body.Parent = this;
         }
-        
+
         public Sequence Body { get; }
     }
 
@@ -343,11 +349,11 @@ namespace Efekt
     }
 
 
-    public sealed class Text : Arr, Value
+    public sealed class Text : Arr
     {
         [DebuggerStepThrough]
-        public Text(string value) 
-            : base(new Values(value.Select(v=>new Char(v)).ToList()))
+        public Text(string value)
+            : base(new Values(value.Select(v => new Char(v)).ToList()))
         {
             Value = value;
         }
@@ -374,7 +380,7 @@ namespace Efekt
         private Void()
         {
         }
-        
+
         public static Void Instance { get; } = new Void();
     }
 
@@ -447,15 +453,16 @@ namespace Efekt
             Body = body;
             Env = env;
         }
-        
+
         // ReSharper disable once UnusedAutoPropertyAccessor.Global
         // ReSharper disable once MemberCanBePrivate.Global
         public ClassBody Body { get; }
+
         public Env Env { get; }
     }
 
 
-    public sealed class MemberAccess : AElement, Exp
+    public sealed class MemberAccess : AElement, AssignTarget
     {
         [DebuggerStepThrough]
         public MemberAccess(Exp exp, Ident ident)
@@ -469,7 +476,7 @@ namespace Efekt
             exp.Parent = this;
             ident.Parent = this;
         }
-        
+
         public Exp Exp { get; }
         public Ident Ident { get; }
     }

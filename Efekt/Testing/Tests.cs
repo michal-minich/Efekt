@@ -1,17 +1,10 @@
 ﻿using System;
-using System.Linq;
 
 // ReSharper disable once CheckNamespace
 namespace Efekt.Tests
 {
     internal static class Tests
     {
-        private static readonly Tokenizer t = new Tokenizer();
-        private static readonly Interpreter i = new Interpreter();
-        private static readonly StringWriter sw = new StringWriter();
-        private static readonly PlainTextCodeWriter ctw = new PlainTextCodeWriter(sw);
-        private static readonly Printer cw = new Printer(ctw);
-
         public static void RunAllTests()
         {
             //test("var a = + return a(1, 2)", "3");
@@ -76,7 +69,7 @@ namespace Efekt.Tests
             test("var a = + return a(1, 2)", "3");
             test("var a = (+) return a(1, 2)", "3");
             test("var + = fn a, b { return a * b } return 3 + 2", "6");
-            test("print(1)", "<Void>", "Int: 1");
+            test("print(1)", "<Void>", "1");
 
             // fn
             test("var a = fn { return 1 } return a()", "1");
@@ -162,22 +155,22 @@ namespace Efekt.Tests
 
 
         // ReSharper disable ParameterOnlyUsedForPreconditionCheck.Local
-        private static void test(string code, string expectedResult,
+        private static void test(
+                string code,
+                string expectedResult,
                 string expectedOutput = "")
             // ReSharper restore ParameterOnlyUsedForPreconditionCheck.Local
         {
-            var tokens = t.Tokenize(code).ToList();
-            var remarkWriter = new StringWriter();
-            var se = new Parser(new Remark(remarkWriter)).Parse("unittest.ef", tokens);
-            var prog = Prog.Init(remarkWriter, se);
-            var r = i.Eval(prog);
-            cw.Write(r);
-            var val = sw.GetAndReset();
+            var outputWriter = new StringWriter();
+            var errorWriter = new StringWriter();
+            var prog = Prog.Init(outputWriter, errorWriter, "unittest.ef", code);
+            var res = prog.Interpreter.Eval(prog);
+            var val = res.ToDebugString();
             if (val != expectedResult)
-                throw prog.Remark.Error.Fail();
-            var acutalOutput = Builtins.Writer.GetAndReset();
+                throw new Exception();
+            var acutalOutput = outputWriter.GetAndReset();
             if (acutalOutput != expectedOutput)
-                throw prog.Remark.Error.Fail();
+                throw new Exception();
         }
     }
 }
