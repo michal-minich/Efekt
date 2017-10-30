@@ -6,14 +6,14 @@ using JetBrains.Annotations;
 namespace Efekt
 {
     [CanBeNull]
-    internal delegate Element ParseElement();
+    public delegate Element ParseElement();
 
 
     [CanBeNull]
-    internal delegate Element ParseOpElement(Exp prev);
+    public delegate Element ParseOpElement(Exp prev);
 
 
-    internal sealed class Parser : ElementIterator
+    public sealed class Parser : ElementIterator
     {
         private readonly Stack<int> StartLineIndex = new Stack<int>();
 
@@ -59,7 +59,7 @@ namespace Efekt
         }
 
 
-        internal Parser(RemarkList remarkList) : base(remarkList)
+        public Parser(RemarkList remarkList) : base(remarkList)
         {
             Parsers = new List<ParseElement>
             {
@@ -125,13 +125,13 @@ namespace Efekt
             else if (t == '[')
                 end = ']';
             else
-                throw remarkList.StructureValidator.BraceExpected();
+                throw RemarkList.StructureValidator.BraceExpected();
             if (endBrace != end)
                 throw new ArgumentException();
             Ti.Next();
             var elb = ParseList(endBrace, isComaSeparated);
             if (Text[0] != end)
-                throw remarkList.StructureValidator.EndBraceDoesNotMatchesStart(null);
+                throw RemarkList.StructureValidator.EndBraceDoesNotMatchesStart(null);
             Ti.Next();
             return elb;
         }
@@ -204,16 +204,16 @@ namespace Efekt
             {
                 if (second is Ident i)
                     return post(new MemberAccess(prev, i));
-                throw remarkList.StructureValidator.ExpectedIdentifierAfterDot(second);
+                throw RemarkList.StructureValidator.ExpectedIdentifierAfterDot(second);
             }
             var e2 = second as Exp;
             if (e2 == null)
-                throw remarkList.StructureValidator.FunctionArgumentMustBeExpression(second);
+                throw RemarkList.StructureValidator.FunctionArgumentMustBeExpression(second);
             if (opText == "=")
             {
                 if (prev is AssignTarget at)
                     return post(new Assign(at, e2));
-                throw remarkList.StructureValidator.AssignTargetIsInvalid(prev);
+                throw RemarkList.StructureValidator.AssignTargetIsInvalid(prev);
             }
             if (!prev.IsBraced
                 && prev is FnApply fna
@@ -264,7 +264,7 @@ namespace Efekt
                 e.IsBraced = true;
                 return e;
             }
-            throw remarkList.StructureValidator.ExpectedOnlyOneExpressionInsideBraces(elb.Items);
+            throw RemarkList.StructureValidator.ExpectedOnlyOneExpressionInsideBraces(elb.Items);
         }
 
 
@@ -322,7 +322,7 @@ namespace Efekt
                 return null;
             markStart();
             if (Text.Length != 3)
-                throw remarkList.StructureValidator.CharShouldHaveOnlyOneChar();
+                throw RemarkList.StructureValidator.CharShouldHaveOnlyOneChar();
             var i = post(new Char(Text[1]));
             Ti.Next();
             return i;
@@ -374,9 +374,9 @@ namespace Efekt
             {
                 if (a.To is Ident i)
                     return post(new Var(i, a.Exp));
-                throw remarkList.StructureValidator.OnlyIdentifierCanBeDeclared(a.To);
+                throw RemarkList.StructureValidator.OnlyIdentifierCanBeDeclared(a.To);
             }
-            throw remarkList.StructureValidator.InvalidElementAfterVar(se);
+            throw RemarkList.StructureValidator.InvalidElementAfterVar(se);
         }
 
 
@@ -393,7 +393,7 @@ namespace Efekt
             var se = ParseOne();
             if (se is Exp exp)
                 return post(new Return(exp));
-            throw remarkList.StructureValidator.ExpectedExpressionAfterReturn(se);
+            throw RemarkList.StructureValidator.ExpectedExpressionAfterReturn(se);
         }
 
 
@@ -407,9 +407,9 @@ namespace Efekt
             var test = ParseOne();
             var testExp = test as Exp;
             if (testExp == null)
-                throw remarkList.StructureValidator.MissingTestExpression();
+                throw RemarkList.StructureValidator.MissingTestExpression();
             if (Text != "then")
-                throw remarkList.StructureValidator.ExpectedWordThen(testExp);
+                throw RemarkList.StructureValidator.ExpectedWordThen(testExp);
             Ti.Next();
             var then = ParseOne();
             Element otherwise;

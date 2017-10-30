@@ -12,48 +12,38 @@ namespace Efekt
         }
 
 
-        [Pure]
-        public EfektException DifferentTypeExpected(Exp value, string expectedTypeName, Exp inExp)
+        private EfektException ex(Exp subject, [CanBeNull] Exp inExp, string message)
         {
             return prog.RemarkList.AddException(new Remark(
-                RemarkSerity.Exception,
-                "Expected type '" + expectedTypeName + "' but the expression is of type '"
-                + value.GetType().Name + "'",
-                value.FilePath,
-                value.LineIndex,
-                value,
+                RemarkSeverity.Exception,
+                message,
+                subject.FilePath,
+                subject.LineIndex,
+                subject,
                 inExp,
                 prog.Interpreter.CallStack));
         }
 
 
         [Pure]
+        public EfektException DifferentTypeExpected(Exp value, string expectedTypeName, Exp inExp)
+        {
+            return ex(value, inExp, "Expected type '" + expectedTypeName
+                                    + "' but the expression is of type '" + value.GetType().Name + "'");
+        }
+
+        [Pure]
         // TODO move to structure validation eventually
         public EfektException VariableIsNotDeclared(Ident ident)
         {
-            return prog.RemarkList.AddException(new Remark(
-                RemarkSerity.Exception,
-                "Variable '" + ident.Name + "' is not declared",
-                ident.FilePath,
-                ident.LineIndex,
-                ident,
-                null,
-                prog.Interpreter.CallStack));
+            return ex(ident, null, "Variable '" + ident.Name + "' is not declared");
         }
-
 
         [Pure]
         // TODO move to structure validation eventually
         public EfektException VariableIsAlreadyDeclared(Ident ident)
         {
-            return prog.RemarkList.AddException(new Remark(
-                RemarkSerity.Exception,
-                "Variable '" + ident.Name + "' is already declared",
-                ident.FilePath,
-                ident.LineIndex,
-                ident,
-                null,
-                prog.Interpreter.CallStack));
+            return ex(ident, null, "Variable '" + ident.Name + "' is already declared");
         }
     }
 }

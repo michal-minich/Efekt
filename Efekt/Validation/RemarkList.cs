@@ -8,7 +8,7 @@ namespace Efekt
 {
     public sealed class Remark
     {
-        public readonly RemarkSerity Severity;
+        public readonly RemarkSeverity Severity;
         public readonly string Message;
         public readonly string FilePath;
         public readonly int LineIndexStart;
@@ -17,12 +17,12 @@ namespace Efekt
         [CanBeNull] public readonly IReadOnlyList<StackItem> CallStack;
 
         public Remark(
-            RemarkSerity severity,
+            RemarkSeverity severity,
             string message,
             string filePath,
             int lineIndexStart,
             Element subject = null,
-            Exp inExp = null,
+            Element inExp = null,
             IReadOnlyList<StackItem> callStack = null)
         {
             Severity = severity;
@@ -66,7 +66,7 @@ namespace Efekt
     }
 
 
-    public enum RemarkSerity
+    public enum RemarkSeverity
     {
         Warning,
         Error,
@@ -95,15 +95,16 @@ namespace Efekt
         public IEnumerator<Remark> GetEnumerator() => remarks.GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
         public int Count => remarks.Count;
+
         [NotNull]
         public Remark this[int index] => remarks[index];
 
 
         public void Add(Remark remark)
         {
-            if (remark.Severity == RemarkSerity.Fatal || remark.Severity == RemarkSerity.Exception)
+            if (remark.Severity == RemarkSeverity.Fatal || remark.Severity == RemarkSeverity.Exception)
                 throw new InvalidOperationException();
-            
+
             remarks.Add(remark);
             prog.ErrorWriter.Write(remark.GetString());
         }
@@ -113,7 +114,7 @@ namespace Efekt
         public EfektException AddFatal(Remark remark)
         {
             C.Nn(remark.Subject);
-            if (remark.Severity != RemarkSerity.Fatal)
+            if (remark.Severity != RemarkSeverity.Fatal)
                 throw new InvalidOperationException();
 
             remarks.Add(remark);
@@ -127,7 +128,7 @@ namespace Efekt
         public EfektException AddException(Remark remark)
         {
             C.Nn(remark.Subject);
-            if (remark.Severity != RemarkSerity.Exception)
+            if (remark.Severity != RemarkSeverity.Exception)
                 throw new InvalidOperationException();
 
             remarks.Add(remark);

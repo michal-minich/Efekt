@@ -3,7 +3,7 @@
 // ReSharper disable once CheckNamespace
 namespace Efekt.Tests
 {
-    internal static class Tests
+    public static class Tests
     {
         public static void RunAllTests()
         {

@@ -4,21 +4,21 @@ using JetBrains.Annotations;
 
 namespace Efekt
 {
-    internal sealed class TokenIterator
+    public sealed class TokenIterator
     {
         [CanBeNull]
-        internal static TokenIterator Instance { get; private set; }
+        public static TokenIterator Instance { get; private set; }
 
         private readonly IEnumerator<Token> te;
 
-        internal Token Current { get; private set; }
-        internal int LineIndex { get; private set; }
-        internal string FilePath { get; }
-        internal bool Finished => Current.Type == TokenType.Terminal;
-        internal bool HasWork => !Finished;
+        public Token Current { get; private set; }
+        public int LineIndex { get; private set; }
+        public string FilePath { get; }
+        public bool Finished => Current.Type == TokenType.Terminal;
+        public bool HasWork => !Finished;
 
 
-        internal TokenIterator(string filePath, IEnumerable<Token> tokens)
+        public TokenIterator(string filePath, IEnumerable<Token> tokens)
         {
             FilePath = filePath;
             te = tokens.GetEnumerator();
@@ -44,7 +44,7 @@ namespace Efekt
 
 
         [DebuggerStepThrough]
-        internal void Next()
+        public void Next()
         {
             again:
             MoveNext();

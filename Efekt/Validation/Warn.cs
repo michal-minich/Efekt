@@ -12,11 +12,11 @@
         private void w(string message, Element subject)
         {
             var filePath = Utils.GetFilePathRelativeToBase(subject.FilePath);
-            prog.RemarkList.Add(new Remark(RemarkSerity.Warning, message, filePath, subject.LineIndex, subject));
+            prog.RemarkList.Add(new Remark(RemarkSeverity.Warning, message, filePath, subject.LineIndex, subject));
         }
 
         // TODO move to structure validation eventually
-        internal void ValueReturnedFromFunctionNotUsed(FnApply fna)
+        public void ValueReturnedFromFunctionNotUsed(FnApply fna)
         {
             w("Value returned from function is not used", fna);
         }

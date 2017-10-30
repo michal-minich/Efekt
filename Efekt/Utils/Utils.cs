@@ -36,9 +36,9 @@ namespace Efekt
         }
 
 
-        public static IEnumerable<TSource> DistinctBy<TSource, TDistictKey>(
+        public static IEnumerable<TSource> DistinctBy<TSource, TDistinctKey>(
             this IEnumerable<TSource> source,
-            Func<TSource, TDistictKey> selector)
+            Func<TSource, TDistinctKey> selector)
         {
             return source.GroupBy(selector).Select(g => g.First());
         }

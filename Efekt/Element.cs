@@ -64,10 +64,11 @@ namespace Efekt
             C.AllNotNull(items);
             this.items = items;
         }
-        
+
         public IEnumerator<T> GetEnumerator() => items.GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => items.GetEnumerator();
         public int Count => items.Count;
+
         [NotNull]
         public T this[int index] => items[index];
     }

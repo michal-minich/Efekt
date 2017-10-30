@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using JetBrains.Annotations;
 
 namespace Efekt
@@ -13,88 +12,94 @@ namespace Efekt
             this.prog = prog;
         }
 
-        [Pure]
-        public Exception AssignTargetIsInvalid(Exp target)
+        private EfektException f(string message, [CanBeNull] Element target)
         {
-            return prog.RemarkList.AddException(new Remark(
-                RemarkSerity.Fatal,
-                "Only identifier or object member can be assigned a value",
-                target.FilePath,
-                target.LineIndex,
-                target));
+            return prog.RemarkList.AddFatal(new Remark(
+                RemarkSeverity.Fatal,
+                message,
+                target == null ? "" : target.FilePath,
+                target == null ? -1 : target.LineIndex,
+                target,
+                target == null ? null : target.Parent));
+        }
 
+
+        [Pure]
+        public EfektException AssignTargetIsInvalid(Exp target)
+        {
+            return f("Only identifier or object member can be assigned a value", target);
         }
 
         [Pure]
-        public Exception OnlyIdentifierCanBeDeclared(Exp target)
+        public EfektException OnlyIdentifierCanBeDeclared(Exp target)
         {
-            return new EfektException("Only identifier can be used with 'var'", target.Parent);
+            return f("Only identifier can be used with 'var'", target);
         }
 
         [Pure]
-        public Exception SecondOperandMustBeExpression(Element target)
+        public EfektException SecondOperandMustBeExpression(Element target)
         {
-            return new EfektException("Second operand must be expression", target.Parent);
+            return f("Second operand must be expression", target);
         }
 
         [Pure]
-        public Exception FunctionArgumentMustBeExpression(Element target)
+        public EfektException FunctionArgumentMustBeExpression(Element target)
         {
-            return new EfektException("function argument must be expression", target.Parent);
+            return f("function argument must be expression", target);
         }
 
         [Pure]
-        public Exception EndBraceDoesNotMatchesStart(Element target)
+        public EfektException EndBraceDoesNotMatchesStart(Element target)
         {
-            return new EfektException("End Brace Does Not Matches Start", new Int(1));
+            return f("End Brace Does Not Matches Start", null);
         }
 
         [Pure]
-        public Exception CharShouldHaveOnlyOneChar()
+        public EfektException CharShouldHaveOnlyOneChar()
         {
-            return new EfektException("CharShouldHaveOnlyOneChar", new Int(1));
+            return f("CharShouldHaveOnlyOneChar", null);
         }
 
         [Pure]
-        public Exception BraceExpected()
+        public EfektException BraceExpected()
         {
-            return new EfektException("BraceExpected", new Int(1));
+            return f("BraceExpected", null);
         }
 
         [Pure]
-        public Exception ExpectedIdentifierAfterDot(Element second)
+        public EfektException ExpectedIdentifierAfterDot(Element second)
         {
-            return new EfektException("ExpectedIdntifierAfterDot", second.Parent);
+            return f("ExpectedIdentifierAfterDot", second);
         }
 
         [Pure]
-        internal Exception ExpectedExpressionAfterReturn(Element element)
+        public EfektException ExpectedExpressionAfterReturn(Element element)
         {
-            return new EfektException("ExpectedExpressionAfterReturn", element.Parent);
+            return f("ExpectedExpressionAfterReturn", element);
         }
 
         [Pure]
-        public Exception ExpectedOnlyOneExpressionInsideBraces(List<Element> elbItems)
+        public EfektException ExpectedOnlyOneExpressionInsideBraces(List<Element> elbItems)
         {
-            return new EfektException("ExpectedExpressionAfterReturn", new Int(1));
+            return f("ExpectedExpressionAfterReturn", null);
         }
 
         [Pure]
-        public Exception InvalidElementAfterVar(Element se)
+        public EfektException InvalidElementAfterVar(Element se)
         {
-            return new EfektException("InvalidElelentAfterVar", se.Parent);
+            return f("InvalidElementAfterVar", se);
         }
 
         [Pure]
-        public Exception MissingTestExpression()
+        public EfektException MissingTestExpression()
         {
-            return new EfektException("MissingTestExpression", new Int(1));
+            return f("MissingTestExpression", null);
         }
 
         [Pure]
-        internal Exception ExpectedWordThen(Exp testExp)
+        public EfektException ExpectedWordThen(Exp testExp)
         {
-            return new EfektException("ExpectedWordThen", testExp);
+            return f("ExpectedWordThen", testExp);
         }
     }
 }

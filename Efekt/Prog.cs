@@ -4,23 +4,29 @@ namespace Efekt
 {
     public sealed class Prog
     {
-        public readonly Interpreter Interpreter;
-        public readonly TextWriter OutputWriter;
-        public readonly TextWriter ErrorWriter;
-        public readonly Printer OutputPrinter;
-        public readonly Printer ErrorPrinter;
-        public readonly RemarkList RemarkList;
+        public Interpreter Interpreter { get; }
+        public RemarkList RemarkList { get; }
+
+        public TextWriter OutputWriter { get; }
+        public Printer OutputPrinter { get; }
+
+        public TextWriter ErrorWriter { get; }
+        public Printer ErrorPrinter { get; }
+
 
         public Element RootElement { get; private set; }
+
 
         private Prog(TextWriter outputWriter, TextWriter errorWriter)
         {
             Interpreter = new Interpreter();
             RemarkList = new RemarkList(this);
+
             OutputWriter = outputWriter;
-            ErrorWriter = errorWriter;
-            ErrorPrinter = OutputPrinter;
             OutputPrinter = new Printer(new PlainTextCodeWriter(OutputWriter));
+
+            ErrorWriter = errorWriter;
+            ErrorPrinter = new Printer(new PlainTextCodeWriter(ErrorWriter));
         }
 
 
@@ -29,7 +35,7 @@ namespace Efekt
             var prog = new Prog(outputWriter, errorWriter);
             var ts = new Tokenizer().Tokenize(codeText);
             var e = new Parser(prog.RemarkList).Parse(asIfFilePath, ts);
-            prog.RootElement = Transform(e);
+            prog.RootElement = transform(e);
             return prog;
         }
 
@@ -47,7 +53,7 @@ namespace Efekt
         }
 
 
-        public static Element Transform(Element e)
+        private static Element transform(Element e)
         {
             if (e is Exp exp)
                 e = new Sequence(new[] {new Return(exp)});

@@ -9,6 +9,7 @@ namespace Efekt
         [CanBeNull] private readonly Env parent;
         private readonly Prog prog;
 
+
         private Env(Prog prog)
         {
             this.prog = prog;
@@ -17,21 +18,19 @@ namespace Efekt
                 dict.Add(b.Name, b);
         }
 
+
         private Env(Prog prog, Env parent)
         {
             this.prog = prog;
             this.parent = parent;
         }
 
-        public static Env CreateRoot(Prog prog)
-        {
-            return new Env(prog);
-        }
 
-        public static Env Create(Prog prog, Env parent)
-        {
-            return new Env(prog, parent);
-        }
+        public static Env CreateRoot(Prog prog) => new Env(prog);
+
+
+        public static Env Create(Prog prog, Env parent) => new Env(prog, parent);
+
 
         public Value Get(Ident ident)
         {
@@ -42,12 +41,14 @@ namespace Efekt
             throw prog.RemarkList.Except.VariableIsNotDeclared(ident);
         }
 
+
         public void Declare(Ident ident, Value value)
         {
             if (dict.ContainsKey(ident.Name))
                 throw prog.RemarkList.Except.VariableIsAlreadyDeclared(ident);
             dict.Add(ident.Name, value);
         }
+
 
         public void Set(Ident ident, Value value)
         {

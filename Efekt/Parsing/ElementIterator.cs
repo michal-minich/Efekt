@@ -4,22 +4,21 @@ using JetBrains.Annotations;
 
 namespace Efekt
 {
-    internal abstract class ElementIterator
+    public abstract class ElementIterator
     {
         protected List<ParseOpElement> OpOparsers;
         protected List<ParseElement> Parsers;
         protected TokenIterator Ti;
-
         protected string Text => Ti.Current.Text;
         protected TokenType Type => Ti.Current.Type;
-        protected readonly RemarkList remarkList;
+        protected readonly RemarkList RemarkList;
 
         public ElementIterator(RemarkList remarkList)
         {
-            this.remarkList = remarkList;
+            RemarkList = remarkList;
         }
 
-        internal Element Parse(string filePath, IEnumerable<Token> tokens)
+        public Element Parse(string filePath, IEnumerable<Token> tokens)
         {
             Ti = new TokenIterator(filePath, tokens);
             var elb = new ElementListBuilder();
@@ -70,7 +69,7 @@ namespace Efekt
                 {
                     if (e2 is Exp ee)
                         return parseWithOp(new Assign(a.To, ee));
-                    throw remarkList.StructureValidator.SecondOperandMustBeExpression(e2);
+                    throw RemarkList.StructureValidator.SecondOperandMustBeExpression(e2);
                 }
                 return parseWithOp(e2);
             }

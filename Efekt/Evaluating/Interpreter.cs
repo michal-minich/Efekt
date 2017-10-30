@@ -9,7 +9,7 @@ namespace Efekt
     {
         private readonly Element e;
         private string fnName;
-        public int LineIndex { get; internal set; }
+        public int LineIndex { get; set; }
         public string FilePath => e.FilePath;
         public string FnName => fnName ?? (fnName = (((Fn) e).Parent is Var v ? v.Ident.Name : null) ?? "(anonymous)");
 

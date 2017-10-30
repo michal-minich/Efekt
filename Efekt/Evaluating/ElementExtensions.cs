@@ -1,6 +1,6 @@
 namespace Efekt
 {
-    internal static class ElementExtensions
+    public static class ElementExtensions
     {
         public static B As<B>(this Exp element, Exp inExp, Prog prog) where B : Exp
         {
