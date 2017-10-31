@@ -14,7 +14,6 @@ prelude
 do not eval code syntaticaly after contiue, break, return (unreachable code)
 
 label goto
-var without asssigment
 string/char escapes
 public attribute
 throw

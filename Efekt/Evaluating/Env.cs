@@ -90,7 +90,7 @@ namespace Efekt
                 if (e.dict.ContainsKey(ident.Name))
                 {
                     var old = e.dict[ident.Name];
-                    if (old.Value.GetType() != value.GetType())
+                    if (old.Value != Void.Instance && old.Value.GetType() != value.GetType())
                         prog.RemarkList.Warn.AssigningDifferentType(ident, old.Value, value);
                     if (old.IsLet)
                         prog.RemarkList.Warn.ReasigingLet(ident);
