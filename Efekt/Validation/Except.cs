@@ -1,4 +1,5 @@
-﻿using JetBrains.Annotations;
+﻿using System;
+using JetBrains.Annotations;
 
 namespace Efekt
 {
@@ -12,7 +13,7 @@ namespace Efekt
         }
 
 
-        private EfektException ex(Exp subject, [CanBeNull] Exp inExp, string message)
+        private EfektException ex(Element subject, [CanBeNull] Exp inExp, string message)
         {
             return prog.RemarkList.AddException(new Remark(
                 RemarkSeverity.Exception,
@@ -26,7 +27,7 @@ namespace Efekt
 
 
         [Pure]
-        public EfektException DifferentTypeExpected(Exp value, string expectedTypeName, Exp inExp)
+        public EfektException DifferentTypeExpected(Element value, string expectedTypeName, Exp inExp)
         {
             return ex(value, inExp, "Expected type '" + expectedTypeName
                                     + "' but the expression is of type '" + value.GetType().Name + "'");
@@ -44,6 +45,12 @@ namespace Efekt
         public EfektException VariableIsAlreadyDeclared(Ident ident)
         {
             return ex(ident, null, "Variable '" + ident.Name + "' is already declared");
+        }
+
+        [Pure]
+        public EfektException ExtensionFuncHasNoParameters(Fn extFn, MemberAccess ma)
+        {
+            return ex(extFn, ma, "Function must accept at least 1 parameter to be an extension function.");
         }
     }
 }

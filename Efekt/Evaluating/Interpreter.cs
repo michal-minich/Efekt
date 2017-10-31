@@ -75,7 +75,39 @@ namespace Efekt
                     ret = eval(r.Exp, env);
                     return Void.Instance;
                 case FnApply fna:
-                    var fn = eval(fna.Fn, env);
+                    Exp fn;
+                    if (fna.Fn is MemberAccess extMemAcc)
+                    {
+                        var exp2 = eval(extMemAcc.Exp, env);
+                        if (exp2 is Obj o2)
+                        {
+                            var v = o2.Env.GetDirectlyOrNull(extMemAcc.Ident);
+                            if (v != null)
+                            {
+                                fn = v;
+                                goto noExtMethodApply;
+                            }
+                        }
+                        var envV = env.GetOrNull(extMemAcc.Ident);
+                        if (envV != null)
+                        {
+                            var extFn = envV.AsFn(fna, prog);
+                            if (extFn.Parameters.Count == 0)
+                                throw prog.RemarkList.Except.ExtensionFuncHasNoParameters(extFn, extMemAcc);
+                            var newArgs = new FnArguments(new[] {exp2}.Concat(fna.Arguments).ToList());
+                            var newFna = new FnApply(extFn, newArgs)
+                            {
+                                LineIndex = fna.LineIndex,
+                                FilePath = fna.FilePath,
+                                IsBraced = fna.IsBraced,
+                                Parent = fna.Parent
+                            };
+                            return eval(newFna, env);
+                        }
+                        throw prog.RemarkList.Except.VariableIsNotDeclared(extMemAcc.Ident);
+                    }
+                    fn = eval(fna.Fn, env);
+                    noExtMethodApply:
                     var builtin = fn as Builtin;
                     var eArgs = fna.Arguments.Select(a => eval(a, env)).ToArray();
                     if (builtin != null)
@@ -109,10 +141,13 @@ namespace Efekt
                     callStack.Pop();
                     return Void.Instance;
                 case Fn f:
-                    var fn3 = new Fn(f.Parameters, f.Sequence, env);
-                    fn3.Parent = f.Parent;
-                    fn3.LineIndex = f.LineIndex;
-                    fn3.FilePath = f.FilePath;
+                    var fn3 = new Fn(f.Parameters, f.Sequence, env)
+                    {
+                        Parent = f.Parent,
+                        LineIndex = f.LineIndex,
+                        FilePath = f.FilePath,
+                        IsBraced = f.IsBraced
+                    };
                     return fn3;
                 case When w:
                     var test = eval(w.Test, env);

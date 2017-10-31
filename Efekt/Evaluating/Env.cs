@@ -47,11 +47,30 @@ namespace Efekt
 
         public Value Get(Ident ident)
         {
-            if (dict.TryGetValue(ident.Name,out var envValue))
+            var v = GetOrNull(ident);
+            if (v != null)
+                return v;
+            throw prog.RemarkList.Except.VariableIsNotDeclared(ident);
+        }
+
+
+        [CanBeNull]
+        public Value GetDirectlyOrNull(Ident ident)
+        {
+            if (dict.TryGetValue(ident.Name, out var envValue))
+                return envValue.Value;
+            return null;
+        }
+
+
+        [CanBeNull]
+        public Value GetOrNull(Ident ident)
+        {
+            if (dict.TryGetValue(ident.Name, out var envValue))
                 return envValue.Value;
             if (parent != null)
                 return parent.Get(ident);
-            throw prog.RemarkList.Except.VariableIsNotDeclared(ident);
+            return null;
         }
 
 

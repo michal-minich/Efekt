@@ -16,7 +16,6 @@ do not eval code syntaticaly after contiue, break, return (unreachable code)
 label goto
 var without asssigment
 string/char escapes
-extension methods
 public attribute
 throw
 try catch finally
