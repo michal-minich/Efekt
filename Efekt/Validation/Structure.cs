@@ -73,9 +73,9 @@ namespace Efekt
         }
 
         [Pure]
-        public EfektException ExpectedExpressionAfterReturn(Element element)
+        public EfektException ExpectedExpression(Element element)
         {
-            return f("ExpectedExpressionAfterReturn", element);
+            return f("Expected expression, found '" + element.GetType().Name + "'", element);
         }
 
         [Pure]

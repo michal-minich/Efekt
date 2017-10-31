@@ -23,6 +23,10 @@ namespace Efekt
                     prog.OutputPrinter.Write(res);
                 return 0;
             }
+            catch (EfektInterpretedException)
+            {
+                return 3;
+            }
             catch (EfektException)
             {
                 return 2;
@@ -30,7 +34,7 @@ namespace Efekt
             catch (Exception ex)
             {
                 Console.Write(ex.Message);
-                return 3;
+                return 1;
             }
         }
     }

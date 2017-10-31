@@ -75,6 +75,8 @@ namespace Efekt
                 ParseBreak,
                 ParseContinue,
                 ParseReturn,
+                ParseThrow,
+                ParseTry,
                 ParseSequence,
                 ParseSingleBraced,
                 ParseArr,
@@ -412,7 +414,56 @@ namespace Efekt
             var se = ParseOne();
             if (se is Exp exp)
                 return post(new Return(exp));
-            throw RemarkList.Structure.ExpectedExpressionAfterReturn(se);
+            throw RemarkList.Structure.ExpectedExpression(se);
+        }
+
+
+        [CanBeNull]
+        private Toss ParseThrow()
+        {
+            if (Text != "throw")
+                return null;
+            markStart();
+            Ti.Next();
+            var se = ParseOne();
+            if (se is Exp exp)
+                return post(new Toss(exp));
+            throw RemarkList.Structure.ExpectedExpression(se);
+        }
+
+
+        [CanBeNull]
+        private Attempt ParseTry()
+        {
+            if (Text != "try")
+                return null;
+            markStart();
+            Ti.Next();
+            var body = ParseMandatorySequence();
+
+            Sequence grab;
+            if (Text == "catch")
+            {
+                Ti.Next();
+                grab = ParseMandatorySequence();
+            }
+            else
+            {
+                grab = null;
+            }
+
+            Sequence atLast;
+            if (Text == "finally")
+            {
+                Ti.Next();
+                atLast = ParseMandatorySequence();
+            }
+            else
+            {
+                atLast = null;
+            }
+
+            return post(new Attempt(body, grab, atLast));
         }
 
 

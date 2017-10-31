@@ -208,6 +208,34 @@ namespace Efekt
                             return Void.Instance;
                     }
                     return Void.Instance;
+                case Toss ts:
+                    var exVal = eval(ts.Exception, env);
+                    throw prog.RemarkList.AddInterpretedException(new Remark(
+                        RemarkSeverity.InterpretedException,
+                        "Interpreted Exception",
+                        ts.FilePath,
+                        ts.LineIndex,
+                        exVal,
+                        ts,
+                        callStack.ToList()));
+                case Attempt att:
+                    try
+                    {
+                        return eval(att.Body, env);
+                    }
+                    catch (EfektInterpretedException ex)
+                    {
+                        var grabEnv = Env.Create(prog, env);
+                        grabEnv.Declare(new Ident("exception", TokenType.Ident), ex.Value, true);
+                        if (att.Grab != null)
+                            eval(att.Grab, grabEnv);
+                        return Void.Instance;
+                    }
+                    finally
+                    {
+                        if (att.AtLast != null)
+                            eval(att.AtLast, env);
+                    }
                 default:
                     throw new NotSupportedException();
             }

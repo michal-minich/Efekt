@@ -510,4 +510,45 @@ namespace Efekt
         public Exp Exp { get; }
         public Ident Ident { get; }
     }
+
+
+    public sealed class Toss : AElement, Stm
+    {
+
+        [DebuggerStepThrough]
+        public Toss(Exp exception)
+        {
+            C.Nn(exception);
+            Exception = exception;
+            exception.Parent = this;
+        }
+
+        public Exp Exception { get; }
+    }
+
+
+    public sealed class Attempt : AElement, Stm
+    {
+
+        [DebuggerStepThrough]
+        public Attempt(Sequence body, [CanBeNull] Sequence grab, [CanBeNull] Sequence atLast)
+        {
+            C.Nn(body);
+
+            Body = body;
+            Grab = grab;
+            AtLast = atLast;
+
+            body.Parent = this;
+            if (grab != null)
+                grab.Parent = this;
+            if (atLast != null)
+                atLast.Parent = this;
+        }
+
+
+        public Sequence Body { get; }
+        [CanBeNull] public Sequence Grab { get; }
+        [CanBeNull] public Sequence AtLast { get; }
+    }
 }

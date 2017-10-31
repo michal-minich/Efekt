@@ -12,4 +12,15 @@ namespace Efekt
         {
         }
     }
+
+
+    public class EfektInterpretedException : EfektException
+    {
+        public Value Value { get; }
+
+        public EfektInterpretedException(Value value) : base("Interpreted excpetion " + value.ToDebugString())
+        {
+            Value = value;
+        }
+    }
 }

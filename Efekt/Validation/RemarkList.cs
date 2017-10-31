@@ -71,7 +71,8 @@ namespace Efekt
         Warning,
         Error,
         Fatal,
-        Exception
+        Exception,
+        InterpretedException
     }
 
 
@@ -135,6 +136,20 @@ namespace Efekt
             var msg = remark.GetString();
             prog.ErrorWriter.WriteLine(msg);
             return new EfektException(msg);
+        }
+
+
+        [Pure] // not pure but use return value 
+        public EfektInterpretedException AddInterpretedException(Remark remark)
+        {
+            C.Nn(remark.Subject);
+            if (remark.Severity != RemarkSeverity.InterpretedException)
+                throw new InvalidOperationException();
+
+            remarks.Add(remark);
+            var msg = remark.GetString();
+            prog.ErrorWriter.WriteLine(msg);
+            return new EfektInterpretedException((Value)remark.Subject);
         }
     }
 }

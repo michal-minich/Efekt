@@ -1,5 +1,12 @@
-﻿var b = 3
-b = 'x'
-var a
-a = 1 + 3
-return a + 10
+﻿var x = fn { throw 1 }
+
+try {
+    x()
+}
+catch {
+    print(exception + 2)
+    throw 'a'
+}
+finally {
+    print('f')
+}

@@ -87,6 +87,9 @@ namespace Efekt
                 case Bool b:
                     w.Key(b.Value ? "true" : "false");
                     break;
+                case Continue _:
+                    w.Key("continue");
+                    break;
                 case Break _:
                     w.Key("break");
                     break;
@@ -137,6 +140,27 @@ namespace Efekt
                     {
                         Write(item);
                         w.Line();
+                    }
+                    break;
+                case Toss ts:
+                    w.Key("throw").Space();
+                    Write(ts.Exception);
+                    break;
+                case Attempt att:
+                    w.Key("try").Space().Markup("{");
+                    Write(att.Body);
+                    w.Markup("}");
+                    if (att.Grab != null)
+                    {
+                        w.Space().Markup("catch").Space().Markup("{");
+                        Write(att.Grab);
+                        w.Markup("}");
+                    }
+                    if (att.AtLast != null)
+                    {
+                        w.Space().Markup("finally").Space().Markup("{");
+                        Write(att.AtLast);
+                        w.Markup("}");
                     }
                     break;
                 default:

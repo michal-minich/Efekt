@@ -15,7 +15,8 @@ namespace Efekt
             "loop", "break", "continue",
             "label", "goto",
             "true", "false",
-            "new"
+            "new",
+            "throw", "try", "catch", "finally"
         };
 
 
