@@ -79,7 +79,7 @@ namespace Efekt
     {
         private readonly Prog prog;
         private readonly List<Remark> remarks = new List<Remark>();
-        public readonly StructureValidator StructureValidator;
+        public readonly Structure Structure;
         public readonly Warn Warn;
         public readonly Except Except;
 
@@ -89,7 +89,7 @@ namespace Efekt
             this.prog = prog;
             Warn = new Warn(prog);
             Except = new Except(prog);
-            StructureValidator = new StructureValidator(prog);
+            Structure = new Structure(prog);
         }
 
         public IEnumerator<Remark> GetEnumerator() => remarks.GetEnumerator();
@@ -106,7 +106,7 @@ namespace Efekt
                 throw new InvalidOperationException();
 
             remarks.Add(remark);
-            prog.ErrorWriter.Write(remark.GetString());
+            prog.ErrorWriter.WriteLine(remark.GetString());
         }
 
 
@@ -119,7 +119,7 @@ namespace Efekt
 
             remarks.Add(remark);
             var msg = remark.GetString();
-            prog.ErrorWriter.Write(msg);
+            prog.ErrorWriter.WriteLine(msg);
             return new EfektException(msg);
         }
 
@@ -133,7 +133,7 @@ namespace Efekt
 
             remarks.Add(remark);
             var msg = remark.GetString();
-            prog.ErrorWriter.Write(msg);
+            prog.ErrorWriter.WriteLine(msg);
             return new EfektException(msg);
         }
     }

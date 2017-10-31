@@ -62,6 +62,7 @@
     <Compile Include="Validation\Except.cs" />
     <Compile Include="Validation\RemarkList.cs" />
     <Compile Include="Validation\StructureValidator.cs" />
+    <Compile Include="Validation\Structure.cs" />
     <Compile Include="Validation\Warn.cs" />
     <Compile Include="Evaluating\Builtins.cs" />
     <Compile Include="Validation\Error.cs" />

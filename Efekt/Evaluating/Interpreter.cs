@@ -26,6 +26,7 @@ namespace Efekt
     {
         [CanBeNull] private Value ret;
         private bool isBreak;
+        private bool isContinue;
         private Prog prog;
         private Stack<StackItem> callStack { get; set; }
 
@@ -44,9 +45,13 @@ namespace Efekt
         {
             switch (se)
             {
+                case Let l:
+                    var val2 = eval(l.Exp, env);
+                    env.Declare(l.Ident, val2, true);
+                    return Void.Instance;
                 case Var v:
                     var val = eval(v.Exp, env);
-                    env.Declare(v.Ident, val);
+                    env.Declare(v.Ident, val, false);
                     return Void.Instance;
                 case Assign a:
                     var newValue = eval(a.Exp, env);
@@ -86,7 +91,7 @@ namespace Efekt
                     foreach (var p in fn2.Parameters)
                     {
                         var eArg = eArgs[ix++];
-                        paramsEnv.Declare(p, eArg);
+                        paramsEnv.Declare(p, eArg, true);
                     }
                     var fnEnv = Env.Create(prog, paramsEnv);
                     callStack.Push(new StackItem(fn2));
@@ -121,9 +126,16 @@ namespace Efekt
                 case Loop l:
                     var loopEnv = Env.Create(prog, env);
                     while (true)
+                    {
+                        continueLoop:
                         foreach (var e in l.Body)
                         {
                             evalSequenceItem(e, loopEnv);
+                            if (isContinue)
+                            {
+                                isContinue = false;
+                                goto continueLoop;
+                            }
                             if (isBreak)
                             {
                                 isBreak = false;
@@ -132,6 +144,10 @@ namespace Efekt
                             if (ret != null)
                                 return Void.Instance;
                         }
+                    }
+                case Continue _:
+                    isContinue = true;
+                    return Void.Instance;
                 case Break _:
                     isBreak = true;
                     return Void.Instance;

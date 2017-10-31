@@ -3,9 +3,22 @@ using JetBrains.Annotations;
 
 namespace Efekt
 {
+    public sealed class EnvValue
+    {
+        public readonly Value Value;
+        public readonly bool IsLet;
+
+        public EnvValue(Value value, bool isLet)
+        {
+            Value = value;
+            IsLet = isLet;
+        }
+    }
+
+
     public sealed class Env
     {
-        private readonly Dictionary<string, Value> dict = new Dictionary<string, Value>();
+        private readonly Dictionary<string, EnvValue> dict = new Dictionary<string, EnvValue>();
         [CanBeNull] private readonly Env parent;
         private readonly Prog prog;
 
@@ -15,7 +28,7 @@ namespace Efekt
             this.prog = prog;
             parent = null;
             foreach (var b in new Builtins(prog).Values)
-                dict.Add(b.Name, b);
+                dict.Add(b.Name, new EnvValue(b, true));
         }
 
 
@@ -34,19 +47,19 @@ namespace Efekt
 
         public Value Get(Ident ident)
         {
-            if (dict.TryGetValue(ident.Name, out var value))
-                return value;
+            if (dict.TryGetValue(ident.Name,out var envValue))
+                return envValue.Value;
             if (parent != null)
                 return parent.Get(ident);
             throw prog.RemarkList.Except.VariableIsNotDeclared(ident);
         }
 
 
-        public void Declare(Ident ident, Value value)
+        public void Declare(Ident ident, Value value, bool isLet)
         {
             if (dict.ContainsKey(ident.Name))
                 throw prog.RemarkList.Except.VariableIsAlreadyDeclared(ident);
-            dict.Add(ident.Name, value);
+            dict.Add(ident.Name, new EnvValue(value, isLet));
         }
 
 
@@ -58,9 +71,11 @@ namespace Efekt
                 if (e.dict.ContainsKey(ident.Name))
                 {
                     var old = e.dict[ident.Name];
-                    if (old.GetType() != value.GetType())
-                        prog.RemarkList.Warn.AssigningDifferentType(ident, old, value);
-                    e.dict[ident.Name] = value;
+                    if (old.Value.GetType() != value.GetType())
+                        prog.RemarkList.Warn.AssigningDifferentType(ident, old.Value, value);
+                    if (old.IsLet)
+                        prog.RemarkList.Warn.ReasigingLet(ident);
+                    e.dict[ident.Name] = new EnvValue(value, old.IsLet);
                     return;
                 }
                 e = e.parent;

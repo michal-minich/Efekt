@@ -69,7 +69,7 @@ namespace Efekt
                 {
                     if (e2 is Exp ee)
                         return parseWithOp(new Assign(a.To, ee));
-                    throw RemarkList.StructureValidator.SecondOperandMustBeExpression(e2);
+                    throw RemarkList.Structure.SecondOperandMustBeExpression(e2);
                 }
                 return parseWithOp(e2);
             }

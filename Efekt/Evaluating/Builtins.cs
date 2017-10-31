@@ -26,6 +26,14 @@ namespace Efekt
                     return new Int(a.Value * b.Value);
                 }),
 
+                new Builtin("==", (@params, inExp) =>
+                {
+                    C.Assume(@params.Count == 2);
+                    var a = @params[0].AsInt(inExp, prog);
+                    var b = @params[1].AsInt(inExp, prog);
+                    return new Bool(a.Value == b.Value);
+                }),
+
                 new Builtin("print", (@params, inExp) =>
                 {
                     C.Assume(@params.Count == 1);

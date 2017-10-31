@@ -90,6 +90,10 @@ namespace Efekt
                 case Break _:
                     w.Key("break");
                     break;
+                case Let l:
+                    w.Key("let").Space();
+                    writeAssign(l.Ident, l.Exp);
+                    break;
                 case Var v:
                     w.Key("var").Space();
                     writeAssign(v.Ident, v.Exp);

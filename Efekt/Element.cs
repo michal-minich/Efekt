@@ -214,6 +214,26 @@ namespace Efekt
     }
 
 
+    public sealed class Let : AElement, Stm
+    {
+        [DebuggerStepThrough]
+        public Let(Ident ident, Exp exp)
+        {
+            C.Nn(ident);
+            C.Nn(exp);
+
+            Ident = ident;
+            Exp = exp;
+
+            ident.Parent = this;
+            exp.Parent = this;
+        }
+
+        public Ident Ident { get; }
+        public Exp Exp { get; }
+    }
+
+
     public sealed class Assign : AElement, Stm
     {
         [DebuggerStepThrough]
@@ -293,6 +313,15 @@ namespace Efekt
     {
         [DebuggerStepThrough]
         public Break()
+        {
+        }
+    }
+
+
+    public sealed class Continue : AElement, Stm
+    {
+        [DebuggerStepThrough]
+        public Continue()
         {
         }
     }

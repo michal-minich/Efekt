@@ -34,5 +34,10 @@
               + old.GetType().Name + "' is being assigned value of type '"
               + @new.GetType().Name + "'", ident);
         }
+
+        public void ReasigingLet(Ident ident)
+        {
+            w("Reasinging value in let variable '" + ident.Name + "'", ident);
+        }
     }
 }

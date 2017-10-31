@@ -8,7 +8,15 @@ namespace Efekt
     public sealed class Tokenizer
     {
         private static readonly string[] keywords =
-            {"var", "fn", "if", "else", "return", "loop", "break", "continue", "label", "goto", "true", "false", "new"};
+        {
+            "var", "let",
+            "fn", "return",
+            "if", "else",
+            "loop", "break", "continue",
+            "label", "goto",
+            "true", "false",
+            "new"
+        };
 
 
         private readonly List<char> opChars = "<>~`\\@#$%^&*+-=./:?!|".ToList();

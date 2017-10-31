@@ -68,11 +68,12 @@ namespace Efekt
                 ParseChar,
                 ParseText,
                 ParseBool,
-                ParseVar,
+                ParseVarOrLet,
                 ParseFn,
                 ParseWhen,
                 ParseLoop,
                 ParseBreak,
+                ParseContinue,
                 ParseReturn,
                 ParseSequence,
                 ParseSingleBraced,
@@ -125,13 +126,13 @@ namespace Efekt
             else if (t == '[')
                 end = ']';
             else
-                throw RemarkList.StructureValidator.BraceExpected();
+                throw RemarkList.Structure.BraceExpected();
             if (endBrace != end)
                 throw new ArgumentException();
             Ti.Next();
             var elb = ParseList(endBrace, isComaSeparated);
             if (Text[0] != end)
-                throw RemarkList.StructureValidator.EndBraceDoesNotMatchesStart(null);
+                throw RemarkList.Structure.EndBraceDoesNotMatchesStart();
             Ti.Next();
             return elb;
         }
@@ -204,16 +205,16 @@ namespace Efekt
             {
                 if (second is Ident i)
                     return post(new MemberAccess(prev, i));
-                throw RemarkList.StructureValidator.ExpectedIdentifierAfterDot(second);
+                throw RemarkList.Structure.ExpectedIdentifierAfterDot(second);
             }
             var e2 = second as Exp;
             if (e2 == null)
-                throw RemarkList.StructureValidator.FunctionArgumentMustBeExpression(second);
+                throw RemarkList.Structure.FunctionArgumentMustBeExpression(second);
             if (opText == "=")
             {
                 if (prev is AssignTarget at)
                     return post(new Assign(at, e2));
-                throw RemarkList.StructureValidator.AssignTargetIsInvalid(prev);
+                throw RemarkList.Structure.AssignTargetIsInvalid(prev);
             }
             if (!prev.IsBraced
                 && prev is FnApply fna
@@ -264,7 +265,7 @@ namespace Efekt
                 e.IsBraced = true;
                 return e;
             }
-            throw RemarkList.StructureValidator.ExpectedOnlyOneExpressionInsideBraces(elb.Items);
+            throw RemarkList.Structure.ExpectedOnlyOneExpressionInsideBraces(elb.Items);
         }
 
 
@@ -288,6 +289,17 @@ namespace Efekt
             markStart();
             Ti.Next();
             return post(new Break());
+        }
+
+
+        [CanBeNull]
+        private Continue ParseContinue()
+        {
+            if (Text != "continue")
+                return null;
+            markStart();
+            Ti.Next();
+            return post(new Continue());
         }
 
 
@@ -322,7 +334,7 @@ namespace Efekt
                 return null;
             markStart();
             if (Text.Length != 3)
-                throw RemarkList.StructureValidator.CharShouldHaveOnlyOneChar();
+                throw RemarkList.Structure.CharShouldHaveOnlyOneChar();
             var i = post(new Char(Text[1]));
             Ti.Next();
             return i;
@@ -361,22 +373,29 @@ namespace Efekt
 
 
         [CanBeNull]
-        private Var ParseVar()
+        private Element ParseVarOrLet()
         {
-            if (Text != "var")
+            bool isVar;
+            if (Text == "var")
+                isVar = true;
+            else if (Text == "let")
+                isVar = false;
+            else
                 return null;
             markStart();
             Ti.Next();
             var se = ParseOne();
             if (se is Ident i2)
-                return post(new Var(i2, Void.Instance));
+            {
+                return post(isVar ? (Element)new Var(i2, Void.Instance) : new Let(i2, Void.Instance));
+            }
             if (se is Assign a)
             {
                 if (a.To is Ident i)
-                    return post(new Var(i, a.Exp));
-                throw RemarkList.StructureValidator.OnlyIdentifierCanBeDeclared(a.To);
+                    return post(isVar ? (Element) new Var(i, a.Exp) : new Let(i, a.Exp));
+                throw RemarkList.Structure.OnlyIdentifierCanBeDeclared(a.To);
             }
-            throw RemarkList.StructureValidator.InvalidElementAfterVar(se);
+            throw RemarkList.Structure.InvalidElementAfterVar(se);
         }
 
 
@@ -393,7 +412,7 @@ namespace Efekt
             var se = ParseOne();
             if (se is Exp exp)
                 return post(new Return(exp));
-            throw RemarkList.StructureValidator.ExpectedExpressionAfterReturn(se);
+            throw RemarkList.Structure.ExpectedExpressionAfterReturn(se);
         }
 
 
@@ -407,9 +426,9 @@ namespace Efekt
             var test = ParseOne();
             var testExp = test as Exp;
             if (testExp == null)
-                throw RemarkList.StructureValidator.MissingTestExpression();
+                throw RemarkList.Structure.MissingTestExpression();
             if (Text != "then")
-                throw RemarkList.StructureValidator.ExpectedWordThen(testExp);
+                throw RemarkList.Structure.ExpectedWordThen(testExp);
             Ti.Next();
             var then = ParseOne();
             Element otherwise;

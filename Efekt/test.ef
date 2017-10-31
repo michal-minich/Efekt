@@ -1,3 +1,8 @@
-﻿var a = fn a, b, c { return a + b + 'a' }
-return a(1, 2, 3)
-fn {} = 1
+﻿var n = 0
+loop {
+  n = n + 1
+  if n == 5 then continue
+  if n == 10 then break
+  print(n)
+}
+print('x')
