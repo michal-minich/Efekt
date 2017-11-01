@@ -116,16 +116,16 @@ namespace Efekt.Tests
             test(adder + " var a = adder(10) var b = adder(100) a() b() return a()", "12");
             test(adder + " var a = adder(10) var b = adder(100) b() a() return b()", "102");
 
-            test("--**--", "<Void>");
-            test("---", "<Void>");
-            test("--**-- 1", "1");
-            test("var a = 1 return --*2*-- a", "1");
-            test("return ---\n  1", "<Void>");
-            test("var a = 1 return --*a*-- 2", "2");
-            test("var --*a = 1*--a = 2  return a", "2");
-            test("var a = ---1\n2 return a", "2");
-            test("--- return  1", "<Void>");
-            test("var a = 1 return a --**--", "1");
+            test("/**/", "<Void>");
+            test("//", "<Void>");
+            test("/**/ 1", "1");
+            test("var a = 1 return /*2*/ a", "1");
+            test("return //\n  1", "<Void>");
+            test("var a = 1 return /*a*/ 2", "2");
+            test("var /*a = 1*/a = 2  return a", "2");
+            test("var a = //1\n2 return a", "2");
+            test("// return  1", "<Void>");
+            test("var a = 1 return a /**/", "1");
 
             // array
             test("var c = 1 + 2 return [1, 2, c]", "[1, 2, 3]");

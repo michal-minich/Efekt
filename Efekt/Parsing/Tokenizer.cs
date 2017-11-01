@@ -123,18 +123,16 @@ namespace Efekt
                            || ch == ';' || ch == '[' || ch == ']', TokenType.Markup))
                     goto final;
 
-                if (ch == '-')
+                if (ch == '/')
                 {
-                    var text = code.Substring(startIx, 3);
-                    if (markIf(text == "---", TokenType.LineCommentBegin))
+                    var text = code.Substring(startIx, 2);
+                    if (markIf(text == "//", TokenType.LineCommentBegin))
                     {
-                        next();
                         next();
                         goto final;
                     }
-                    if (markIf(text == "--*", TokenType.CommentBegin))
+                    if (markIf(text == "/*", TokenType.CommentBegin))
                     {
-                        next();
                         next();
                         goto final;
                     }
@@ -142,10 +140,9 @@ namespace Efekt
 
                 if (ch == '*')
                 {
-                    var text = code.Substring(startIx, 3);
-                    if (markIf(text == "*--", TokenType.CommentEnd))
+                    var text = code.Substring(startIx, 2);
+                    if (markIf(text == "*/", TokenType.CommentEnd))
                     {
-                        next();
                         next();
                         goto final;
                     }

@@ -12,6 +12,7 @@ multifile support
 prelude
 module import
 
+prog runtime writter output (for throw)
 
 label goto
 string/char escapes
