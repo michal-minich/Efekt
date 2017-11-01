@@ -2,22 +2,20 @@
 elements holds its tokens
 report line column range with error
 validate usage of break and continue outside loop
+do not eval code syntaticaly after contiue, break, return (unreachable code)
 
-and or operators
 not operator - how?
 more and thought out builtins
 Double type
 
 multifile support
 prelude
+module import
 
-do not eval code syntaticaly after contiue, break, return (unreachable code)
 
 label goto
 string/char escapes
 public attribute
-throw
-try catch finally
 class, constructor
 
 ? ref

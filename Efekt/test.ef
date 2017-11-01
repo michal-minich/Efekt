@@ -1,12 +1,7 @@
-﻿var x = fn { throw 1 }
+﻿print(true and false)
+print(true and true)
+print(false and false)
 
-try {
-    x()
-}
-catch {
-    print(exception + 2)
-    throw 'a'
-}
-finally {
-    print('f')
-}
+print(true or false)
+print(true or true)
+print(false or false)

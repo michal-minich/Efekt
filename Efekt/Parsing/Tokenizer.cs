@@ -16,6 +16,7 @@ namespace Efekt
             "label", "goto",
             "true", "false",
             "new",
+            "and", "or",
             "throw", "try", "catch", "finally"
         };
 
@@ -164,6 +165,8 @@ namespace Efekt
                 var text2 = code.Substring(startIx, ix - startIx);
                 if (tokType == TokenType.Ident && keywords.Contains(text2))
                     tokType = TokenType.Key;
+                if (tokType == TokenType.Key && text2 == "and" || text2 == "or")
+                    tokType = TokenType.Op;
                 tokens.Add(new Token(tokType, text2));
             }
 
