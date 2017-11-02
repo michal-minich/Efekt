@@ -15,7 +15,6 @@ module import
 prog runtime writter output (for throw)
 
 label goto
-string/char escapes
 public attribute
 class, constructor
 

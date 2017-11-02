@@ -99,7 +99,7 @@ namespace Efekt
                 if (markIf(ch == '\'', TokenType.Char))
                 {
                     while (ch != '\'')
-                        next();
+                        verifyEscape();
                     next();
                     goto final;
                 }
@@ -107,7 +107,7 @@ namespace Efekt
                 if (markIf(ch == '\"', TokenType.Text))
                 {
                     while (ch != '\"')
-                        next();
+                        verifyEscape();
                     next();
                     goto final;
                 }
@@ -164,10 +164,25 @@ namespace Efekt
                     tokType = TokenType.Key;
                 if (tokType == TokenType.Key && text2 == "and" || text2 == "or")
                     tokType = TokenType.Op;
+                if (tokType == TokenType.Char || tokType == TokenType.Text)
+                    text2 = text2.Replace("\\n", "\n").Replace("\\r", "\r").Replace("\\t", "\t")
+                        .Replace("\\0", "\0").Replace("\\\'", "\'").Replace("\\\"", "\"").Replace("\\\\", "\\");
                 tokens.Add(new Token(tokType, text2));
             }
 
             return tokens;
+        }
+
+        private void verifyEscape()
+        {
+            if (ch == '\\')
+            {
+                next();
+                if (ch != 'n' && ch != 'r' && ch != 't' && ch != '0' && ch != '\'' && ch != '"'
+                    && ch != '\\')
+                    throw new Exception();
+            }
+            next();
         }
     }
 

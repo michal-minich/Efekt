@@ -1,1 +1,1 @@
-﻿print(/* 1 */2)
+﻿print("a\nb\n\rc\td\'e\"f\\g")
