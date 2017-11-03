@@ -47,7 +47,7 @@ namespace Efekt
         public static string ToDebugString(this Element e)
         {
             var sw = new StringWriter();
-            new Printer(new PlainTextCodeWriter(sw)).Write(e);
+            new Printer(new PlainTextCodeWriter(sw), false).Write(e);
             return sw.GetAndReset();
         }
     }

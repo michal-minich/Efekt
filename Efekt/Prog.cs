@@ -23,10 +23,10 @@ namespace Efekt
             RemarkList = new RemarkList(this);
 
             OutputWriter = outputWriter;
-            OutputPrinter = new Printer(new PlainTextCodeWriter(OutputWriter));
+            OutputPrinter = new Printer(new PlainTextCodeWriter(OutputWriter), false);
 
             ErrorWriter = errorWriter;
-            ErrorPrinter = new Printer(new PlainTextCodeWriter(ErrorWriter));
+            ErrorPrinter = new Printer(new PlainTextCodeWriter(ErrorWriter), true);
         }
 
 
@@ -52,6 +52,16 @@ namespace Efekt
             return res;
         }
 
+
+        private static Element transformToModule(Element e, string filePath)
+        {
+            if (e is Exp)
+                return transform(e);
+            var name = Path.GetFileNameWithoutExtension(filePath);
+            var ident = new Ident(name, TokenType.Ident);
+            var var = new Var(ident, new New(new ClassBody(null)));
+            return var;
+        }
 
         private static Element transform(Element e)
         {

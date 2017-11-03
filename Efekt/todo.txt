@@ -3,20 +3,18 @@ elements holds its tokens
 report line column range with error
 validate usage of break and continue outside loop
 do not eval code syntaticaly after contiue, break, return (unreachable code)
+prog runtime writter output (for throw)
 
 not operator - how?
 more and thought out builtins
 Double type
-
+interators
+module import
 multifile support
 prelude
-module import
-
-prog runtime writter output (for throw)
 
 label goto
 public attribute
-class, constructor
-
 ? ref
+? function overloading (introduces polymorphism and introspection)
 ? contracts: requires, ensures, assert, assume, invariant (scope, loop, fn body, object body)

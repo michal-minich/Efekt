@@ -3,10 +3,12 @@ namespace Efekt
     public sealed class Printer
     {
         private readonly PlainTextCodeWriter w;
+        private readonly bool asCode;
 
-        public Printer(PlainTextCodeWriter codeWriter)
+        public Printer(PlainTextCodeWriter codeWriter, bool asCode)
         {
             w = codeWriter;
+            this.asCode = asCode;
         }
 
 
@@ -105,10 +107,17 @@ namespace Efekt
                     writeAssign(a.To, a.Exp);
                     break;
                 case Char ch:
-                    w.Markup("\'").Text(ch.Value.ToString()).Markup("\'");
+                    if (asCode)
+                        w.Markup("\'");
+                    w.Text(ch.Value.ToString());
+                    if (asCode)
+                        w.Markup("\'");
                     break;
                 case Text tx:
-                    w.Markup("\"").Text(tx.Value).Markup("\"");
+                    if (asCode)
+                        w.Markup("\"").Text(tx.Value);
+                    if (asCode)
+                        w.Markup("\"");
                     break;
                 case Arr arr:
                     w.Markup("[");
