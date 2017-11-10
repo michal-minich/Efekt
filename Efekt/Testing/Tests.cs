@@ -15,7 +15,7 @@ namespace Efekt.Tests
             test("(1)", "1");
 
             // return
-            test("return 1", "<Void>");
+            test("return 1", "1");
 
             // var
             test("var a = 1 return a", "1");

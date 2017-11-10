@@ -12,7 +12,7 @@ namespace Efekt
 
                 if (args.Length == 0)
                 {
-                    Console.WriteLine("Efekt interpreter. pass file arguments to evaluate.");
+                    Console.WriteLine("Efekt interpreter. pass file(s) and folder(s) arguments to evaluate.");
                     return 1;
                 }
 

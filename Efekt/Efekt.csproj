@@ -101,6 +101,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="lib\efekt\prelude.ef" />
     <None Include="test.ef" />
   </ItemGroup>
   <ItemGroup>
