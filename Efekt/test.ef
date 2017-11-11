@@ -1,5 +1,5 @@
-﻿var not = fn a { return if a then false else true }
-var printLine = fn a { print(a) print('\n') }
-
-true.not().printLine()
-printLine(not(false))
+﻿
+var start = fn {
+    prelude.printLine(prelude.not(true))
+    prelude.printLine(prelude.not(false))
+}

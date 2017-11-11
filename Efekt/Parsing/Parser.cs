@@ -113,7 +113,7 @@ namespace Efekt
 
         private FnParameters ParseFnParameters()
         {
-            return new FnParameters(ParseList('{', true).Items.Cast<Ident>().ToArray());
+            return new FnParameters(ParseList('{', true).Items.Cast<Ident>().Select(i => new Param(i)).ToArray());
         }
 
 

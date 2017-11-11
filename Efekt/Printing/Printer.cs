@@ -103,6 +103,9 @@ namespace Efekt
                     w.Key("var").Space();
                     writeAssign(v.Ident, v.Exp);
                     break;
+                case Param p:
+                    Write(p.Ident);
+                    break;
                 case Assign a:
                     writeAssign(a.To, a.Exp);
                     break;

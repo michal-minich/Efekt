@@ -17,7 +17,7 @@ namespace Efekt
                 }
 
                 var cw = new ConsoleWriter();
-                var prog = Prog.Load(cw, cw, args[0]);
+                var prog = Prog.Load2(cw, cw, args);
                 var res = prog.Run();
                 if (res != Void.Instance)
                     prog.OutputPrinter.Write(res);
@@ -30,12 +30,12 @@ namespace Efekt
             catch (EfektException)
             {
                 return 2;
-            }
+            }/*
             catch (Exception ex)
             {
-                Console.Write(ex.Message);
+                Console.Write(ex.Message + ex.StackTrace);
                 return 1;
-            }
+            }*/
         }
     }
 }

@@ -5,10 +5,10 @@ validate usage of break and continue outside loop
 do not eval code syntaticaly after contiue, break, return (unreachable code)
 prog runtime writter output (for throw)
 
-module import
-multifile support
+module import, auto import prelude
+how to reolve nested module names vs paths
+find start function
 predeclare vars in object
-prelude
 
 not operator - how?
 more and thought out builtins

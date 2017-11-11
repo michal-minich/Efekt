@@ -123,7 +123,7 @@ namespace Efekt
                     foreach (var p in fn2.Parameters)
                     {
                         var eArg = eArgs[ix++];
-                        paramsEnv.Declare(p, eArg, true);
+                        paramsEnv.Declare(p.Ident, eArg, true);
                     }
                     var fnEnv = Env.Create(prog, paramsEnv);
                     callStack.Push(new StackItem(fn2));

@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using JetBrains.Annotations;
 
 namespace Efekt
 {
@@ -20,7 +22,7 @@ namespace Efekt
         public Element RootElement { get; private set; }
 
 
-        private List<Var> Modules { get; set; }
+        private ClassBody Modules { get; set; }
 
         private Prog(TextWriter outputWriter, TextWriter errorWriter)
         {
@@ -33,7 +35,7 @@ namespace Efekt
             ErrorWriter = errorWriter;
             ErrorPrinter = new Printer(new PlainTextCodeWriter(ErrorWriter), true);
 
-            Modules = new List<Var>();
+            Modules = new ClassBody(new List<Var>());
         }
 
 
@@ -46,6 +48,7 @@ namespace Efekt
             return prog;
         }
 
+
         private static Element parseFile(Prog prog, string filePath)
         {
             var codeText = File.ReadAllText(filePath);
@@ -53,10 +56,12 @@ namespace Efekt
             return new Parser(prog.RemarkList).Parse(filePath, ts);
         }
 
+
         public static Prog Load(TextWriter outputWriter, TextWriter errorWriter, string filePath)
         {
             return Init(outputWriter, errorWriter, filePath, File.ReadAllText(filePath));
         }
+
 
         public static Prog Load2(TextWriter outputWriter, TextWriter errorWriter, IReadOnlyList<string> rootPaths)
         {
@@ -67,55 +72,90 @@ namespace Efekt
             {
                 var codeFilesPaths = getAllCodeFiles(fp);
                 var shortest = codeFilesPaths.OrderBy(cfp => cfp.Length).First();
-                var numSeparators = shortest.Split('\\').Length;
+                var numSeparators = shortest.Split('\\').Length - 2;
                 foreach (var cfp in codeFilesPaths)
                 {
-                    var sections = cfp.Split('\\').Skip(numSeparators).ToList();
+                    var startIndex = "C:\\".Length;
+                    var f = cfp.Substring(startIndex, cfp.Length - ".ef".Length - startIndex);
+                    var sections = f.Split('\\').Skip(numSeparators).ToList();
                     var e = parseFile(prog, cfp);
-                    var m = transformToModule(e, sections);
-                    prog.Modules.Add(m);
+                    addMod(prog, sections, e);
                 }
             }
+            var start = new FnApply(
+                new MemberAccess(new Ident("test", TokenType.Ident), new Ident("start", TokenType.Ident)),
+                new FnArguments());
             prog.RootElement = new FnApply(
-                new Fn(new FnParameters(), new Sequence(prog.Modules)),
+                new Fn(new FnParameters(), new Sequence(prog.Modules.Cast<Element>().Concat(new[] {start}).ToList())),
                 new FnArguments());
             return prog;
         }
 
+
+        private static void addMod(Prog prog, IReadOnlyList<string> sections, Element mod)
+        {
+            var mods = prog.Modules;
+            foreach (var s in sections.Skip(1))
+            {
+                var m = findParentModule(mods, s);
+                if (m == null)
+                {
+                    var empty = getEmptyModule(s);
+                    mods.Add(empty);
+                    mods = ((New) empty.Exp).Body;
+                }
+                else
+                {
+                    mods = m;
+                }
+            }
+            var lastSection = sections.Last();
+            var m2 = findParentModule(mods, lastSection);
+            if (m2 != null)
+                throw new Exception();
+            mods.Add(getNewModule(lastSection, mod));
+        }
+
+
+        [CanBeNull]
+        private static ClassBody findParentModule(IEnumerable<Var> mods, string name)
+        {
+            foreach (var m in mods)
+                if (m.Ident.Name == name)
+                    return ((New) m.Exp).Body;
+            return null;
+        }
+
+
+        private static Var getEmptyModule(string name)
+        {
+            return new Var(new Ident(name, TokenType.Ident), new New(new ClassBody(new List<Var>())));
+        }
+
+
+
+        private static Var getNewModule(string name, Element body)
+        {
+            if (body is Sequence seq)
+            {
+                var vars = seq.Cast<Var>().ToArray();
+                return new Var(new Ident(name, TokenType.Ident), new New(new ClassBody(vars)));
+            }
+            throw new Exception();
+        }
+
+
         public sealed class ModuleNode
         {
             public readonly string Name;
+            public readonly Element Parsed;
             public readonly List<ModuleNode> Children = new List<ModuleNode>();
-            public ModuleNode(string name) => Name = name;
-        }
 
-        private static IReadOnlyList<ModuleNode> getModulePaths(IEnumerable<string> codeFilesPaths, IReadOnlyList<string> rootPaths)
-        {
-            var rootMods = new List<ModuleNode>();
-            foreach (var cfp in codeFilesPaths)
+            public ModuleNode(string name, Element parsed)
             {
-                var items = filePathToModulePath(cfp);
-                var mods = rootMods;
-                foreach (var i in items)
-                {
-                    var mod = mods.Find(m => m.Name == i);
-                    if (mod == null)
-                    {
-                        mod = new ModuleNode(i);
-                        mods.Add(mod);
-                    }
-                    mods = mod.Children;
-                }
+                Name = name;
+                Parsed = parsed;
             }
-            return rootMods;
-        }
-
-
-        private static string[] filePathToModulePath(string cfp)
-        {
-            var f = cfp.Substring("C:\\".Length, cfp.Length - ".ef".Length - 1);
-            var items = f.Split('\\');
-            return items;
         }
 
 
@@ -161,19 +201,6 @@ namespace Efekt
                     new Fn(new FnParameters(), body2),
                     new FnArguments());
             throw new NotSupportedException();
-        }
-
-
-        private static Var transformToModule(Element e, IReadOnlyList<string> modulePath)
-        {
-            if (e is Sequence seq)
-            {
-                var vars = seq.Cast<Var>().ToArray();
-                var ident = new Ident("TODO", TokenType.Ident);
-                var var = new Var(ident, new New(new ClassBody(vars)));
-                return var;
-            }
-            throw new Exception();
         }
     }
 }

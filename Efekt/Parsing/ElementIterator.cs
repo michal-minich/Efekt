@@ -29,7 +29,7 @@ namespace Efekt
                 elb.Add(e);
             }
             var seq = new Sequence(elb.Items);
-            return seq.Count == 1 ? seq[0] : seq;
+            return seq.Count == 1 && seq[0] is Exp ? seq[0] : seq;
         }
 
 

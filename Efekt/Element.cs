@@ -56,7 +56,7 @@ namespace Efekt
 
     public abstract class ElementList<T> : IElementList<T> where T : class, Element
     {
-        private readonly IReadOnlyList<T> items;
+        protected IReadOnlyList<T> items;
 
         [DebuggerStepThrough]
         protected ElementList(IReadOnlyList<T> items)
@@ -116,6 +116,11 @@ namespace Efekt
         public ClassBody(IReadOnlyList<Var> items) : base(items)
         {
         }
+
+        public void Add(Var v)
+        {
+            items = items.Concat(new[] {v}).ToList();
+        }
     }
 
 
@@ -133,15 +138,15 @@ namespace Efekt
     }
 
 
-    public sealed class FnParameters : ElementList<Ident>
+    public sealed class FnParameters : ElementList<Param>
     {
         [DebuggerStepThrough]
-        public FnParameters() : base(new Ident[0])
+        public FnParameters() : base(new Param[0])
         {
         }
 
         [DebuggerStepThrough]
-        public FnParameters(IReadOnlyList<Ident> items) : base(items)
+        public FnParameters(IReadOnlyList<Param> items) : base(items)
         {
         }
     }
@@ -193,8 +198,11 @@ namespace Efekt
         public TokenType TokenType { get; }
     }
 
+    public interface Declr : Stm
+    {
+    }
 
-    public sealed class Var : AElement, Stm
+    public sealed class Var : AElement, Declr
     {
         [DebuggerStepThrough]
         public Var(Ident ident, Exp exp)
@@ -214,7 +222,7 @@ namespace Efekt
     }
 
 
-    public sealed class Let : AElement, Stm
+    public sealed class Let : AElement, Declr
     {
         [DebuggerStepThrough]
         public Let(Ident ident, Exp exp)
@@ -231,6 +239,20 @@ namespace Efekt
 
         public Ident Ident { get; }
         public Exp Exp { get; }
+    }
+    
+
+    public sealed class Param : AElement, Declr
+    {
+        [DebuggerStepThrough]
+        public Param(Ident ident)
+        {
+            C.Nn(ident);
+            Ident = ident;
+            ident.Parent = this;
+        }
+
+        public Ident Ident { get; }
     }
 
 
