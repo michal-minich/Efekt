@@ -22,8 +22,8 @@ namespace Efekt
         public Element RootElement { get; private set; }
 
 
-        private ClassBody Modules { get; set; }
-
+        public ClassBody Modules { get; set; }
+        
         private Prog(TextWriter outputWriter, TextWriter errorWriter)
         {
             Interpreter = new Interpreter();
@@ -82,13 +82,41 @@ namespace Efekt
                     addMod(prog, sections, e);
                 }
             }
-            var start = new FnApply(
-                new MemberAccess(new Ident("test", TokenType.Ident), new Ident("start", TokenType.Ident)),
-                new FnArguments());
+
+            var start = new FnApply(getStartQualifiedName(prog), new FnArguments());
             prog.RootElement = new FnApply(
-                new Fn(new FnParameters(), new Sequence(prog.Modules.Cast<Element>().Concat(new[] {start}).ToList())),
+                new Fn(new FnParameters(), new Sequence(prog.Modules.Cast<Element>().Append(start).ToList())),
                 new FnArguments());
             return prog;
+        }
+
+        private static Exp getStartQualifiedName(Prog prog)
+        {
+            var candidates = new List<List<string>>();
+            findStart(prog, prog.Modules, candidates, new List<string>());
+            if (candidates.Count != 1)
+                throw new Exception();
+            var fn = candidates[0]
+                .Append("start")
+                .Select(section => new Ident(section, TokenType.Ident))
+                .Cast<Exp>()
+                .Aggregate((a, b) => new MemberAccess(a, (Ident) b));
+            return fn;
+        }
+
+
+        private static void findStart(Prog prog, ClassBody modules, List<List<string>> candidates, List<string> path)
+        {
+            foreach (var m in modules)
+            {
+                var i = m.Ident.Name;
+                if (i == "start")
+                    candidates.Add(path);
+                if (m.Exp is New n)
+                {
+                    findStart(prog, n.Body, candidates, path.Append(i).ToList());
+                }
+            }
         }
 
 

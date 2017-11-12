@@ -11,7 +11,7 @@ namespace Efekt
     {
         public static string RepeatString(string value, int count)
         {
-            return string.Concat(Enumerable.Repeat(value, count));
+            return String.Concat(Enumerable.Repeat(value, count));
         }
 
 
@@ -41,6 +41,12 @@ namespace Efekt
             Func<TSource, TDistinctKey> selector)
         {
             return source.GroupBy(selector).Select(g => g.First());
+        }
+
+
+        public static IEnumerable<TSouce> Append<TSouce>(this IEnumerable<TSouce> source, TSouce element) 
+        {
+            return source.Concat(new [] {element});
         }
     }
 

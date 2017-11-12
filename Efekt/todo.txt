@@ -7,8 +7,7 @@ prog runtime writter output (for throw)
 
 module import, auto import prelude
 how to reolve nested module names vs paths
-find start function
-predeclare vars in object
+recursive functions/modules/objects
 
 not operator - how?
 more and thought out builtins
