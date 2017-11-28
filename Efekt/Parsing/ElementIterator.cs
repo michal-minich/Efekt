@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using JetBrains.Annotations;
 
 namespace Efekt
@@ -28,8 +29,8 @@ namespace Efekt
                 var e = ParseOne();
                 elb.Add(e);
             }
-            var seq = new Sequence(elb.Items);
-            return seq.Count == 1 && seq[0] is Exp ? seq[0] : seq;
+            var first = elb.Items.FirstOrDefault();
+            return first is Exp ? first : new Sequence(elb.Items.Cast<SequenceItem>().ToList());
         }
 
 

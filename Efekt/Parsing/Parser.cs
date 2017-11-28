@@ -80,7 +80,8 @@ namespace Efekt
                 ParseSequence,
                 ParseSingleBraced,
                 ParseArr,
-                ParseNew
+                ParseNew,
+                ParseImport
             };
 
             OpOparsers = new List<ParseOpElement>
@@ -95,13 +96,13 @@ namespace Efekt
         {
             markStart();
             var elb = ParseBracedList('}', false);
-            return post(new Sequence(elb.Items));
+            return post(new Sequence(elb.Items.Cast<SequenceItem>().ToList()));
         }
 
 
         private ClassBody ParseClassBody()
         {
-            return new ClassBody(ParseBracedList('}', false).Items.Cast<Var>().ToArray());
+            return new ClassBody(ParseBracedList('}', false).Items.Cast<ClassItem>().ToArray());
         }
 
 
@@ -280,6 +281,20 @@ namespace Efekt
             Ti.Next();
             var body = ParseClassBody();
             return post(new New(body));
+        }
+
+
+        [CanBeNull]
+        private Import ParseImport()
+        {
+            if (Text != "import")
+                return null;
+            markStart();
+            Ti.Next();
+            var e = ParseOne();
+            if (e is QualifiedIdent qi)
+                return post(new Import(qi));
+            throw new Exception();
         }
 
 

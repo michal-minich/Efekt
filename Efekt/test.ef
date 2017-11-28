@@ -1,5 +1,19 @@
 ﻿
+import prelude
+
 var start = fn {
-    prelude.printLine(prelude.not(true))
-    prelude.printLine(prelude.not(false))
+
+    import prelude
+
+    printLine(x)
+    o.a(3).printLine()
+
+    fib(0, 1, 1, 7)
+}
+
+var fib = fn a, b, counter, number {
+
+    prelude.printLine(a)
+    if counter < number then
+        fib(b, a + b, counter + 1, number)
 }

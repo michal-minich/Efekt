@@ -1,4 +1,7 @@
+using System;
 using System.Collections.Generic;
+using System.Diagnostics.Eventing.Reader;
+using System.Linq;
 using JetBrains.Annotations;
 
 namespace Efekt
@@ -19,6 +22,7 @@ namespace Efekt
     public sealed class Env
     {
         private readonly Dictionary<string, EnvValue> dict = new Dictionary<string, EnvValue>();
+        private readonly Dictionary<QualifiedIdent, Obj> imports = new Dictionary<QualifiedIdent, Obj>();
         [CanBeNull] private readonly Env parent;
         private readonly Prog prog;
 
@@ -27,10 +31,8 @@ namespace Efekt
         {
             this.prog = prog;
             parent = null;
-            foreach (var b in new Builtins(prog).Values)
-                dict.Add(b.Name, new EnvValue(b, true));
         }
-
+        
 
         private Env(Prog prog, Env parent)
         {
@@ -39,7 +41,13 @@ namespace Efekt
         }
 
 
-        public static Env CreateRoot(Prog prog) => new Env(prog);
+        public static Env CreateRoot(Prog prog)
+        {
+            var env = new Env(prog);
+            foreach (var b in new Builtins(prog).Values)
+                env.dict.Add(b.Name, new EnvValue(b, true));
+            return env;
+        }
 
 
         public static Env Create(Prog prog, Env parent) => new Env(prog, parent);
@@ -69,8 +77,48 @@ namespace Efekt
             if (dict.TryGetValue(ident.Name, out var envValue))
                 return envValue.Value;
             if (parent != null)
-                return parent.Get(ident);
+                return parent.GetOrNull(ident);
             return null;
+        }
+
+
+        [CanBeNull]
+        public Value GetWithImportOrNull(Ident ident)
+        {
+            var candidates = new Dictionary<QualifiedIdent, Value>();
+
+            var local = GetOrNull(ident);
+            if (local != null)
+                candidates.Add(new Ident("local", TokenType.Ident), local);
+
+            GetFromImports(ident, candidates);
+
+            if (candidates.Count == 1)
+                return candidates.First().Value;
+            if (candidates.Count == 0)
+                return null;
+            throw prog.RemarkList.Except.MoreVariableCandidates(candidates, ident);
+        }
+
+        private void GetFromImports(Ident ident, Dictionary<QualifiedIdent, Value> candidates)
+        {
+            foreach (var i in imports)
+            {
+                var x = i.Value.Env.GetDirectlyOrNull(ident);
+                if (x != null && !candidates.Any(c => c.Key.ToDebugString() == i.Key.ToDebugString()))
+                    candidates.Add(i.Key, x);
+            }
+            if (parent != null)
+                parent.GetFromImports(ident, candidates);
+        }
+
+
+        public Value GetWithImport(Ident ident)
+        {
+            var v  = GetWithImportOrNull(ident);
+            if (v == null)
+                throw prog.RemarkList.Except.VariableIsNotDeclared(ident);
+            return v;
         }
 
 
@@ -100,6 +148,12 @@ namespace Efekt
                 e = e.parent;
             } while (e != null);
             throw prog.RemarkList.Except.VariableIsNotDeclared(ident);
+        }
+
+
+        public void AddImport(QualifiedIdent qi, Obj module)
+        {
+            imports.Add(qi, module);
         }
     }
 }

@@ -28,6 +28,11 @@ namespace Efekt
         public string FilePath { get; set; }
         public Element Parent { get; set; }
         public bool IsBraced { get; set; }
+
+        public override string ToString()
+        {
+            return GetType().Name + ": " + this.ToDebugString();
+        }
     }
 
     public interface Exp : Element
@@ -44,17 +49,38 @@ namespace Efekt
     {
     }
 
+
     public interface AssignTarget : Exp
     {
     }
 
 
-    public interface IElementList<out T> : IReadOnlyList<T> where T : class, Element
+    public interface QualifiedIdent : Exp
     {
     }
 
 
-    public abstract class ElementList<T> : IElementList<T> where T : class, Element
+    public interface ClassItem : Stm
+    {
+    }
+
+
+    public interface LoopOnlyItem : Stm
+    {
+    }
+
+
+    public interface SequenceItem : Element
+    {
+    }
+
+
+    public interface IElementList<out T> : IReadOnlyList<T> where T : Element
+    {
+    }
+
+
+    public abstract class ElementList<T> : IElementList<T> where T : Element
     {
         protected IReadOnlyList<T> items;
 
@@ -87,10 +113,10 @@ namespace Efekt
     }
 
 
-    public sealed class Sequence : ElementList<Element>, Stm
+    public sealed class Sequence : ElementList<SequenceItem>, SequenceItem
     {
         [DebuggerStepThrough]
-        public Sequence(IReadOnlyList<Element> items) : base(items)
+        public Sequence(IReadOnlyList<SequenceItem> items) : base(items)
         {
             if (TokenIterator.Instance != null)
             {
@@ -110,16 +136,16 @@ namespace Efekt
     }
 
 
-    public sealed class ClassBody : ElementList<Var>
+    public sealed class ClassBody : ElementList<ClassItem>
     {
         [DebuggerStepThrough]
-        public ClassBody(IReadOnlyList<Var> items) : base(items)
+        public ClassBody(IReadOnlyList<ClassItem> items) : base(items)
         {
         }
 
-        public void Add(Var v)
+        public void Add(ClassItem ci)
         {
-            items = items.Concat(new[] {v}).ToList();
+            items = items.Concat(new[] {ci}).ToList();
         }
     }
 
@@ -179,7 +205,7 @@ namespace Efekt
     }
 
 
-    public sealed class Ident : AElement, AssignTarget
+    public sealed class Ident : AElement, AssignTarget, QualifiedIdent
     {
         [DebuggerStepThrough]
         public Ident(string name, TokenType tokenType)
@@ -198,11 +224,7 @@ namespace Efekt
         public TokenType TokenType { get; }
     }
 
-    public interface Declr : Stm
-    {
-    }
-
-    public sealed class Var : AElement, Declr
+    public sealed class Var : AElement, SequenceItem, ClassItem
     {
         [DebuggerStepThrough]
         public Var(Ident ident, Exp exp)
@@ -222,7 +244,7 @@ namespace Efekt
     }
 
 
-    public sealed class Let : AElement, Declr
+    public sealed class Let : AElement, Stm
     {
         [DebuggerStepThrough]
         public Let(Ident ident, Exp exp)
@@ -242,7 +264,7 @@ namespace Efekt
     }
     
 
-    public sealed class Param : AElement, Declr
+    public sealed class Param : AElement, Stm
     {
         [DebuggerStepThrough]
         public Param(Ident ident)
@@ -256,7 +278,7 @@ namespace Efekt
     }
 
 
-    public sealed class Assign : AElement, Stm
+    public sealed class Assign : AElement, SequenceItem
     {
         [DebuggerStepThrough]
         public Assign(AssignTarget to, Exp exp)
@@ -276,7 +298,7 @@ namespace Efekt
     }
 
 
-    public sealed class When : AElement, Exp
+    public sealed class When : AElement, SequenceItem, Exp
     {
         [DebuggerStepThrough]
         public When(Exp test, Element then, [CanBeNull] Element otherwise)
@@ -303,7 +325,7 @@ namespace Efekt
     }
 
 
-    public sealed class Loop : AElement, Stm
+    public sealed class Loop : AElement, SequenceItem, Stm
     {
         [DebuggerStepThrough]
         public Loop(Sequence body)
@@ -317,7 +339,7 @@ namespace Efekt
     }
 
 
-    public sealed class Return : AElement, Stm
+    public sealed class Return : AElement, SequenceItem, Stm
     {
         [DebuggerStepThrough]
         public Return(Exp exp)
@@ -331,7 +353,7 @@ namespace Efekt
     }
 
 
-    public sealed class Break : AElement, Stm
+    public sealed class Break : AElement, SequenceItem, LoopOnlyItem
     {
         [DebuggerStepThrough]
         public Break()
@@ -340,7 +362,7 @@ namespace Efekt
     }
 
 
-    public sealed class Continue : AElement, Stm
+    public sealed class Continue : AElement, SequenceItem, LoopOnlyItem
     {
         [DebuggerStepThrough]
         public Continue()
@@ -437,7 +459,7 @@ namespace Efekt
     }
 
 
-    public sealed class FnApply : AElement, Exp
+    public sealed class FnApply : AElement, SequenceItem, Exp
     {
         [DebuggerStepThrough]
         public FnApply(Exp fn, FnArguments arguments)
@@ -456,7 +478,7 @@ namespace Efekt
     }
 
 
-    public sealed class ArrConstructor : AElement, Exp
+    public sealed class ArrConstructor : AElement, SequenceItem, Exp
     {
         [DebuggerStepThrough]
         public ArrConstructor(FnArguments arguments)
@@ -482,7 +504,7 @@ namespace Efekt
     }
 
 
-    public sealed class New : AElement, Exp
+    public sealed class New : AElement, SequenceItem, Exp
     {
         public New(ClassBody body)
         {
@@ -514,7 +536,7 @@ namespace Efekt
     }
 
 
-    public sealed class MemberAccess : AElement, AssignTarget
+    public sealed class MemberAccess : AElement, AssignTarget, QualifiedIdent
     {
         [DebuggerStepThrough]
         public MemberAccess(Exp exp, Ident ident)
@@ -534,7 +556,7 @@ namespace Efekt
     }
 
 
-    public sealed class Toss : AElement, Stm
+    public sealed class Toss : AElement, SequenceItem, Stm
     {
 
         [DebuggerStepThrough]
@@ -549,7 +571,7 @@ namespace Efekt
     }
 
 
-    public sealed class Attempt : AElement, Stm
+    public sealed class Attempt : AElement, SequenceItem, Stm
     {
 
         [DebuggerStepThrough]
@@ -572,5 +594,18 @@ namespace Efekt
         public Sequence Body { get; }
         [CanBeNull] public Sequence Grab { get; }
         [CanBeNull] public Sequence AtLast { get; }
+    }
+
+
+    public sealed class Import : AElement, SequenceItem, ClassItem
+    {
+        [DebuggerStepThrough]
+        public Import(QualifiedIdent qualifiedIdent)
+        {
+            C.Nn(qualifiedIdent);
+            QualifiedIdent = qualifiedIdent;
+        }
+
+        public readonly QualifiedIdent QualifiedIdent;
     }
 }

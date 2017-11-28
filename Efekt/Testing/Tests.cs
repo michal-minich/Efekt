@@ -120,7 +120,7 @@ namespace Efekt.Tests
             test("//", "<Void>");
             test("/**/ 1", "1");
             test("var a = 1 return /*2*/ a", "1");
-            test("return //\n  1", "<Void>");
+            test("return //\n  1 + 1", "<Void>");
             test("var a = 1 return /*a*/ 2", "2");
             test("var /*a = 1*/a = 2  return a", "2");
             test("var a = //1\n2 return a", "2");

@@ -1,2 +1,5 @@
 ﻿var not = fn a { return if a then false else true }
 var printLine = fn a { print(a) print('\n') }
+var x  = 111
+var o = new { var a = fn b { return b + 222 } }
+var xfib = 3

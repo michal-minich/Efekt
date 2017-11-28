@@ -2,12 +2,17 @@
 elements holds its tokens
 report line column range with error
 validate usage of break and continue outside loop
-do not eval code syntaticaly after contiue, break, return (unreachable code)
 prog runtime writter output (for throw)
+validate ineqaul count of params and args
+import candidates - nicer output with location
+revaluate all the save casts to nicer mesages
+import - print info when importing the same module in inner scope
 
-module import, auto import prelude
+auto import prelude
+builtins as extension methods
 how to reolve nested module names vs paths
-recursive functions/modules/objects
+resolve imports based on lib folder?
+project config file? (instaed of cmd args)
 
 not operator - how?
 more and thought out builtins

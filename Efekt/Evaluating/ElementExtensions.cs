@@ -2,7 +2,7 @@ namespace Efekt
 {
     public static class ElementExtensions
     {
-        public static B As<B>(this Element element, Exp inExp, Prog prog) where B : Exp
+        public static B As<B>(this Element element, Element inExp, Prog prog) where B : Exp
         {
             return element is B e
                 ? e
@@ -34,7 +34,7 @@ namespace Efekt
             return exp.As<Fn>(inExp, prog);
         }
 
-        public static Obj AsObj(this Exp exp, Exp inExp, Prog prog)
+        public static Obj AsObj(this Exp exp, Element inExp, Prog prog)
         {
             return exp.As<Obj>(inExp, prog);
         }

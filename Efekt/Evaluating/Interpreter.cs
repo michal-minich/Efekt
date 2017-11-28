@@ -28,6 +28,8 @@ namespace Efekt
         private bool isBreak;
         private bool isContinue;
         private Prog prog;
+        private bool IsImportContext;
+
         private Stack<StackItem> callStack { get; set; }
 
         public IReadOnlyList<StackItem> CallStack => callStack.ToList();
@@ -70,7 +72,10 @@ namespace Efekt
                     }
                     return Void.Instance;
                 case Ident i:
-                    return env.Get(i);
+                    if (IsImportContext)
+                        return env.Get(i);
+                    else
+                        return env.GetWithImport(i);
                 case Return r:
                     ret = eval(r.Exp, env);
                     return Void.Instance;
@@ -88,7 +93,7 @@ namespace Efekt
                                 goto noExtMethodApply;
                             }
                         }
-                        var envV = env.GetOrNull(extMemAcc.Ident);
+                        var envV = env.GetWithImportOrNull(extMemAcc.Ident);
                         if (envV != null)
                         {
                             var extFn = envV.AsFn(fna, prog);
@@ -236,6 +241,13 @@ namespace Efekt
                         if (att.AtLast != null)
                             eval(att.AtLast, env);
                     }
+                case Import imp:
+                    IsImportContext = true;
+                    var modImpEl = eval(imp.QualifiedIdent, env);
+                    IsImportContext = false;
+                    var modImp = modImpEl.AsObj(imp, prog);
+                    env.AddImport(imp.QualifiedIdent, modImp);
+                    return Void.Instance;
                 default:
                     throw new NotSupportedException();
             }

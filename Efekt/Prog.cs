@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using JetBrains.Annotations;
 
 namespace Efekt
@@ -35,7 +34,7 @@ namespace Efekt
             ErrorWriter = errorWriter;
             ErrorPrinter = new Printer(new PlainTextCodeWriter(ErrorWriter), true);
 
-            Modules = new ClassBody(new List<Var>());
+            Modules = new ClassBody(new List<ClassItem>());
         }
 
 
@@ -85,7 +84,7 @@ namespace Efekt
 
             var start = new FnApply(getStartQualifiedName(prog), new FnArguments());
             prog.RootElement = new FnApply(
-                new Fn(new FnParameters(), new Sequence(prog.Modules.Cast<Element>().Append(start).ToList())),
+                new Fn(new FnParameters(), new Sequence(prog.Modules.Cast<SequenceItem>().Append(start).ToList())),
                 new FnArguments());
             return prog;
         }
@@ -105,17 +104,20 @@ namespace Efekt
         }
 
 
-        private static void findStart(Prog prog, ClassBody modules, List<List<string>> candidates, List<string> path)
+        private static void findStart(Prog prog, ClassBody classBody, List<List<string>> candidates, List<string> path)
         {
-            foreach (var m in modules)
+            foreach (var ci in classBody)
             {
-                var i = m.Ident.Name;
-                if (i == "start")
-                    candidates.Add(path);
-                if (m.Exp is New n)
+                if (ci is Var v)
                 {
-                    findStart(prog, n.Body, candidates, path.Append(i).ToList());
-                }
+                    var i = v.Ident.Name;
+                    if (i == "start")
+                        candidates.Add(path);
+                    if (v.Exp is New n)
+                    {
+                        findStart(prog, n.Body, candidates, path.Append(i).ToList());
+                    }
+                }       
             }
         }
 
@@ -146,11 +148,12 @@ namespace Efekt
 
 
         [CanBeNull]
-        private static ClassBody findParentModule(IEnumerable<Var> mods, string name)
+        private static ClassBody findParentModule(IEnumerable<ClassItem> mods, string name)
         {
-            foreach (var m in mods)
-                if (m.Ident.Name == name)
-                    return ((New) m.Exp).Body;
+            foreach (var ci in mods)
+                if (ci is Var v)
+                if (v.Ident.Name == name)
+                    return ((New) v.Exp).Body;
             return null;
         }
 
@@ -166,8 +169,8 @@ namespace Efekt
         {
             if (body is Sequence seq)
             {
-                var vars = seq.Cast<Var>().ToArray();
-                return new Var(new Ident(name, TokenType.Ident), new New(new ClassBody(vars)));
+                var cis = seq.Cast<ClassItem>().ToArray();
+                return new Var(new Ident(name, TokenType.Ident), new New(new ClassBody(cis)));
             }
             throw new Exception();
         }
@@ -222,8 +225,8 @@ namespace Efekt
         {
             if (e is Exp exp)
                 return exp;
-            if (e is Stm stm)
-                e = new Sequence(new[] {stm});
+            if (e is SequenceItem si)
+                e = new Sequence(new[] {si});
             if (e is Sequence body2)
                 return new FnApply(
                     new Fn(new FnParameters(), body2),

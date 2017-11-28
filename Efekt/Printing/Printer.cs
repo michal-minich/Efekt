@@ -175,6 +175,10 @@ namespace Efekt
                         w.Markup("}");
                     }
                     break;
+                case Import imp:
+                    w.Key("import").Space();
+                    Write(imp.QualifiedIdent);
+                    break;
                 default:
                     w.Markup("<" + se.GetType().Name + ">");
                     break;

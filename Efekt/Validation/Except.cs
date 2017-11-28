@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using JetBrains.Annotations;
 
 namespace Efekt
@@ -13,7 +15,7 @@ namespace Efekt
         }
 
 
-        private EfektException ex(Element subject, [CanBeNull] Exp inExp, string message)
+        private EfektException ex(Element subject, [CanBeNull] Element inExp, string message)
         {
             return prog.RemarkList.AddException(new Remark(
                 RemarkSeverity.Exception,
@@ -27,7 +29,7 @@ namespace Efekt
 
 
         [Pure]
-        public EfektException DifferentTypeExpected(Element value, string expectedTypeName, Exp inExp)
+        public EfektException DifferentTypeExpected(Element value, string expectedTypeName, Element inExp)
         {
             return ex(value, inExp, "Expected type '" + expectedTypeName
                                     + "' but the expression is of type '" + value.GetType().Name + "'");
@@ -38,6 +40,17 @@ namespace Efekt
         public EfektException VariableIsNotDeclared(Ident ident)
         {
             return ex(ident, null, "Variable '" + ident.Name + "' is not declared");
+        }
+
+        [Pure]
+        // TODO move to structure validation eventually
+        public EfektException MoreVariableCandidates(Dictionary<QualifiedIdent, Value> candidates, Ident ident)
+        {
+            return ex(ident, null,
+                "Variable '" + ident.Name + "' can be found multiple times: " +
+                Environment.NewLine +
+                String.Join(Environment.NewLine, candidates.Select(
+                    c => "    " + c.Key.ToDebugString() + " : " + c.Value.GetType())));
         }
 
         [Pure]

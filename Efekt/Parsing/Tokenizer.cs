@@ -10,6 +10,7 @@ namespace Efekt
         private static readonly string[] keywords =
         {
             "var", "let",
+            "import",
             "fn", "return",
             "if", "else",
             "loop", "break", "continue",
