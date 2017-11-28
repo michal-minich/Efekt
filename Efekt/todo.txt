@@ -14,6 +14,7 @@ how to reolve nested module names vs paths
 resolve imports based on lib folder?
 project config file? (instaed of cmd args)
 
+fix: do not parse op apply after line break (brace starts at the new line)
 not operator - how?
 more and thought out builtins
 Double type
@@ -23,3 +24,4 @@ public attribute
 ? ref
 ? function overloading (introduces polymorphism and introspection)
 ? contracts: requires, ensures, assert, assume, invariant (scope, loop, fn body, object body)
+imlicit return when sequnce has only 1 item which is exp?

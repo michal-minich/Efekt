@@ -206,6 +206,8 @@ namespace Efekt
                     return ve;
                 case Sequence seq:
                     var scopeEnv = Env.Create(prog, env);
+                    if (seq.Count == 1)
+                        return eval(seq.First(), scopeEnv);
                     foreach (var item in seq)
                     {
                         evalSequenceItem(item, scopeEnv);

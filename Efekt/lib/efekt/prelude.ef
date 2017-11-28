@@ -1,4 +1,6 @@
 ﻿var not = fn a { return if a then false else true }
+var or = fn a, b { return if a then true else { if b then true else false } }
+var and = fn a, b { return if a then { if b then true else false } else false }
 var printLine = fn a { print(a) print('\n') }
 var x  = 111
 var o = new { var a = fn b { return b + 222 } }

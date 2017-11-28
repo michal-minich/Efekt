@@ -42,22 +42,6 @@ namespace Efekt
                     return new Bool(a.Value < b.Value);
                 }),
 
-                new Builtin("and", (@params, inExp) =>
-                {
-                    C.Assume(@params.Count == 2);
-                    var a = @params[0].AsBool(inExp, prog);
-                    var b = @params[1].AsBool(inExp, prog);
-                    return new Bool(a.Value && b.Value);
-                }),
-
-                new Builtin("or", (@params, inExp) =>
-                {
-                    C.Assume(@params.Count == 2);
-                    var a = @params[0].AsBool(inExp, prog);
-                    var b = @params[1].AsBool(inExp, prog);
-                    return new Bool(a.Value || b.Value);
-                }),
-
                 new Builtin("print", (@params, inExp) =>
                 {
                     C.Assume(@params.Count == 1);

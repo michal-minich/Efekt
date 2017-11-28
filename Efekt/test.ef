@@ -3,17 +3,15 @@ import prelude
 
 var start = fn {
 
-    import prelude
+    printLine(true  and true)
+    printLine(false and false)
+    printLine(true  and false)
+    printLine(false and true)
 
-    printLine(x)
-    o.a(3).printLine()
+    printLine(true  or true)
+    printLine(false or false)
+    printLine(true  or false)
+    printLine(false or true)
 
-    fib(0, 1, 1, 7)
 }
 
-var fib = fn a, b, counter, number {
-
-    prelude.printLine(a)
-    if counter < number then
-        fib(b, a + b, counter + 1, number)
-}
