@@ -68,20 +68,20 @@ namespace Efekt.Tests
             test("(1 + 2)", "3");
             test("var a = + return a(1, 2)", "3");
             test("var a = (+) return a(1, 2)", "3");
-            test("var + = fn a, b { return a * b } return 3 + 2", "6");
+            test("var + = fn a, b { a * b } return 3 + 2", "6");
             test("print(1)", "<Void>", "1");
 
             // fn
-            test("var a = fn { return 1 } return a()", "1");
-            test("var a = fn b { return b } return a(1)", "1");
-            test("var a = fn a { return a } return a(1)", "1");
-            test("var b = 2 var a = fn b { return b } return a(1)", "1");
-            test("var x = fn a, b { return a } return x(1, 2)", "1");
-            test("var x = fn a, b { return b } return x(1, 2)", "2");
+            test("var a = fn { 1 } return a()", "1");
+            test("var a = fn b { b } return a(1)", "1");
+            test("var a = fn a { a } return a(1)", "1");
+            test("var b = 2 var a = fn b { b } return a(1)", "1");
+            test("var x = fn a, b { a } return x(1, 2)", "1");
+            test("var x = fn a, b { b } return x(1, 2)", "2");
             test("fn { return 1 }()", "1");
             test("fn a { return a }(1)", "1");
             test("fn a, b { return b }((1), (2))", "2");
-            test("fn a { return fn b { return a + b } }(1)(2)", "3");
+            test("fn a { return fn b { a + b } }(1)(2)", "3");
 
             // labda
             const string tt = "fn tt { return fn y { return tt } }";

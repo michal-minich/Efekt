@@ -132,15 +132,28 @@ namespace Efekt
                     }
                     var fnEnv = Env.Create(prog, paramsEnv);
                     callStack.Push(new StackItem(fn2));
-                    foreach (var bodyElement in fn2.Sequence)
+                    if (fn2.Sequence.Count == 1)
                     {
-                        evalSequenceItem(bodyElement, fnEnv);
-                        if (ret != null)
+                        var r = evalSequenceItem(fn2.Sequence.First(), fnEnv);
+                        if (ret == null)
+                            return r;
+                        var tmp = ret;
+                        ret = null;
+                        callStack.Pop();
+                        return tmp;
+                    }
+                    else
+                    {
+                        foreach (var bodyElement in fn2.Sequence)
                         {
-                            var tmp = ret;
-                            ret = null;
-                            callStack.Pop();
-                            return tmp;
+                            evalSequenceItemFull(bodyElement, fnEnv);
+                            if (ret != null)
+                            {
+                                var tmp = ret;
+                                ret = null;
+                                callStack.Pop();
+                                return tmp;
+                            }
                         }
                     }
                     callStack.Pop();
@@ -170,7 +183,7 @@ namespace Efekt
                         continueLoop:
                         foreach (var e in l.Body)
                         {
-                            evalSequenceItem(e, loopEnv);
+                            evalSequenceItemFull(e, loopEnv);
                             if (isContinue)
                             {
                                 isContinue = false;
@@ -210,7 +223,7 @@ namespace Efekt
                         return eval(seq.First(), scopeEnv);
                     foreach (var item in seq)
                     {
-                        evalSequenceItem(item, scopeEnv);
+                        evalSequenceItemFull(item, scopeEnv);
                         if (ret != null)
                             return Void.Instance;
                     }
@@ -255,10 +268,9 @@ namespace Efekt
             }
         }
 
-        private void evalSequenceItem(Element bodyElement, Env env)
+        private void evalSequenceItemFull(Element bodyElement, Env env)
         {
-            callStack.Peek().LineIndex = bodyElement.LineIndex;
-            var bodyVal = eval(bodyElement, env);
+            var bodyVal = evalSequenceItem(bodyElement, env);
             if (bodyVal != Void.Instance)
             {
                 if (bodyElement is FnApply fna2)
@@ -266,6 +278,13 @@ namespace Efekt
                 else
                     prog.RemarkList.Warn.ValueIsNotAssigned(bodyElement);
             }
+        }
+
+        private Value evalSequenceItem(Element bodyElement, Env env)
+        {
+            callStack.Peek().LineIndex = bodyElement.LineIndex;
+            var bodyVal = eval(bodyElement, env);
+            return bodyVal;
         }
     }
 }

@@ -18,7 +18,8 @@
         // TODO move to structure validation eventually
         public void ValueReturnedFromFunctionNotUsed(FnApply fna)
         {
-            w("Value returned from function is not used", fna);
+            w("Value returned from function '" + fna.Fn.ToDebugString()
+                                               + "' is not used. In '" + fna.ToDebugString() + "'", fna);
         }
 
         // TODO move to structure validation eventually

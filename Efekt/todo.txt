@@ -10,6 +10,7 @@ import - print info when importing the same module in inner scope
 import - warn on duplicate import in same scope
 fix various crashes - (build on prelude/wrong paths?, not matching braces)
 do not repeat warnings multiple times
+error when loop does not have break or return statement inside (to prevent infinite loop)
 
 builtins as extension methods
 how to reolve nested module names vs paths
@@ -17,16 +18,15 @@ resolve imports based on lib folder?
 project config file? (instaed of cmd args)
 
 not operator - how?
-* more and thought out builtins
+more and thought out builtins
 Double type
-* interators
-label goto
+interators
+? label goto
 public attribute
 attributes in general?
 ? ref
 ? function overloading (introduces polymorphism and introspection)
 ? contracts: requires, ensures, assert, assume, invariant (scope, loop, fn body, object body)
-imlicit return when sequnce has only 1 item which is exp?
 
 * fix: parse/eval fn apply as second operand
 * fix: do not parse op apply after line break (brace starts at the new line)

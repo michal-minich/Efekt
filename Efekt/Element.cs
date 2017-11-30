@@ -45,7 +45,7 @@ namespace Efekt
     }
 
 
-    public interface Value : Exp
+    public interface Value : Exp, SequenceItem
     {
     }
 
@@ -211,7 +211,7 @@ namespace Efekt
     }
 
 
-    public sealed class Ident : AElement, AssignTarget, QualifiedIdent
+    public sealed class Ident : AElement, AssignTarget, QualifiedIdent, SequenceItem
     {
         [DebuggerStepThrough]
         public Ident(string name, TokenType tokenType)

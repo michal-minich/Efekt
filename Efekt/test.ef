@@ -2,7 +2,7 @@
 var start = fn {
     var arr = [1, 2, 3, 4, 5]
     arrayIterator(arr)
-      .where(fn c { return c > 3 })
+      .where(fn c { c > 3 })
       .forEach(fn c { c.printLine() })
 }
 
