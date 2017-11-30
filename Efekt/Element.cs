@@ -82,10 +82,10 @@ namespace Efekt
 
     public abstract class ElementList<T> : IElementList<T> where T : Element
     {
-        protected IReadOnlyList<T> items;
+        protected List<T> items;
 
         [DebuggerStepThrough]
-        protected ElementList(IReadOnlyList<T> items)
+        protected ElementList(List<T> items)
         {
             C.AllNotNull(items);
             this.items = items;
@@ -116,7 +116,7 @@ namespace Efekt
     public sealed class Sequence : ElementList<SequenceItem>, SequenceItem
     {
         [DebuggerStepThrough]
-        public Sequence(IReadOnlyList<SequenceItem> items) : base(items)
+        public Sequence(List<SequenceItem> items) : base(items)
         {
             if (TokenIterator.Instance != null)
             {
@@ -139,7 +139,7 @@ namespace Efekt
     public sealed class ClassBody : ElementList<ClassItem>
     {
         [DebuggerStepThrough]
-        public ClassBody(IReadOnlyList<ClassItem> items) : base(items)
+        public ClassBody(List<ClassItem> items) : base(items)
         {
         }
 
@@ -153,12 +153,12 @@ namespace Efekt
     public sealed class FnArguments : ElementList<Exp>
     {
         [DebuggerStepThrough]
-        public FnArguments() : base(new Exp[0])
+        public FnArguments() : base(new List<Exp>())
         {
         }
 
         [DebuggerStepThrough]
-        public FnArguments(IReadOnlyList<Exp> items) : base(items)
+        public FnArguments(List<Exp> items) : base(items)
         {
         }
     }
@@ -167,12 +167,12 @@ namespace Efekt
     public sealed class FnParameters : ElementList<Param>
     {
         [DebuggerStepThrough]
-        public FnParameters() : base(new Param[0])
+        public FnParameters() : base(new List<Param>())
         {
         }
 
         [DebuggerStepThrough]
-        public FnParameters(IReadOnlyList<Param> items) : base(items)
+        public FnParameters(List<Param> items) : base(items)
         {
         }
     }
@@ -181,8 +181,14 @@ namespace Efekt
     public sealed class Values : ElementList<Value>
     {
         [DebuggerStepThrough]
-        public Values(IReadOnlyList<Value> items) : base(items)
+        public Values(List<Value> items) : base(items)
         {
+        }
+        [NotNull]
+        public new Value this[int index]
+        {
+            get => items[index];
+            set => items[index] = value;
         }
     }
 
@@ -427,7 +433,7 @@ namespace Efekt
     {
         [DebuggerStepThrough]
         public Text(string value)
-            : base(new Values(value.Select(v => new Char(v)).ToList()))
+            : base(new Values(value.Select(v => new Char(v) as Value).ToList()))
         {
             Value = value;
         }

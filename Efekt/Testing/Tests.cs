@@ -132,6 +132,7 @@ namespace Efekt.Tests
             test("var c = 1 + 2 return [c + 1, c + 1, c + 1]", "[4, 4, 4]");
             //test("var c = 1 + 2 return [c = c + 1, c = c + 1, c = c + 1]", "[4, 5, 6]");
             //test("var c = 3 var a = [c = c + 1, c = c + 1] c = 5 var b = a return a", "[4, 5]");
+
         }
 
         /*

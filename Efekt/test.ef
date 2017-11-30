@@ -1,17 +1,9 @@
-﻿
-import prelude
+﻿import prelude
 
 var start = fn {
-
-    printLine(true  and true)
-    printLine(false and false)
-    printLine(true  and false)
-    printLine(false and true)
-
-    printLine(true  or true)
-    printLine(false or false)
-    printLine(true  or false)
-    printLine(false or true)
-
+    var arr = [1, 2, 3, 4, 5]
+    arrayIterator(arr)
+      .where(fn c { return c > 3 })
+      .forEach(fn c { c.printLine() })
 }
 

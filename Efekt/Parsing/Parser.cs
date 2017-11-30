@@ -102,19 +102,19 @@ namespace Efekt
 
         private ClassBody ParseClassBody()
         {
-            return new ClassBody(ParseBracedList('}', false).Items.Cast<ClassItem>().ToArray());
+            return new ClassBody(ParseBracedList('}', false).Items.Cast<ClassItem>().ToList());
         }
 
 
         private FnArguments ParseFnArguments(char end)
         {
-            return new FnArguments(ParseBracedList(end, true).Items.Cast<Exp>().ToArray());
+            return new FnArguments(ParseBracedList(end, true).Items.Cast<Exp>().ToList());
         }
 
 
         private FnParameters ParseFnParameters()
         {
-            return new FnParameters(ParseList('{', true).Items.Cast<Ident>().Select(i => new Param(i)).ToArray());
+            return new FnParameters(ParseList('{', true).Items.Cast<Ident>().Select(i => new Param(i)).ToList());
         }
 
 
@@ -225,11 +225,11 @@ namespace Efekt
                 && prevOp.TokenType == TokenType.Op
                 && opPrecedence[prevOp.Name] < opPrecedence[opText])
             {
-                var x = post(new FnApply(ident, new FnArguments(new[] {fna.Arguments.Skip(1).First(), e2})));
-                fna.Arguments = new FnArguments(new[] {fna.Arguments.First(), x});
+                var x = post(new FnApply(ident, new FnArguments(new List<Exp> {fna.Arguments.Skip(1).First(), e2})));
+                fna.Arguments = new FnArguments(new List<Exp> {fna.Arguments.First(), x});
                 return fna;
             }
-            return post(new FnApply(ident, new FnArguments(new[] {prev, e2})));
+            return post(new FnApply(ident, new FnArguments(new List<Exp> {prev, e2})));
         }
 
 

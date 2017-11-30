@@ -160,7 +160,7 @@ namespace Efekt
 
         private static Var getEmptyModule(string name)
         {
-            return new Var(new Ident(name, TokenType.Ident), new New(new ClassBody(new List<Var>())));
+            return new Var(new Ident(name, TokenType.Ident), new New(new ClassBody(new List<ClassItem>())));
         }
 
 
@@ -169,7 +169,7 @@ namespace Efekt
         {
             if (body is Sequence seq)
             {
-                var cis = seq.Cast<ClassItem>().ToArray();
+                var cis = seq.Cast<ClassItem>().ToList();
                 return new Var(new Ident(name, TokenType.Ident), new New(new ClassBody(cis)));
             }
             throw new Exception();
@@ -226,7 +226,7 @@ namespace Efekt
             if (e is Exp exp)
                 return exp;
             if (e is SequenceItem si)
-                e = new Sequence(new[] {si});
+                e = new Sequence(new List<SequenceItem> {si});
             if (e is Sequence body2)
                 return new FnApply(
                     new Fn(new FnParameters(), body2),

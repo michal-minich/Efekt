@@ -18,6 +18,14 @@ namespace Efekt
                     return new Int(a.Value + b.Value);
                 }),
 
+                new Builtin("-", (@params, inExp) =>
+                {
+                    C.Assume(@params.Count == 2);
+                    var a = @params[0].AsInt(inExp, prog);
+                    var b = @params[1].AsInt(inExp, prog);
+                    return new Int(a.Value - b.Value);
+                }),
+
                 new Builtin("*", (@params, inExp) =>
                 {
                     C.Assume(@params.Count == 2);
@@ -29,9 +37,9 @@ namespace Efekt
                 new Builtin("==", (@params, inExp) =>
                 {
                     C.Assume(@params.Count == 2);
-                    var a = @params[0].AsInt(inExp, prog);
-                    var b = @params[1].AsInt(inExp, prog);
-                    return new Bool(a.Value == b.Value);
+                    var a = @params[0].AsValue(inExp, prog);
+                    var b = @params[1].AsValue(inExp, prog);
+                    return new Bool(a.ToDebugString() == b.ToDebugString());
                 }),
 
                 new Builtin("<", (@params, inExp) =>
@@ -50,13 +58,27 @@ namespace Efekt
                     return Void.Instance;
                 }),
 
-                new Builtin("cons", (@params, inExp) =>
+                new Builtin("at", (@params, inExp) =>
                 {
-                    var xs = @params[0].AsArr(inExp, prog).Values;
-                    var list = new List<Value>(xs.Count + 1);
-                    list.AddRange(xs);
-                    list.Add(@params[1].AsValue(inExp, prog));
-                    return new Arr(new Values(list.ToArray()));
+                    var items = @params[0].AsArr(inExp, prog).Values;
+                    var at = @params[1].AsInt(inExp, prog);
+                    // todo check index vs lenght
+                    return items[at.Value];
+                }),
+
+                new Builtin("setAt", (@params, inExp) =>
+                {
+                    var items = @params[0].AsArr(inExp, prog).Values;
+                    var at = @params[1].AsInt(inExp, prog);
+                    var value = @params[2].AsValue(inExp, prog);
+                    // todo check index vs lenght
+                    return items[at.Value] = value;
+                }),
+
+                new Builtin("count", (@params, inExp) =>
+                {
+                    var items = @params[0].AsArr(inExp, prog).Values;
+                    return new Int(items.Count);
                 })
             };
         }

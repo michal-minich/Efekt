@@ -1,7 +1,54 @@
 ﻿var not = fn a { return if a then false else true }
 var or = fn a, b { return if a then true else { if b then true else false } }
 var and = fn a, b { return if a then { if b then true else false } else false }
+var >= = fn a, b { return not(a < b) }
+var <= = fn a, b { return a < b or a == b }
+var > = fn a, b { return not(a < b) and (not(a == b)) }
 var printLine = fn a { print(a) print('\n') }
-var x  = 111
-var o = new { var a = fn b { return b + 222 } }
-var xfib = 3
+
+var arrayIterator = fn a {
+    return new {
+        var arr = a
+        var position = 0 - 1
+        var current = fn { return at(arr, position) }
+        var moveForward = fn {
+            position = position + 1
+            return position < (count(arr))
+        }
+        /*var getForwardIterator = fn {
+            return arr.arrayIterator()
+        }*/
+    }
+}
+
+var whereIterator = fn i, p {
+    return new {
+        var iterator = i
+        var predicate = p
+        var current = fn { return i.current() }
+        var moveForward = fn {
+            var ok = false
+            loop {
+                ok = i.moveForward()
+                if not(ok) then
+                    return false
+                if i.current().predicate() then
+                    return true
+            }
+        }
+    }
+}
+
+var forEach = fn i, f {
+    /*var i = iterable.getForwardIterator()*/
+    loop {
+        if not(i.moveForward()) then
+            return
+        i.current().f()
+    }
+}
+
+var where = fn i, p {
+    return whereIterator(i, p)
+}
+

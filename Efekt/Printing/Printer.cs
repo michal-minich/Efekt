@@ -119,6 +119,7 @@ namespace Efekt
                 case Text tx:
                     if (asCode)
                         w.Markup("\"").Text(tx.Value);
+                    w.Text(tx.Value);
                     if (asCode)
                         w.Markup("\"");
                     break;

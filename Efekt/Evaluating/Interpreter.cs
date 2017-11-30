@@ -114,11 +114,11 @@ namespace Efekt
                     fn = eval(fna.Fn, env);
                     noExtMethodApply:
                     var builtin = fn as Builtin;
-                    var eArgs = fna.Arguments.Select(a => eval(a, env)).ToArray();
+                    var eArgs = fna.Arguments.Select(a => eval(a, env)).ToList();
                     if (builtin != null)
                     {
                         callStack.Push(new StackItem(builtin, builtin.Name));
-                        var res = builtin.Fn(new FnArguments(eArgs), fna);
+                        var res = builtin.Fn(new FnArguments(eArgs.Cast<Exp>().ToList()), fna);
                         callStack.Pop();
                         return res;
                     }
@@ -192,7 +192,7 @@ namespace Efekt
                     isBreak = true;
                     return Void.Instance;
                 case ArrConstructor ae:
-                    return new Arr(new Values(ae.Arguments.Select(e => eval(e, env)).ToArray()));
+                    return new Arr(new Values(ae.Arguments.Select(e => eval(e, env)).ToList()));
                 case MemberAccess ma:
                     var exp = eval(ma.Exp, env);
                     var o = exp.AsObj(ma, prog);
