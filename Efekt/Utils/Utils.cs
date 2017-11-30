@@ -44,6 +44,14 @@ namespace Efekt
         }
 
 
+        [Pure]
+        public static IEnumerable<TSouce> Prepend<TSouce>(this IEnumerable<TSouce> source, TSouce element)
+        {
+            return new[] {element}.Concat(source);
+        }
+
+
+        [Pure]
         public static IEnumerable<TSouce> Append<TSouce>(this IEnumerable<TSouce> source, TSouce element) 
         {
             return source.Concat(new [] {element});

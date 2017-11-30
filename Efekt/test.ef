@@ -1,5 +1,4 @@
-﻿import prelude
-
+﻿
 var start = fn {
     var arr = [1, 2, 3, 4, 5]
     arrayIterator(arr)

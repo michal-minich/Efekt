@@ -92,7 +92,7 @@ namespace Efekt
         private static Exp getStartQualifiedName(Prog prog)
         {
             var candidates = new List<List<string>>();
-            findStart(prog, prog.Modules, candidates, new List<string>());
+            findStart(prog.Modules, candidates, new List<string>());
             if (candidates.Count != 1)
                 throw new Exception();
             var fn = candidates[0]
@@ -104,7 +104,7 @@ namespace Efekt
         }
 
 
-        private static void findStart(Prog prog, ClassBody classBody, List<List<string>> candidates, List<string> path)
+        private static void findStart(ClassBody classBody, List<List<string>> candidates, List<string> path)
         {
             foreach (var ci in classBody)
             {
@@ -115,7 +115,7 @@ namespace Efekt
                         candidates.Add(path);
                     if (v.Exp is New n)
                     {
-                        findStart(prog, n.Body, candidates, path.Append(i).ToList());
+                        findStart(n.Body, candidates, path.Append(i).ToList());
                     }
                 }       
             }
@@ -164,32 +164,20 @@ namespace Efekt
         }
 
 
-
         private static Var getNewModule(string name, Element body)
         {
+            var preludeImport = new Import(new Ident("prelude", TokenType.Ident));
             if (body is Sequence seq)
             {
                 var cis = seq.Cast<ClassItem>().ToList();
+                if (name != "prelude")
+                    cis = cis.Prepend(preludeImport).ToList();
                 return new Var(new Ident(name, TokenType.Ident), new New(new ClassBody(cis)));
             }
             throw new Exception();
         }
 
-
-        public sealed class ModuleNode
-        {
-            public readonly string Name;
-            public readonly Element Parsed;
-            public readonly List<ModuleNode> Children = new List<ModuleNode>();
-
-            public ModuleNode(string name, Element parsed)
-            {
-                Name = name;
-                Parsed = parsed;
-            }
-        }
-
-
+        
         private static IReadOnlyList<string> getAllCodeFiles(string rootPath)
         {
             var files = new List<string>();

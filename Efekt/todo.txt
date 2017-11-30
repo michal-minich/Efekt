@@ -7,10 +7,10 @@ validate ineqaul count of params and args
 import candidates - nicer output with location
 revaluate all the save casts to nicer mesages
 import - print info when importing the same module in inner scope
+import - warn on duplicate import in same scope
 fix various crashes - (build on prelude/wrong paths?, not matching braces)
 do not repeat warnings multiple times
 
-* auto import prelude
 builtins as extension methods
 how to reolve nested module names vs paths
 resolve imports based on lib folder?
