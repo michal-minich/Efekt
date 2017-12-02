@@ -17,13 +17,14 @@ namespace Efekt
     {
         private readonly Stack<int> StartLineIndex = new Stack<int>();
 
-        private static readonly List<string> rightAssociativeOps = new List<string>
-            {":", "="};
+        //private static readonly List<string> rightAssociativeOps = new List<string>
+        //    {":", "="};
 
         private static readonly Dictionary<string, int> opPrecedence
             = new Dictionary<string, int>
             {
                 ["."] = 160,
+                //["("] = 150,
                 //[":"] = 140,
                 ["*"] = 130,
                 ["/"] = 130,
@@ -84,11 +85,7 @@ namespace Efekt
                 ParseImport
             };
 
-            OpOparsers = new List<ParseOpElement>
-            {
-                ParseFnApply,
-                ParseOpApply
-            };
+            ParseOpApplyFn = ParseOpApply;
         }
 
 
@@ -193,8 +190,40 @@ namespace Efekt
         }
 
 
+        private Element ParseOpApply(Element e)
+        {
+            if (Ti.Finished)
+                return e;
+            Exp prev;
+            if (e is Exp e3)
+                prev = e3;
+            else if (e is Assign a)
+                prev = a.Exp;
+            else
+                return e;
+            IEnumerable<ParseOpElement> parsers;
+            if (withOps)
+                parsers = OpOparsers;
+            else
+                parsers = OpOparsers.Take(1);
+            foreach (var opar in parsers)
+            {
+                var e2 = opar(prev);
+                if (e2 == null)
+                    continue;
+                if (e is Assign a)
+                {
+                    if (e2 is Exp ee)
+                        return ParseOpApply(new Assign(a.To, ee));
+                    throw RemarkList.Structure.SecondOperandMustBeExpression(e2);
+                }
+                return ParseOpApply(e2);
+            }
+            return e;
+        }
+
         [CanBeNull]
-        private Element ParseOpApply(Exp prev)
+        private Element ParseOpApply1(Exp prev)
         {
             if (Type != TokenType.Op)
                 return null;
@@ -203,40 +232,65 @@ namespace Efekt
             Ti.Next();
             var ident = post(new Ident(opText, TokenType.Op));
             markStart();
-            var second = ParseOne(false);
+            var isLesser = IsLesserPrecedence(prev, opText);
+            if (isLesser)
+                return prev;
+            return PaserOpApply2(prev, opText, !prev.IsBraced, ident);
+        }
+
+        private static bool IsLesserPrecedence(Exp prev, string opText)
+        {
+            return prev is FnApply fna
+                   && fna.Fn is Ident prevOp
+                   && prevOp.TokenType == TokenType.Op
+                   && opPrecedence[prevOp.Name] < opPrecedence[opText];
+        }
+
+        private Element PaserOpApply2(Exp prev, string opText, bool isLesser, Ident ident)
+        {
+            var second = ParseOne();
+
+            if (!(second is Exp e2))
+                throw RemarkList.Structure.SecondOperatorMustBeExpression(second);
+
             if (opText == ".")
-            {
-                if (second is Ident i)
-                    return post(new MemberAccess(prev, i));
-                throw RemarkList.Structure.ExpectedIdentifierAfterDot(second);
-            }
-            var e2 = second as Exp;
-            if (e2 == null)
-                throw RemarkList.Structure.FunctionArgumentMustBeExpression(second);
+                return PaserMemberAccess(prev, second);
+
             if (opText == "=")
+                return PaserAssign(prev, e2);
+
+            if (isLesser)
             {
-                if (prev is AssignTarget at)
-                    return post(new Assign(at, e2));
-                throw RemarkList.Structure.AssignTargetIsInvalid(prev);
+                var fna2 = (FnApply) prev;
+                var x = post(new FnApply(ident, new FnArguments(new List<Exp> {fna2.Arguments.Skip(1).First(), e2})));
+                fna2.Arguments = new FnArguments(new List<Exp> {fna2.Arguments.First(), x});
+                return fna2;
             }
-            if (!prev.IsBraced
-                && prev is FnApply fna
-                && fna.Fn is Ident prevOp
-                && prevOp.TokenType == TokenType.Op
-                && opPrecedence[prevOp.Name] < opPrecedence[opText])
-            {
-                var x = post(new FnApply(ident, new FnArguments(new List<Exp> {fna.Arguments.Skip(1).First(), e2})));
-                fna.Arguments = new FnArguments(new List<Exp> {fna.Arguments.First(), x});
-                return fna;
-            }
+
             return post(new FnApply(ident, new FnArguments(new List<Exp> {prev, e2})));
+        }
+
+
+        private Element PaserMemberAccess(Exp prev, Element second)
+        {
+            if (second is Ident i)
+                return post(new MemberAccess(prev, i));
+            throw RemarkList.Structure.ExpectedIdentifierAfterDot(second);
+        }
+
+
+        private Element PaserAssign(Exp prev, Exp e2)
+        {
+            if (prev is AssignTarget at)
+                return post(new Assign(at, e2));
+            throw RemarkList.Structure.AssignTargetIsInvalid(prev);
         }
 
 
         [CanBeNull]
         private FnApply ParseFnApply(Exp prev)
         {
-            if (Text[0] != '(')
+            if (Text[0] != '(' || prev is MemberAccess)
                 return null;
             markStart();
             var args = ParseFnArguments(')');

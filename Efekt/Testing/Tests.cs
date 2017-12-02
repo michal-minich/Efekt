@@ -54,6 +54,13 @@ namespace Efekt.Tests
             test("var a = new { var b = 1 } a.b = 1 + 2 * 10 return a.b", "21");
             test("var a = new { var b = 1 } a.b = 0 * 1 + 2 return a.b", "2");
 
+            // fn apply after op or dot
+            test("var id = fn a { a } return id(1) + id(2)", "3");
+            test("var f = fn a { fn { a } } return f(1)() + f(2)()", "3");
+            test("var f = fn { fn a { a } } return f()(1) + f(1)(2)", "3");
+            test("var f = fn a { fn b { a + b } } return f(1)(10) + f(100)(1000)", "1111");
+            test("var o = new { var f = fn a { fn b { a + b } } } return x.f(1)(10) + x.f(100)(1000)", "1111");
+
             // if
             test("if true then 1 else 2", "1");
             test("if false then 1 else 2", "2");
@@ -130,9 +137,6 @@ namespace Efekt.Tests
             // array
             test("var c = 1 + 2 return [1, 2, c]", "[1, 2, 3]");
             test("var c = 1 + 2 return [c + 1, c + 1, c + 1]", "[4, 4, 4]");
-            //test("var c = 1 + 2 return [c = c + 1, c = c + 1, c = c + 1]", "[4, 5, 6]");
-            //test("var c = 3 var a = [c = c + 1, c = c + 1] c = 5 var b = a return a", "[4, 5]");
-
         }
 
         /*

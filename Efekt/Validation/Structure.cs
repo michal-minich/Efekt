@@ -43,9 +43,9 @@ namespace Efekt
         }
 
         [Pure]
-        public EfektException FunctionArgumentMustBeExpression(Element target)
+        public EfektException SecondOperatorMustBeExpression(Element target)
         {
-            return f("function argument must be expression", target);
+            return f("second operator must be expression", target);
         }
 
         [Pure]

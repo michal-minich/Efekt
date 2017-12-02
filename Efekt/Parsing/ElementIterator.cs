@@ -7,7 +7,7 @@ namespace Efekt
 {
     public abstract class ElementIterator
     {
-        protected List<ParseOpElement> OpOparsers;
+        protected Func<Element, Element> ParseOpApplyFn;
         protected List<ParseElement> Parsers;
         protected TokenIterator Ti;
         protected string Text => Ti.Current.Text;
@@ -35,7 +35,7 @@ namespace Efekt
 
 
         [NotNull]
-        protected Element ParseOne(bool withOps = true)
+        protected Element ParseOne()
         {
             foreach (var p in Parsers)
             {
@@ -43,38 +43,10 @@ namespace Efekt
                 var e = p();
                 if (e == null)
                     continue;
-                if (withOps)
-                    e = parseWithOp(e);
+                e = ParseOpApplyFn(e);
                 return e;
             }
             throw new Exception();
-        }
-
-        private Element parseWithOp(Element e)
-        {
-            if (Ti.Finished)
-                return e;
-            Exp prev;
-            if (e is Exp e3)
-                prev = e3;
-            else if (e is Assign a)
-                prev = a.Exp;
-            else
-                return e;
-            foreach (var opar in OpOparsers)
-            {
-                var e2 = opar(prev);
-                if (e2 == null)
-                    continue;
-                if (e is Assign a)
-                {
-                    if (e2 is Exp ee)
-                        return parseWithOp(new Assign(a.To, ee));
-                    throw RemarkList.Structure.SecondOperandMustBeExpression(e2);
-                }
-                return parseWithOp(e2);
-            }
-            return e;
         }
     }
 }
