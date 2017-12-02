@@ -1,18 +1,26 @@
-﻿rerport elements details on warning
-elements holds its tokens
-report line column range with error
+﻿* fix: parse/eval fn apply as second operand
+* fix: do not parse op apply after line break (brace starts at the new line)
+* fix: declaring var in loop now fails with already declared
+* fix: parsing of comment
+fix various crashes - (build on prelude/wrong paths?, not matching braces)
+reevaluate all the safe casts to nicer mesages
+error - when loop does not have break or return statement inside (to prevent infinite loop)
 validate usage of break and continue outside loop
-prog runtime writter output (for throw)
-validate ineqaul count of params and args
+warn when declaring variable of type void
+info when return can be skipped
+validate inequal count of params and args
 import candidates - nicer output with location
-revaluate all the save casts to nicer mesages
 import - print info when importing the same module in inner scope
 import - warn on duplicate import in same scope
-fix various crashes - (build on prelude/wrong paths?, not matching braces)
-do not repeat warnings multiple times
-error when loop does not have break or return statement inside (to prevent infinite loop)
+more tests
+static validation where possible
+nicer code
 
-builtins as extension methods
+rerport elements details on warning
+elements holds its tokens
+report line column range with error
+prog runtime writter output (for throw)
+
 how to reolve nested module names vs paths
 resolve imports based on lib folder?
 project config file? (instaed of cmd args)
@@ -28,9 +36,7 @@ attributes in general?
 ? function overloading (introduces polymorphism and introspection)
 ? contracts: requires, ensures, assert, assume, invariant (scope, loop, fn body, object body)
 
-* fix: parse/eval fn apply as second operand
-* fix: do not parse op apply after line break (brace starts at the new line)
-* fix: declaring var in loop now fails with already declared
-more tests
+allow only typed functions to be called as extensions
+builtins as extension methods (when typing for builtins is done)
 
 convert to JS, D, C#

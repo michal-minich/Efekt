@@ -61,6 +61,7 @@ namespace Efekt
         }
 
         [Pure]
+        // TODO move to structure validation eventually
         public EfektException ExtensionFuncHasNoParameters(Fn extFn, MemberAccess ma)
         {
             return ex(extFn, ma, "Function must accept at least 1 parameter to be an extension function.");
