@@ -1,16 +1,19 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26228.4
+VisualStudioVersion = 15.0.27004.2005
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Efekt", "Efekt\Efekt.csproj", "{5EFC0FD4-6FD1-4C18-BBC7-22DCF89E31EC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Contracts|Any CPU = Contracts|Any CPU
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{5EFC0FD4-6FD1-4C18-BBC7-22DCF89E31EC}.Contracts|Any CPU.ActiveCfg = Contracts|Any CPU
+		{5EFC0FD4-6FD1-4C18-BBC7-22DCF89E31EC}.Contracts|Any CPU.Build.0 = Contracts|Any CPU
 		{5EFC0FD4-6FD1-4C18-BBC7-22DCF89E31EC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{5EFC0FD4-6FD1-4C18-BBC7-22DCF89E31EC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5EFC0FD4-6FD1-4C18-BBC7-22DCF89E31EC}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -18,5 +21,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {6349C98B-5563-4276-B691-847F7FECFCEC}
 	EndGlobalSection
 EndGlobal
