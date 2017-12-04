@@ -35,7 +35,7 @@ namespace Efekt
 
 
         [NotNull]
-        protected Element ParseOne()
+        protected Element ParseOne(bool withOps = true)
         {
             foreach (var p in Parsers)
             {
@@ -43,7 +43,8 @@ namespace Efekt
                 var e = p();
                 if (e == null)
                     continue;
-                e = ParseOpApplyFn(e);
+                if (withOps)
+                    e = ParseOpApplyFn(e);
                 return e;
             }
             throw new Exception();

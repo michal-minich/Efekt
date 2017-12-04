@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Dynamic;
 using System.Linq;
 using JetBrains.Annotations;
 
@@ -96,7 +97,11 @@ namespace Efekt
         public int Count => items.Count;
 
         [NotNull]
-        public T this[int index] => items[index];
+        public T this[int index]
+        {
+            get => items[index];
+            set => items[index] = value;
+        }
     }
 
 
@@ -300,8 +305,7 @@ namespace Efekt
         }
 
         public AssignTarget To { get; }
-        public Exp Exp { get; }
-    }
+        public Exp Exp { get; set; }    }
 
 
     public sealed class When : AElement, SequenceItem, Exp
