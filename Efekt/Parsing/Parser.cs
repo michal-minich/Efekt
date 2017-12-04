@@ -24,7 +24,7 @@ namespace Efekt
             = new Dictionary<string, int>
             {
                 ["."] = 160,
-                //["("] = 150,
+                ["("] = 150,
                 //[":"] = 140,
                 ["*"] = 130,
                 ["/"] = 130,
@@ -38,7 +38,8 @@ namespace Efekt
                 ["!="] = 60,
                 ["and"] = 20,
                 ["or"] = 10,
-                ["="] = 3
+                ["="] = 3,
+                ["\0"] = -1
             };
 
 
@@ -189,15 +190,21 @@ namespace Efekt
             return post(new Fn(p, s));
         }
 
-        
         private Element ParseOpApply(Element prev)
+        {
+            prevOp = "\0";
+            return ParseOpApply2(prev);
+        }
+
+        private string prevOp;
+        private Element ParseOpApply2(Element prev)
         {
             if (prev is Exp e)
             {
                 var el = ParseOpApply1(e);
                 if (el == null)
                     return e;
-                return ParseOpApply(el);
+                return ParseOpApply2(el);
             }
             return prev;
         }
@@ -209,7 +216,9 @@ namespace Efekt
             if (Type != TokenType.Op && Text != "(")
                 return null;
             var opText = Text;
-            var isBigger = HasBiggerPrecedence(prev, opText);
+            //var isBigger = HasBiggerPrecedence(prev, opText);
+            var isBigger = opPrecedence[opText] > opPrecedence[prevOp];
+            prevOp = opText;
 
             if (Text == "(")
             {
@@ -248,7 +257,7 @@ namespace Efekt
             {
                 if (prev is AssignTarget at)
                 {
-                    var el2 = ParseOpApply(e2);
+                    var el2 = ParseOpApply2(e2);
                     if (el2 is Exp eee)
                         return post(new Assign(at, eee));
                     throw RemarkList.Structure.SecondOperandMustBeExpression(el2);
@@ -256,11 +265,11 @@ namespace Efekt
                 throw RemarkList.Structure.AssignTargetIsInvalid(prev);
             }
 
-            if (!prev.IsBraced && prev is FnApply fna2 && !isBigger)
+            if (!prev.IsBraced && prev is FnApply prevFna && isBigger)
             {
-                var x = post(new FnApply(ident, new FnArguments(new List<Exp> {fna2.Arguments.Skip(1).First(), e2})));
-                fna2.Arguments = new FnArguments(new List<Exp> {fna2.Arguments.First(), x});
-                return fna2;
+                var bigger = post(new FnApply(ident, new FnArguments(new List<Exp> {prevFna.Arguments[1], e2})));
+                prevFna.Arguments = new FnArguments(new List<Exp> {prevFna.Arguments[0], bigger});
+                return prevFna;
             }
 
             return post(new FnApply(ident, new FnArguments(new List<Exp> {prev, e2})));

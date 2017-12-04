@@ -37,9 +37,11 @@ namespace Efekt
                 case FnApply fna:
                     if (fna.Fn is Ident ident && ident.TokenType == TokenType.Op)
                     {
+                        w.Markup("(");
                         Write(fna.Arguments[0]).Space();
                         Write(fna.Fn).Space();
                         Write(fna.Arguments[1]);
+                        w.Markup(")");
                         break;
                     }
                     Write(fna.Fn);
