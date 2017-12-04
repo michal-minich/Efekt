@@ -1,4 +1,3 @@
-﻿* fix: parse/eval fn apply as second operand
 * fix: do not parse op apply after line break (brace starts at the new line)
 * fix: declaring var in loop now fails with already declared
 * fix: parsing of comment

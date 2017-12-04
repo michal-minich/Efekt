@@ -9,21 +9,25 @@ namespace Efekt
     public delegate Element ParseElement();
 
 
-    [CanBeNull]
-    public delegate Element ParseOpElement(Exp prev);
-
-
     public sealed class Parser : ElementIterator
     {
+        private readonly List<ParseElement> parsers;
+        private TokenIterator Ti;
+        private string Text => Ti.Current.Text;
+        private TokenType Type => Ti.Current.Type;
+        private readonly RemarkList RemarkList;
+
+
         private readonly Stack<int> StartLineIndex = new Stack<int>();
 
-        private static readonly List<string> rightAssociativeOps = new List<string>
-            {":", "="};
+        //private static readonly List<string> rightAssociativeOps = new List<string>
+        //    {":", "="};
 
-        private static readonly Dictionary<string, int> opPrecedence
+        public static readonly Dictionary<string, int> opPrecedence
             = new Dictionary<string, int>
             {
                 ["."] = 160,
+                ["("] = 150,
                 //[":"] = 140,
                 ["*"] = 130,
                 ["/"] = 130,
@@ -59,9 +63,10 @@ namespace Efekt
         }
 
 
-        public Parser(RemarkList remarkList) : base(remarkList)
+        public Parser(RemarkList remarkList)
         {
-            Parsers = new List<ParseElement>
+            this.RemarkList = remarkList;
+            parsers = new List<ParseElement>
             {
                 ParseIdent,
                 ParseInt,
@@ -82,12 +87,6 @@ namespace Efekt
                 ParseArr,
                 ParseNew,
                 ParseImport
-            };
-
-            OpOparsers = new List<ParseOpElement>
-            {
-                ParseFnApply,
-                ParseOpApply
             };
         }
 
@@ -192,9 +191,86 @@ namespace Efekt
             return post(new Fn(p, s));
         }
 
+        public Element Parse(string filePath, IEnumerable<Token> tokens)
+        {
+            Ti = new TokenIterator(filePath, tokens);
+            var elb = new ElementListBuilder();
+            Ti.Next();
+            while (Ti.HasWork)
+            {
+                var e = ParseOne();
+                elb.Add(e);
+            }
+            var first = elb.Items.FirstOrDefault();
+            return first is Exp ? first : new Sequence(elb.Items.Cast<SequenceItem>().ToList());
+        }
+
+
+        [NotNull]
+        private Element ParseOne(bool withOps = true, bool withFn = true)
+        {
+            foreach (var p in parsers)
+            {
+                C.Nn(p);
+                var e = p();
+                if (e == null)
+                    continue;
+                if (withOps || Text == ".")
+                    e = ParseWithOp(e);
+                if (withFn && e is Exp exp)
+                    e = ParseFnApply(exp);
+                return e;
+            }
+            throw new Exception();
+        }
+
+        private Element ParseWithOp(Element e)
+        {
+            if (e is Exp exp)
+                e = ParseFnApply(exp);
+
+            Exp prev;
+            if (e is Exp e3)
+                prev = e3;
+            else if (e is Assign a)
+                prev = a.Exp;
+            else
+                return e;
+            
+            var e2 = ParseOpApply(prev);
+            if (e2 == null)
+                return e;
+
+            if (e is Assign aa)
+            {
+                if (e2 is Exp ee)
+                    return ParseWithOp(new Assign(aa.To, ee));
+                throw RemarkList.Structure.SecondOperandMustBeExpression(e2);
+            }
+            
+            return ParseWithOp(e2);
+        }
+
 
         [CanBeNull]
         private Element ParseOpApply(Exp prev)
+        {
+            var e = ParseOpApply1(prev);
+            if (e is MemberAccess)
+                return e;
+            if (e is Exp exp)
+            {
+                var e2 = ParseFnApply(exp);
+                return e2;
+            }
+
+            return e;
+        }
+
+
+
+        [CanBeNull]
+        private Element ParseOpApply1(Exp prev)
         {
             if (Type != TokenType.Op)
                 return null;
@@ -203,7 +279,7 @@ namespace Efekt
             Ti.Next();
             var ident = post(new Ident(opText, TokenType.Op));
             markStart();
-            var second = ParseOne(false);
+            var second = ParseOne(false, opText != ".");
             if (opText == ".")
             {
                 if (second is Ident i)
@@ -233,14 +309,14 @@ namespace Efekt
         }
 
 
-        [CanBeNull]
-        private FnApply ParseFnApply(Exp prev)
+        [NotNull]
+        private Exp ParseFnApply(Exp prev)
         {
             if (Text[0] != '(')
-                return null;
+                return prev;
             markStart();
             var args = ParseFnArguments(')');
-            return post(new FnApply(prev, args));
+            return ParseFnApply(post(new FnApply(prev, args)));
         }
 
 

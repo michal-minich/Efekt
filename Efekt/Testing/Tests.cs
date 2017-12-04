@@ -54,6 +54,13 @@ namespace Efekt.Tests
             test("var a = new { var b = 1 } a.b = 1 + 2 * 10 return a.b", "21");
             test("var a = new { var b = 1 } a.b = 0 * 1 + 2 return a.b", "2");
 
+            // fn apply after op or dot
+            test("var id = fn a { a } return id(1) + id(2)", "3");
+            test("var f = fn a { fn { a } } return f(1)() + f(2)()", "3");
+            test("var f = fn { fn a { a } } return f()(1) + f(1)(2)", "3");
+            test("var f = fn a { fn b { a + b } } return f(1)(10) + f(100)(1000)", "1111");
+            test("var o = new { var f = fn a { fn b { a + b } } } return o.f(1)(10) + o.f(100)(1000)", "1111");
+
             // if
             test("if true then 1 else 2", "1");
             test("if false then 1 else 2", "2");
