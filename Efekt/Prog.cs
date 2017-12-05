@@ -29,10 +29,10 @@ namespace Efekt
             RemarkList = new RemarkList(this);
 
             OutputWriter = outputWriter;
-            OutputPrinter = new Printer(new PlainTextCodeWriter(OutputWriter), false);
+            OutputPrinter = new Printer(new PlainTextCodeWriter(outputWriter), false);
 
             ErrorWriter = errorWriter;
-            ErrorPrinter = new Printer(new PlainTextCodeWriter(ErrorWriter), true);
+            ErrorPrinter = new Printer(new PlainTextCodeWriter(errorWriter), true);
 
             Modules = new ClassBody(new List<ClassItem>());
         }
@@ -151,8 +151,7 @@ namespace Efekt
         private static ClassBody findParentModule(IEnumerable<ClassItem> mods, string name)
         {
             foreach (var ci in mods)
-                if (ci is Var v)
-                if (v.Ident.Name == name)
+                if (ci is Var v && v.Ident.Name == name)
                     return ((New) v.Exp).Body;
             return null;
         }

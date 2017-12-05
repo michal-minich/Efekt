@@ -46,8 +46,8 @@ namespace Efekt
         [DebuggerStepThrough]
         public void Next()
         {
-            again:
             MoveNext();
+            again:
             if (Current.Type == TokenType.LineCommentBegin)
             {
                 while (HasWork && Current.Type != TokenType.NewLine)
@@ -60,8 +60,12 @@ namespace Efekt
                     MoveNext();
                 MoveNext();
             }
-            if (Current.Type == TokenType.NewLine
-                || Current.Type == TokenType.LineCommentBegin
+            if (Current.Type == TokenType.NewLine)
+            {
+                MoveNext();
+                goto again;
+            }
+            if (Current.Type == TokenType.LineCommentBegin
                 || Current.Type == TokenType.CommentBegin)
                 goto again;
         }

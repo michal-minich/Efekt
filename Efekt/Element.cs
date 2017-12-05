@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using JetBrains.Annotations;
 
@@ -198,8 +199,8 @@ namespace Efekt
         [DebuggerStepThrough]
         public Builtin(string name, Func<FnArguments, Exp, Value> fn)
         {
-            C.Assert(!string.IsNullOrWhiteSpace(name));
-            C.Assert(name.Trim().Length == name.Length);
+            C.Req(!string.IsNullOrWhiteSpace(name));
+            C.Req(name.Trim().Length == name.Length);
             C.Nn(fn);
 
             Name = name;

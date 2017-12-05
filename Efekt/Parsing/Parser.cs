@@ -211,7 +211,7 @@ namespace Efekt
         {
             foreach (var p in parsers)
             {
-                C.Nn(p);
+                C.Assert(p != null);
                 var e = p();
                 if (e == null)
                     continue;

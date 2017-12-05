@@ -45,6 +45,10 @@ namespace Efekt
 
         private Value eval(Element se, Env env)
         {
+            C.Nn(se);
+            C.Nn(env);
+            C.EnsNn<Value>();
+
             switch (se)
             {
                 case Let l:

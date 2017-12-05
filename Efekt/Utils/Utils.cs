@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
 using JetBrains.Annotations;
@@ -44,17 +45,17 @@ namespace Efekt
         }
 
 
-        [Pure]
+        [JetBrains.Annotations.Pure]
         public static IEnumerable<TSouce> Prepend<TSouce>(this IEnumerable<TSouce> source, TSouce element)
         {
             return new[] {element}.Concat(source);
         }
 
 
-        [Pure]
-        public static IEnumerable<TSouce> Append<TSouce>(this IEnumerable<TSouce> source, TSouce element) 
+        [JetBrains.Annotations.Pure]
+        public static IEnumerable<TSouce> Append<TSouce>(this IEnumerable<TSouce> source, TSouce element)
         {
-            return source.Concat(new [] {element});
+            return source.Concat(new[] {element});
         }
     }
 
@@ -64,45 +65,71 @@ namespace Efekt
         [DebuggerStepThrough]
         [Conditional("DEBUG")]
         [ContractAnnotation("false => halt", true)]
+        //[ContractAbbreviator]
         // ReSharper disable once ParameterOnlyUsedForPreconditionCheck.Global
         public static void Assert(bool condition)
         {
-            if (!condition)
-                throw new Exception();
+            Contract.Assert(condition);
         }
 
 
         [DebuggerStepThrough]
         [Conditional("DEBUG")]
+        [Conditional("CONTRACTS_FULL")]
         [ContractAnnotation("false => halt", true)]
+        //[ContractAbbreviator]
         // ReSharper disable once ParameterOnlyUsedForPreconditionCheck.Global
         public static void Assume(bool condition)
         {
-            if (!condition)
-                throw new Exception();
+            Contract.Assume(condition);
         }
 
 
         [DebuggerStepThrough]
         [Conditional("DEBUG")]
+        [Conditional("CONTRACTS_FULL")]
         [ContractAnnotation("null => halt", true)]
+        [ContractAbbreviator]
+        // ReSharper disable once ParameterOnlyUsedForPreconditionCheck.Global
+        public static void Req([CanBeNull] object value)
+        {
+            Contract.Requires(value != null);
+        }
+
+
+        [DebuggerStepThrough]
+        [Conditional("DEBUG")]
+        [Conditional("CONTRACTS_FULL")]
+        [ContractAnnotation("null => halt", true)]
+        [ContractAbbreviator]
         // ReSharper disable once ParameterOnlyUsedForPreconditionCheck.Global
         public static void Nn([CanBeNull] object value)
         {
-            if (value == null)
-                throw new Exception();
+            Contract.Requires(value != null);
         }
 
 
         [DebuggerStepThrough]
         [Conditional("DEBUG")]
+        [Conditional("CONTRACTS_FULL")]
+        [ContractAbbreviator]
+        // ReSharper disable once ParameterOnlyUsedForPreconditionCheck.Global
+        public static void EnsNn<T>()
+        {
+            Contract.Ensures(Contract.Result<T>() != null);
+        }
+
+
+        [DebuggerStepThrough]
+        [Conditional("DEBUG")]
+        [Conditional("CONTRACTS_FULL")]
         [ContractAnnotation("null => halt")]
+        [ContractAbbreviator]
+        // ReSharper disable once ParameterOnlyUsedForPreconditionCheck.Global
         public static void AllNotNull<T>([CanBeNull] IEnumerable<T> items)
         {
-            Nn(items);
-            foreach (var i in items)
-                if (i == null)
-                    throw new Exception();
+            Contract.Requires(items != null);
+            Contract.Requires(Contract.ForAll(items, i => i != null));
         }
     }
 }

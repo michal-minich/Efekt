@@ -3,7 +3,7 @@ var or = fn a, b { if a then true else { if b then true else false } }
 var and = fn a, b { if a then { if b then true else false } else false }
 var >= = fn a, b { not(a < b) }
 var <= = fn a, b { a < b or a == b }
-var > = fn a, b { not(a < b) and (not(a == b)) }
+var > = fn a, b { not(a < b) and not(a == b) }
 var printLine = fn a { print(a) print('\n') }
 
 var arrayIterator = fn a {
@@ -13,7 +13,7 @@ var arrayIterator = fn a {
         var current = fn { at(arr, position) }
         var moveForward = fn {
             position = position + 1
-            return position < (count(arr))
+            return position < count(arr)
         }
         /*var getForwardIterator = fn {
             return arr.arrayIterator()
@@ -32,7 +32,7 @@ var whereIterator = fn i, p {
                 ok = i.moveForward()
                 if not(ok) then
                     return false
-                if i.current().predicate() then
+                if predicate(i.current()) then
                     return true
             }
         }
@@ -44,7 +44,7 @@ var forEach = fn i, f {
     loop {
         if not(i.moveForward()) then
             return
-        i.current().f()
+        f(i.current())
     }
 }
 

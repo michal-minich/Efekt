@@ -144,7 +144,7 @@ namespace Efekt
                     w.Key("new").Space().Markup("{");
                     foreach (var se2 in n.Body)
                     {
-                        C.Nn(se2);
+                        C.Assert(se2 != null);
                         Write(se2);
                         w.Line();
                     }
