@@ -1,4 +1,3 @@
-* fix: do not parse op apply after line break (brace starts at the new line)
 * fix: declaring var in loop now fails with already declared
 fix various crashes - (build on prelude/wrong paths?, not matching braces)
 reevaluate all the safe casts to nicer mesages

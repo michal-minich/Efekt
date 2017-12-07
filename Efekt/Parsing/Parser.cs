@@ -116,7 +116,7 @@ namespace Efekt
             return new FnParameters(ParseList('{', true).Items.Cast<Ident>().Select(i => new Param(i)).ToList());
         }
 
-
+        private bool crossedLine;
         private ElementListBuilder ParseBracedList(char endBrace, bool isComaSeparated)
         {
             char end;
@@ -135,7 +135,9 @@ namespace Efekt
             var elb = ParseList(endBrace, isComaSeparated);
             if (Text[0] != end)
                 throw RemarkList.Structure.EndBraceDoesNotMatchesStart();
+            var lineIndex = Ti.LineIndex;
             Ti.Next();
+            crossedLine = lineIndex != Ti.LineIndex;
             return elb;
         }
 
@@ -202,7 +204,9 @@ namespace Efekt
                 elb.Add(e);
             }
             var first = elb.Items.FirstOrDefault();
-            return first is Exp ? first : new Sequence(elb.Items.Cast<SequenceItem>().ToList());
+            return elb.Items.Count == 1 && first is Exp 
+                ? first 
+                : new Sequence(elb.Items.Cast<SequenceItem>().ToList());
         }
 
 
@@ -217,8 +221,9 @@ namespace Efekt
                     continue;
                 if (withOps || Text == ".")
                     e = ParseWithOp(e);
-                if (withFn && e is Exp exp)
+                if (withFn && !crossedLine && e is Exp exp)
                     e = ParseFnApply(exp);
+                crossedLine = false;
                 return e;
             }
             throw new Exception();
@@ -312,11 +317,12 @@ namespace Efekt
         [NotNull]
         private Exp ParseFnApply(Exp prev)
         {
-            if (Text[0] != '(')
+            if (crossedLine || Text[0] != '(')
                 return prev;
             markStart();
             var args = ParseFnArguments(')');
-            return ParseFnApply(post(new FnApply(prev, args)));
+            var fna = post(new FnApply(prev, args));
+            return crossedLine ? fna : ParseFnApply(fna);
         }
 
 

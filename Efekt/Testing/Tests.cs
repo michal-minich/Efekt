@@ -61,6 +61,10 @@ namespace Efekt.Tests
             test("var f = fn a { fn b { a + b } } return f(1)(10) + f(100)(1000)", "1111");
             test("var o = new { var f = fn a { fn b { a + b } } } return o.f(1)(10) + o.f(100)(1000)", "1111");
 
+            // fn apply & braced & curly
+            test("var p = fn a { print(a) }\r\n(1).p()", "<Void>", "1");
+            test("var p = fn a { print(a) }\r\n(1).p()\r\n(2).p()", "<Void>", "12");
+
             // if
             test("if true then 1 else 2", "1");
             test("if false then 1 else 2", "2");
