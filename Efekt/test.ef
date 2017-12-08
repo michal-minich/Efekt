@@ -1,7 +1,16 @@
 ﻿
 var start = fn {
-    var arr = [1, 2, 3, 4, 5]
+    let arr = [1, 2, 3, 4, 5]
     arrayIterator(arr)
       .where(fn c { c > 3 })
       .forEach(fn c { c.printLine() })
+
+    var a = 0
+    loop {
+         var b = 1
+         a = a + 1
+         print(a)
+         if a == 1 then
+             break
+    }
 }

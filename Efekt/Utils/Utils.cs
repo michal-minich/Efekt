@@ -88,12 +88,12 @@ namespace Efekt
         [DebuggerStepThrough]
         [Conditional("DEBUG")]
         [Conditional("CONTRACTS_FULL")]
-        [ContractAnnotation("null => halt", true)]
+        [ContractAnnotation("false => halt", true)]
         [ContractAbbreviator]
         // ReSharper disable once ParameterOnlyUsedForPreconditionCheck.Global
-        public static void Req([CanBeNull] object value)
+        public static void Req(bool condition)
         {
-            Contract.Requires(value != null);
+            Contract.Requires(condition);
         }
 
 

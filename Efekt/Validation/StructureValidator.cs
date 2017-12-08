@@ -8,5 +8,11 @@
         {
             this.prog = prog;
         }
+
+
+        public void Validate()
+        {
+
+        }
     }
 }

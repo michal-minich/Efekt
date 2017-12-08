@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Diagnostics.Contracts;
 using System.Linq;
 using JetBrains.Annotations;
 
@@ -36,7 +35,7 @@ namespace Efekt
         }
     }
 
-    public interface Exp : Element
+    public interface Exp : SequenceItem
     {
     }
 
@@ -46,7 +45,7 @@ namespace Efekt
     }
 
 
-    public interface Value : Exp, SequenceItem
+    public interface Value : Exp
     {
     }
 
@@ -56,7 +55,7 @@ namespace Efekt
     }
 
 
-    public interface QualifiedIdent : Exp
+    public interface QualifiedIdent : AssignTarget
     {
     }
 
@@ -212,7 +211,7 @@ namespace Efekt
     }
 
 
-    public sealed class Ident : AElement, AssignTarget, QualifiedIdent, SequenceItem
+    public sealed class Ident : AElement, QualifiedIdent
     {
         [DebuggerStepThrough]
         public Ident(string name, TokenType tokenType)
@@ -225,9 +224,7 @@ namespace Efekt
         }
 
         public string Name { get; }
-
-        // ReSharper disable once UnusedAutoPropertyAccessor.Global
-        // ReSharper disable once MemberCanBePrivate.Global
+        
         public TokenType TokenType { get; }
     }
 
@@ -251,7 +248,7 @@ namespace Efekt
     }
 
 
-    public sealed class Let : AElement, Stm
+    public sealed class Let : AElement, SequenceItem, ClassItem
     {
         [DebuggerStepThrough]
         public Let(Ident ident, Exp exp)
@@ -271,7 +268,7 @@ namespace Efekt
     }
     
 
-    public sealed class Param : AElement, Stm
+    public sealed class Param : AElement
     {
         [DebuggerStepThrough]
         public Param(Ident ident)
@@ -305,7 +302,7 @@ namespace Efekt
     }
 
 
-    public sealed class When : AElement, SequenceItem, Exp
+    public sealed class When : AElement, Exp
     {
         [DebuggerStepThrough]
         public When(Exp test, Element then, [CanBeNull] Element otherwise)
@@ -466,7 +463,7 @@ namespace Efekt
     }
 
 
-    public sealed class FnApply : AElement, SequenceItem, Exp
+    public sealed class FnApply : AElement, Exp
     {
         [DebuggerStepThrough]
         public FnApply(Exp fn, FnArguments arguments)
@@ -485,7 +482,7 @@ namespace Efekt
     }
 
 
-    public sealed class ArrConstructor : AElement, SequenceItem, Exp
+    public sealed class ArrConstructor : AElement, Exp
     {
         [DebuggerStepThrough]
         public ArrConstructor(FnArguments arguments)
@@ -511,7 +508,7 @@ namespace Efekt
     }
 
 
-    public sealed class New : AElement, SequenceItem, Exp
+    public sealed class New : AElement, Exp
     {
         public New(ClassBody body)
         {
@@ -543,7 +540,7 @@ namespace Efekt
     }
 
 
-    public sealed class MemberAccess : AElement, AssignTarget, QualifiedIdent
+    public sealed class MemberAccess : AElement, QualifiedIdent
     {
         [DebuggerStepThrough]
         public MemberAccess(Exp exp, Ident ident)

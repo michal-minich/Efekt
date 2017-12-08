@@ -10,8 +10,8 @@ var arrayIterator = fn a {
     return new {
         var arr = a
         var position = 0 - 1
-        var current = fn { at(arr, position) }
-        var moveForward = fn {
+        let current = fn { at(arr, position) }
+        let moveForward = fn {
             position = position + 1
             return position < count(arr)
         }
@@ -25,8 +25,8 @@ var whereIterator = fn i, p {
     return new {
         var iterator = i
         var predicate = p
-        var current = fn { i.current() }
-        var moveForward = fn {
+        let current = fn { i.current() }
+        let moveForward = fn {
             var ok = false
             loop {
                 ok = i.moveForward()
@@ -50,5 +50,21 @@ var forEach = fn i, f {
 
 var where = fn i, p {
     return whereIterator(i, p)
+}
+
+var assert = fn condition {
+    if not(condition) then
+        throw "assert is false"
+}
+
+var for = fn from, to, do {
+    assert(from <= to)
+    var i = from
+    loop {
+        do(i)
+        if i == to then
+            break
+        i = i + 1
+   }
 }
 

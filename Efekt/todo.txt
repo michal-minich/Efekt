@@ -1,14 +1,19 @@
-* fix: declaring var in loop now fails with already declared
+fix: declaring var in loop now fails with already declared
+fix stack trace
 fix various crashes - (build on prelude/wrong paths?, not matching braces)
 reevaluate all the safe casts to nicer mesages
-error - when loop does not have break or return statement inside (to prevent infinite loop)
-validate usage of break and continue outside loop
-warn when declaring variable of type void
-info when return can be skipped
-validate inequal count of params and args
+error: when loop does not have break or return statement inside (to prevent infinite loop)
+error: validate usage of break and continue outside loop
+error: validate inequal count of params and args
+
+warn: when declaring variable of type void
+info: when return can be skipped
 import candidates - nicer output with location
-import - print info when importing the same module in inner scope
-import - warn on duplicate import in same scope
+info: import - print info when importing the same module in inner scope
+warn: import - warn on duplicate import in same scope
+info: when there is no need to crate new fn and name is enough, like fn a { print(a) }
+info: when var can be let
+
 more tests
 static validation where possible
 nicer code
@@ -22,6 +27,8 @@ how to reolve nested module names vs paths
 resolve imports based on lib folder?
 project config file? (instaed of cmd args)
 
+enforce (optionally) readonly func parameters. how?
+lock - transform mutable value to immutalbe (objects)
 not operator - how?
 more and thought out builtins
 Double type
