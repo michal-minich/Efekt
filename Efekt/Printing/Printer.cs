@@ -99,11 +99,11 @@ namespace Efekt
                     break;
                 case Let l:
                     w.Key("let").Space();
-                    writeAssign(l.Ident, l.Exp);
+                    writeDeclAssing(l.Ident, l.Exp);
                     break;
                 case Var v:
                     w.Key("var").Space();
-                    writeAssign(v.Ident, v.Exp);
+                    writeDeclAssing(v.Ident, v.Exp);
                     break;
                 case Param p:
                     Write(p.Ident);
@@ -182,6 +182,9 @@ namespace Efekt
                     w.Key("import").Space();
                     Write(imp.QualifiedIdent);
                     break;
+                case Invalid inv:
+                    w.Markup(inv.Text);
+                    break;
                 default:
                     w.Markup("<" + se.GetType().Name + ">");
                     break;
@@ -194,6 +197,16 @@ namespace Efekt
         {
             Write(to).Space().Op("=").Space();
             Write(e);
+        }
+
+        private void writeDeclAssing(Exp to, Exp e)
+        {
+            Write(to);
+            if (e != Void.Instance)
+            {
+                w.Space().Op("=").Space();
+                Write(e);
+            }
         }
     }
 }

@@ -1,9 +1,9 @@
 ﻿
-var start = fn {
+let start = fn {
     let arr = [1, 2, 3, 4, 5]
     arrayIterator(arr)
       .where(fn c { c > 3 })
-      .forEach(fn c { c.printLine() })
+      .forEach(fn c { c.printLine() + 1 })
 
     var a = 0
     loop {
@@ -13,4 +13,23 @@ var start = fn {
          if a == 1 then
              break
     }
+    aa()
+}
+
+let aa = fn {
+    b()
+}
+
+let b = fn {
+    c()
+}
+
+let c = fn {
+    d(fn {
+    if 1 then true
+    })
+}
+
+let d = fn f {
+    f()
 }

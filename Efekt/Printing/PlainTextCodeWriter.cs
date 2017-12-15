@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.Contracts;
 
 namespace Efekt
 {
@@ -17,6 +18,8 @@ namespace Efekt
 
         public PlainTextCodeWriter Indent()
         {
+            C.Ens(IndentLevel == Contract.OldValue(IndentLevel) + 1);
+
             ++IndentLevel;
             writer.Write(Utils.RepeatString("    ", IndentLevel));
             return this;
@@ -25,6 +28,9 @@ namespace Efekt
 
         public PlainTextCodeWriter Unindent()
         {
+            C.Req(IndentLevel > 0);
+            C.Ens(IndentLevel == Contract.OldValue(IndentLevel) - 1);
+
             --IndentLevel;
             writer.Write(Utils.RepeatString("    ", IndentLevel));
             return this;

@@ -8,60 +8,90 @@ namespace Efekt
 {
     public sealed class Remark
     {
+        public static Remark NewRemark(RemarkSeverity severity, string message, string filePath, int lineIndexStart, int columnIndexStart, Token token)
+        {
+            return new Remark(
+                severity, message, filePath, lineIndexStart, columnIndexStart,
+                lineIndexStart, columnIndexStart + token.Text.Length,
+                null, null);
+        }
+
+        public static Remark NewRemark(RemarkSeverity severity, string message, Element subject, IReadOnlyList<StackItem> callStack = null)
+        {
+            var filePath = Utils.GetFilePathRelativeToBase(subject.FilePath);
+            return new Remark(
+                severity, message, filePath,
+                subject.LineIndex, subject.ColumnIndex, subject.LineIndexEnd, subject.ColumnIndexEnd,
+                subject, callStack);
+        }
+
         public readonly RemarkSeverity Severity;
         public readonly string Message;
         public readonly string FilePath;
         public readonly int LineIndexStart;
+        public readonly int ColumnIndexStart;
+        public readonly int LineIndexEnd;
+        public readonly int ColumnIndexEnd;
         [CanBeNull] public readonly Element Subject;
-        [CanBeNull] public readonly Element InExp;
         [CanBeNull] public readonly IReadOnlyList<StackItem> CallStack;
 
-        public Remark(
+        private Remark(
             RemarkSeverity severity,
             string message,
             string filePath,
             int lineIndexStart,
-            Element subject = null,
-            Element inExp = null,
-            IReadOnlyList<StackItem> callStack = null)
+            int columnIndexStart,
+            int lineIndexEnd,
+            int columnIndexEnd,
+            Element subject,
+            IReadOnlyList<StackItem> callStack)
         {
             Severity = severity;
             Message = message;
             FilePath = filePath;
             LineIndexStart = lineIndexStart;
+            ColumnIndexStart = columnIndexStart;
+            LineIndexEnd = lineIndexEnd;
+            ColumnIndexEnd = columnIndexEnd;
             Subject = subject;
-            InExp = inExp;
             CallStack = callStack;
         }
 
 
         public string GetString()
         {
+            C.ReturnsNn();
+
             string msg;
 
             if (CallStack == null)
             {
-                msg = Utils.GetFilePathRelativeToBase(FilePath) + ":" + (LineIndexStart + 1) + " "
-                      + Severity + ": " + Message;
+                msg = getPathLineCol() + " " + Severity + ": " + Message;
             }
             else
             {
-                msg = Severity + ": " + Message + Environment.NewLine
+                var stack = CallStack;
+                msg = getPathLineCol() + " " + Severity + ": " + Message + Environment.NewLine
                       + string.Join(
                           Environment.NewLine,
-                          CallStack
+                          stack
+                              .Where(cs => cs.FilePath != "runtime.ef")
                               .Select(cs =>
                               {
                                   var filePath = Utils.GetFilePathRelativeToBase(cs.FilePath);
                                   return "  " + filePath
-                                         + ":" + (cs.LineIndex + 1) + " " + cs.FnName;
+                                         + ":" + (cs.LineIndex + 1) + "," + (cs.ColumnIndex + 1) + " " + cs.FnName;
                               }));
             }
 
-            if (InExp != null)
-                msg += " in '" + InExp.ToDebugString() + "'";
-
             return msg;
+        }
+
+        private string getPathLineCol()
+        {
+            return Utils.GetFilePathRelativeToBase(FilePath)
+                   + ":" + (LineIndexStart + 1) + "," + (ColumnIndexStart + 1)
+                   + "," + (LineIndexEnd + 1) + "," + (ColumnIndexEnd + 1);
         }
     }
 
@@ -106,7 +136,7 @@ namespace Efekt
             if (remark.Severity == RemarkSeverity.Fatal || remark.Severity == RemarkSeverity.Exception)
                 throw new InvalidOperationException();
 
-            remarks.Add(remark);
+            remarks.AddValue(remark);
             prog.ErrorWriter.WriteLine(remark.GetString());
         }
 
@@ -114,11 +144,10 @@ namespace Efekt
         [Pure] // not pure but use return value 
         public EfektException AddFatal(Remark remark)
         {
-            C.Nn(remark.Subject);
             if (remark.Severity != RemarkSeverity.Fatal)
                 throw new InvalidOperationException();
 
-            remarks.Add(remark);
+            remarks.AddValue(remark);
             var msg = remark.GetString();
             prog.ErrorWriter.WriteLine(msg);
             return new EfektException(msg);
@@ -132,7 +161,7 @@ namespace Efekt
             if (remark.Severity != RemarkSeverity.Exception)
                 throw new InvalidOperationException();
 
-            remarks.Add(remark);
+            remarks.AddValue(remark);
             var msg = remark.GetString();
             prog.ErrorWriter.WriteLine(msg);
             return new EfektException(msg);
@@ -146,7 +175,7 @@ namespace Efekt
             if (remark.Severity != RemarkSeverity.InterpretedException)
                 throw new InvalidOperationException();
 
-            remarks.Add(remark);
+            remarks.AddValue(remark);
             var msg = remark.GetString();
             prog.ErrorWriter.WriteLine(msg);
             return new EfektInterpretedException((Value)remark.Subject);

@@ -10,8 +10,9 @@ namespace Efekt
         private readonly Element e;
         private string fnName;
         public int LineIndex { get; set; }
+        public int ColumnIndex { get; set; }
         public string FilePath => e.FilePath;
-        public string FnName => fnName ?? (fnName = (((Fn) e).Parent is Var v ? v.Ident.Name : null) ?? "(anonymous)");
+        public string FnName => fnName ?? (fnName = (((Fn) e).Parent is Declr d ? d.Ident.Name : null) ?? "(anonymous)");
 
         public StackItem(Fn fn) => e = fn;
 
@@ -45,19 +46,14 @@ namespace Efekt
 
         private Value eval(Element se, Env env)
         {
-            C.Nn(se);
-            C.Nn(env);
-            C.EnsNn<Value>();
+            C.Nn(se, env);
+            C.ReturnsNn();
 
             switch (se)
             {
-                case Let l:
-                    var val2 = eval(l.Exp, env);
-                    env.Declare(l.Ident, val2, true);
-                    return Void.Instance;
-                case Var v:
-                    var val = eval(v.Exp, env);
-                    env.Declare(v.Ident, val, false);
+                case Declr d:
+                    var val = eval(d.Exp, env);
+                    env.Declare(d.Ident, val, d is Let);
                     return Void.Instance;
                 case Assign a:
                     var newValue = eval(a.Exp, env);
@@ -107,22 +103,28 @@ namespace Efekt
                             var newFna = new FnApply(extFn, newArgs)
                             {
                                 LineIndex = fna.LineIndex,
+                                ColumnIndex = fna.ColumnIndex,
+                                LineIndexEnd = fna.LineIndexEnd,
+                                ColumnIndexEnd = fna.ColumnIndexEnd,
                                 FilePath = fna.FilePath,
                                 IsBraced = fna.IsBraced,
                                 Parent = fna.Parent
                             };
-                            return eval(newFna, env);
+                            callStack.Push(new StackItem(extFn));
+                            var res = eval(newFna, env);
+                            callStack.Pop();
+                            return res;
                         }
                         throw prog.RemarkList.Except.VariableIsNotDeclared(extMemAcc.Ident);
                     }
                     fn = eval(fna.Fn, env);
                     noExtMethodApply:
                     var builtin = fn as Builtin;
-                    var eArgs = fna.Arguments.Select(a => eval(a, env)).ToList();
+                    var eArgs = fna.Arguments.Select(a => (Exp)eval(a, env)).ToList();
                     if (builtin != null)
                     {
                         callStack.Push(new StackItem(builtin, builtin.Name));
-                        var res = builtin.Fn(new FnArguments(eArgs.Cast<Exp>().ToList()), fna);
+                        var res = builtin.Fn(new FnArguments(eArgs), fna);
                         callStack.Pop();
                         return res;
                     }
@@ -131,16 +133,19 @@ namespace Efekt
                     var ix = 0;
                     foreach (var p in fn2.Parameters)
                     {
-                        var eArg = eArgs[ix++];
+                        var eArg = (Value) eArgs[ix++];
                         paramsEnv.Declare(p.Ident, eArg, true);
                     }
                     var fnEnv = Env.Create(prog, paramsEnv);
                     callStack.Push(new StackItem(fn2));
                     if (fn2.Sequence.Count == 1)
                     {
-                        var r = evalSequenceItem(fn2.Sequence.First(), fnEnv);
+                        var r = evalSequenceItem(fn2.Sequence[0], fnEnv);
                         if (ret == null)
+                        {
+                            callStack.Pop();
                             return r;
+                        }
                         var tmp = ret;
                         ret = null;
                         callStack.Pop();
@@ -167,6 +172,9 @@ namespace Efekt
                     {
                         Parent = f.Parent,
                         LineIndex = f.LineIndex,
+                        ColumnIndex = f.ColumnIndex,
+                        LineIndexEnd = f.LineIndexEnd,
+                        ColumnIndexEnd = f.ColumnIndexEnd,
                         FilePath = f.FilePath,
                         IsBraced = f.IsBraced
                     };
@@ -234,12 +242,8 @@ namespace Efekt
                     return Void.Instance;
                 case Toss ts:
                     var exVal = eval(ts.Exception, env);
-                    throw prog.RemarkList.AddInterpretedException(new Remark(
-                        RemarkSeverity.InterpretedException,
-                        "Interpreted Exception",
-                        ts.FilePath,
-                        ts.LineIndex,
-                        exVal,
+                    throw prog.RemarkList.AddInterpretedException(Remark.NewRemark(RemarkSeverity.InterpretedException,
+                        "Interpreted Exception: " + exVal.ToDebugString(),
                         ts,
                         callStack.ToList()));
                 case Attempt att:
@@ -286,7 +290,11 @@ namespace Efekt
 
         private Value evalSequenceItem(Element bodyElement, Env env)
         {
-            callStack.Peek().LineIndex = bodyElement.LineIndex;
+            C.ReturnsNn();
+
+            var stackItem = callStack.Peek();
+            stackItem.LineIndex = bodyElement.LineIndex;
+            stackItem.ColumnIndex = bodyElement.ColumnIndex;
             var bodyVal = eval(bodyElement, env);
             return bodyVal;
         }

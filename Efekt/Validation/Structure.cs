@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using JetBrains.Annotations;
 
 namespace Efekt
@@ -12,17 +13,20 @@ namespace Efekt
             this.prog = prog;
         }
 
-        private EfektException f(string message, [CanBeNull] Element target)
+        private EfektException f(string message, [NotNull] Element target)
         {
-            return prog.RemarkList.AddFatal(new Remark(
-                RemarkSeverity.Fatal,
+            return prog.RemarkList.AddFatal(Remark.NewRemark(RemarkSeverity.Fatal,
                 message,
-                target == null ? "" : target.FilePath,
-                target == null ? -1 : target.LineIndex,
-                target,
-                target == null ? null : target.Parent));
+                target));
         }
 
+        [Pure]
+        internal EfektException ExpectedDifferentElement(Element target, Type type)
+        {
+            return f("Expected element of type '"
+                     + type.Name + "', but '"
+                     + target.ToDebugString() + "' is of type '" + target.GetType().Name + "'.", target);
+        }
 
         [Pure]
         public EfektException AssignTargetIsInvalid(Exp target)
@@ -51,19 +55,19 @@ namespace Efekt
         [Pure]
         public EfektException EndBraceDoesNotMatchesStart()
         {
-            return f("End Brace Does Not Matches Start", null);
+            return f("End Brace Does Not Matches Start", Void.Instance);
         }
 
         [Pure]
         public EfektException CharShouldHaveOnlyOneChar()
         {
-            return f("CharShouldHaveOnlyOneChar", null);
+            return f("CharShouldHaveOnlyOneChar", Void.Instance);
         }
 
         [Pure]
         public EfektException BraceExpected()
         {
-            return f("BraceExpected", null);
+            return f("BraceExpected", Void.Instance);
         }
 
         [Pure]
@@ -81,7 +85,7 @@ namespace Efekt
         [Pure]
         public EfektException ExpectedOnlyOneExpressionInsideBraces(List<Element> elbItems)
         {
-            return f("ExpectedExpressionAfterReturn", null);
+            return f("ExpectedExpressionAfterReturn", Void.Instance);
         }
 
         [Pure]
@@ -93,13 +97,20 @@ namespace Efekt
         [Pure]
         public EfektException MissingTestExpression()
         {
-            return f("MissingTestExpression", null);
+            return f("MissingTestExpression", Void.Instance);
         }
 
         [Pure]
         public EfektException ExpectedWordThen(Exp testExp)
         {
             return f("ExpectedWordThen", testExp);
+        }
+
+        [Pure]
+        public Exception ExpectedQualifiedIdentAfterImport(Element notQi)
+        {
+            return f("Expected (qualified identifier) after import keyword. '"
+                     + notQi.ToDebugString() + "' as found instead", notQi);
         }
     }
 }

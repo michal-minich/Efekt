@@ -20,10 +20,8 @@ namespace Efekt
 
         public Element RootElement { get; private set; }
 
-
-        public ClassBody Modules { get; set; }
         
-        private Prog(TextWriter outputWriter, TextWriter errorWriter)
+        internal Prog(TextWriter outputWriter, TextWriter errorWriter)
         {
             Interpreter = new Interpreter();
             RemarkList = new RemarkList(this);
@@ -33,8 +31,6 @@ namespace Efekt
 
             ErrorWriter = errorWriter;
             ErrorPrinter = new Printer(new PlainTextCodeWriter(errorWriter), true);
-
-            Modules = new ClassBody(new List<ClassItem>());
         }
 
 
@@ -66,7 +62,7 @@ namespace Efekt
         {
             rootPaths = rootPaths.Select(Path.GetFullPath).ToList();
             var prog = new Prog(outputWriter, errorWriter);
-
+            var modules = new List<ClassItem>();
             foreach (var fp in rootPaths)
             {
                 var codeFilesPaths = getAllCodeFiles(fp);
@@ -78,42 +74,42 @@ namespace Efekt
                     var f = cfp.Substring(startIndex, cfp.Length - ".ef".Length - startIndex);
                     var sections = f.Split('\\').Skip(numSeparators).ToList();
                     var e = parseFile(prog, cfp);
-                    addMod(prog, sections, e);
+                    addMod(sections, e, modules, prog);
                 }
             }
 
-            var start = new FnApply(getStartQualifiedName(prog), new FnArguments());
+            var start = new FnApply(getStartQualifiedName(modules), new FnArguments());
+            var seqItems = modules.Cast<SequenceItem>().Append(start).ToList();
             prog.RootElement = new FnApply(
-                new Fn(new FnParameters(), new Sequence(prog.Modules.Cast<SequenceItem>().Append(start).ToList())),
+                new Fn(new FnParameters(), new Sequence(seqItems)),
                 new FnArguments());
             return prog;
         }
 
-        private static Exp getStartQualifiedName(Prog prog)
+        private static QualifiedIdent getStartQualifiedName(List<ClassItem> modules)
         {
             var candidates = new List<List<string>>();
-            findStart(prog.Modules, candidates, new List<string>());
+            findStart(modules, candidates, new List<string>());
             if (candidates.Count != 1)
                 throw new Exception();
             var fn = candidates[0]
                 .Append("start")
-                .Select(section => new Ident(section, TokenType.Ident))
-                .Cast<Exp>()
+                .Select(section => (QualifiedIdent) new Ident(section, TokenType.Ident))
                 .Aggregate((a, b) => new MemberAccess(a, (Ident) b));
             return fn;
         }
 
 
-        private static void findStart(ClassBody classBody, List<List<string>> candidates, List<string> path)
+        private static void findStart(IEnumerable<ClassItem> classBody, List<List<string>> candidates, List<string> path)
         {
             foreach (var ci in classBody)
             {
-                if (ci is Var v)
+                if (ci is Declr d)
                 {
-                    var i = v.Ident.Name;
+                    var i = d.Ident.Name;
                     if (i == "start")
-                        candidates.Add(path);
-                    if (v.Exp is New n)
+                        candidates.AddValue(path);
+                    if (d.Exp is New n)
                     {
                         findStart(n.Body, candidates, path.Append(i).ToList());
                     }
@@ -122,28 +118,28 @@ namespace Efekt
         }
 
 
-        private static void addMod(Prog prog, IReadOnlyList<string> sections, Element mod)
+        private static void addMod(IReadOnlyList<string> sections, Element mod, List<ClassItem> modules, Prog prog)
         {
-            var mods = prog.Modules;
+            C.Nn(modules);
+
             foreach (var s in sections.Skip(1))
             {
-                var m = findParentModule(mods, s);
+                var m = findParentModule(modules, s);
                 if (m == null)
                 {
-                    var empty = getEmptyModule(s);
-                    mods.Add(empty);
-                    mods = ((New) empty.Exp).Body;
+                    modules.AddValue(new Let(new Ident(s, TokenType.Ident), new New(new ClassBody(new List<ClassItem>()))));
+                    modules = new List<ClassItem>();
                 }
                 else
                 {
-                    mods = m;
+                    modules = m.ToList();
                 }
             }
             var lastSection = sections.Last();
-            var m2 = findParentModule(mods, lastSection);
+            var m2 = findParentModule(modules, lastSection);
             if (m2 != null)
                 throw new Exception();
-            mods.Add(getNewModule(lastSection, mod));
+            modules.AddValue(getNewModule(lastSection, mod, prog));
         }
 
 
@@ -151,27 +147,21 @@ namespace Efekt
         private static ClassBody findParentModule(IEnumerable<ClassItem> mods, string name)
         {
             foreach (var ci in mods)
-                if (ci is Var v && v.Ident.Name == name)
+                if (ci is Declr v && v.Ident.Name == name)
                     return ((New) v.Exp).Body;
             return null;
         }
 
 
-        private static Var getEmptyModule(string name)
-        {
-            return new Var(new Ident(name, TokenType.Ident), new New(new ClassBody(new List<ClassItem>())));
-        }
-
-
-        private static Var getNewModule(string name, Element body)
+        private static Let getNewModule(string name, Element body, Prog prog)
         {
             var preludeImport = new Import(new Ident("prelude", TokenType.Ident));
             if (body is Sequence seq)
             {
-                var cis = seq.Cast<ClassItem>().ToList();
                 if (name != "prelude")
-                    cis = cis.Prepend(preludeImport).ToList();
-                return new Var(new Ident(name, TokenType.Ident), new New(new ClassBody(cis)));
+                    seq.InsertImport(preludeImport);
+                return new Let(new Ident(name, TokenType.Ident), 
+                    new New(new ClassBody(seq.ManyAs<ClassItem>(prog.RemarkList).ToList())));
             }
             throw new Exception();
         }
@@ -190,7 +180,7 @@ namespace Efekt
                 {
                     throw new Exception("File is not supported '" + rootPath + "'.");
                 }
-                files.Add(rootPath);
+                files.AddValue(rootPath);
             }
             else
             {

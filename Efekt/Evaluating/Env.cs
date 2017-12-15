@@ -1,6 +1,4 @@
-using System;
 using System.Collections.Generic;
-using System.Diagnostics.Eventing.Reader;
 using System.Linq;
 using JetBrains.Annotations;
 
@@ -43,6 +41,8 @@ namespace Efekt
 
         public static Env CreateRoot(Prog prog)
         {
+            C.ReturnsNn();
+
             var env = new Env(prog);
             foreach (var b in new Builtins(prog).Values)
                 env.dict.Add(b.Name, new EnvValue(b, true));
@@ -50,11 +50,17 @@ namespace Efekt
         }
 
 
-        public static Env Create(Prog prog, Env parent) => new Env(prog, parent);
+        public static Env Create(Prog prog, Env parent)
+        {
+            C.ReturnsNn();
 
+            return new Env(prog, parent);
+        }
 
         public Value Get(Ident ident)
         {
+            C.ReturnsNn();
+
             var v = GetOrNull(ident);
             if (v != null)
                 return v;
@@ -102,6 +108,8 @@ namespace Efekt
 
         private void GetFromImports(Ident ident, Dictionary<QualifiedIdent, Value> candidates)
         {
+            C.Nn(ident);
+
             foreach (var i in imports)
             {
                 var x = i.Value.Env.GetDirectlyOrNull(ident);
@@ -115,6 +123,8 @@ namespace Efekt
 
         public Value GetWithImport(Ident ident)
         {
+            C.ReturnsNn();
+
             var v  = GetWithImportOrNull(ident);
             if (v == null)
                 throw prog.RemarkList.Except.VariableIsNotDeclared(ident);
@@ -124,6 +134,8 @@ namespace Efekt
 
         public void Declare(Ident ident, Value value, bool isLet)
         {
+            C.Nn(ident, value);
+
             if (dict.ContainsKey(ident.Name))
                 throw prog.RemarkList.Except.VariableIsAlreadyDeclared(ident);
             dict.Add(ident.Name, new EnvValue(value, isLet));
@@ -132,6 +144,8 @@ namespace Efekt
 
         public void Set(Ident ident, Value value)
         {
+            C.Nn(ident, value);
+
             var e = this;
             do
             {
@@ -153,6 +167,8 @@ namespace Efekt
 
         public void AddImport(QualifiedIdent qi, Obj module)
         {
+            C.Nn(qi, module);
+
             imports.Add(qi, module);
         }
     }

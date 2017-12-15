@@ -1,12 +1,36 @@
+using System.Collections.Generic;
+
 namespace Efekt
 {
     public static class ElementExtensions
     {
-        public static B As<B>(this Element element, Element inExp, Prog prog) where B : Exp
+        public static IEnumerable<B> ManyAs<B>(this IEnumerable<Element> elements, RemarkList remarkList) 
+            where B : class , Element
         {
-            return element is B e
-                ? e
-                : throw prog.RemarkList.Except.DifferentTypeExpected(element, typeof(B).Name, inExp);
+            var list = new List<B>();
+            foreach (var e in elements)
+            {
+                C.Assert(e != null);
+                var b = e as B;
+                if (b == null)
+                    throw remarkList.Structure.ExpectedDifferentElement(e, typeof(B));
+                list.Add(b);
+            }
+
+            return list;
+        }
+
+
+        public static B As<B>(this Element element, Element inExp, Prog prog) where B : class, Exp
+        {
+            C.Nn(element, inExp, prog);
+            C.ReturnsNn();
+
+            var e = element as B;
+            if (e != null)
+                return e;
+
+            throw prog.RemarkList.Except.ExpectedDifferentType(inExp, element, typeof(B).Name);
         }
 
         public static Int AsInt(this Exp exp, Exp inExp, Prog prog)

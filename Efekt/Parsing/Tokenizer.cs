@@ -25,20 +25,26 @@ namespace Efekt
         private readonly List<char> opChars = "<>~`\\@#$%^&*+-=./:?!|".ToList();
 
         // ReSharper disable once NotNullMemberIsNotInitialized
-        [NotNull] private string code;
+        private string code;
 
         private char ch;
         private int ix;
         private TokenType tokType;
 
+
         private void next()
         {
+            C.Req(ix >= -1);
+            
             ++ix;
+
             if (ix >= code.Length)
             {
                 ch = '\0';
+                ix = code.Length;
                 return;
             }
+
             ch = code[ix];
         }
 
@@ -60,7 +66,13 @@ namespace Efekt
 
         public IEnumerable<Token> Tokenize(string codeText)
         {
+            C.Nn(codeText);
+
             var tokens = new List<Token>();
+
+            if (codeText.Length == 0)
+                return tokens;
+
             code = codeText;
             ix = -1;
             tokType = TokenType.Terminal;
@@ -74,10 +86,11 @@ namespace Efekt
                 if (ch == '\0')
                     break;
 
-                if (ch == ' ' || ch == '\t')
+                if (markIf(ch == ' ' || ch == '\t', TokenType.White))
                 {
-                    next();
-                    continue;
+                    while (ch == ' ' || ch == '\t')
+                        next();
+                    goto final;
                 }
 
                 if (markIf(ch == '\r', TokenType.NewLine))
@@ -92,30 +105,38 @@ namespace Efekt
 
                 if (markIf(ch >= '0' && ch <= '9', TokenType.Int))
                 {
-                    while (ch >= '0' && ch <= '9' || ch == '_')
+                    while (ch != '\0' && (ch >= '0' && ch <= '9' || ch == '_'))
                         next();
                     goto final;
                 }
 
                 if (markIf(ch == '\'', TokenType.Char))
                 {
-                    while (ch != '\'')
-                        verifyEscape();
+                    while (ch != '\0' && ch != '\'')
+                    {
+                        if (ch == '\\')
+                            next();
+                        next();
+                    }
                     next();
                     goto final;
                 }
 
                 if (markIf(ch == '\"', TokenType.Text))
                 {
-                    while (ch != '\"')
-                        verifyEscape();
+                    while (ch != '\0' && ch != '\"')
+                    {
+                        if (ch == '\\')
+                            next();
+                        next();
+                    }
                     next();
                     goto final;
                 }
 
                 if (markIf(ch >= 'a' && ch <= 'z', TokenType.Ident))
                 {
-                    while (ch >= 'a' && ch <= 'z' || ch >= 'A' && ch <= 'Z' || ch >= '0' && ch <= '9' || ch == '_')
+                    while (ch != '\0' && (ch >= 'a' && ch <= 'z' || ch >= 'A' && ch <= 'Z' || ch >= '0' && ch <= '9' || ch == '_'))
                         next();
                     goto final;
                 }
@@ -124,7 +145,7 @@ namespace Efekt
                            || ch == ';' || ch == '[' || ch == ']', TokenType.Markup))
                     goto final;
 
-                if (ch == '/')
+                if (ch == '/' && code.Length >= startIx + 2)
                 {
                     var text = code.Substring(startIx, 2);
                     if (markIf(text == "//", TokenType.LineCommentBegin))
@@ -132,6 +153,7 @@ namespace Efekt
                         next();
                         goto final;
                     }
+
                     if (markIf(text == "/*", TokenType.CommentBegin))
                     {
                         next();
@@ -139,7 +161,7 @@ namespace Efekt
                     }
                 }
 
-                if (ch == '*')
+                if (ch == '*' && code.Length >= startIx + 2)
                 {
                     var text = code.Substring(startIx, 2);
                     if (markIf(text == "*/", TokenType.CommentEnd))
@@ -151,39 +173,29 @@ namespace Efekt
 
                 if (markIf(opChars.Contains(ch), TokenType.Op))
                 {
-                    while (opChars.Contains(ch))
+                    while (ch != '\0' && opChars.Contains(ch))
                         next();
                 }
 
                 final:
 
-                if (startIx == ix)
-                    throw new NotSupportedException("Character not supported '" + ch + "'.");
+                C.Assume(ix - startIx > 0);
+
+                if (tokType == TokenType.Terminal && ch != '\0')
+                    mark(TokenType.Invalid);
 
                 var text2 = code.Substring(startIx, ix - startIx);
                 if (tokType == TokenType.Ident && keywords.Contains(text2))
                     tokType = TokenType.Key;
                 if (tokType == TokenType.Key && text2 == "and" || text2 == "or")
                     tokType = TokenType.Op;
-                if (tokType == TokenType.Char || tokType == TokenType.Text)
-                    text2 = text2.Replace("\\n", "\n").Replace("\\r", "\r").Replace("\\t", "\t")
-                        .Replace("\\0", "\0").Replace("\\\'", "\'").Replace("\\\"", "\"").Replace("\\\\", "\\");
-                tokens.Add(new Token(tokType, text2));
+                tokens.AddValue(new Token(tokType, text2));
             }
+
+            C.Assume(!tokens.Contains(Token.Terminal));
+            C.Assume(String.Join("", tokens.Select(t => t.Text)) == code);
 
             return tokens;
-        }
-
-        private void verifyEscape()
-        {
-            if (ch == '\\')
-            {
-                next();
-                if (ch != 'n' && ch != 'r' && ch != 't' && ch != '0' && ch != '\'' && ch != '"'
-                    && ch != '\\')
-                    throw new Exception();
-            }
-            next();
         }
     }
 
@@ -211,16 +223,21 @@ namespace Efekt
 
     public enum TokenType
     {
+        None,
         Terminal,
+        Invalid,
+
+        White,
+        NewLine,
+        LineCommentBegin,
+        CommentBegin,
+        CommentEnd,
+
         Ident,
         Int,
         Markup,
         Op,
         Key,
-        NewLine,
-        LineCommentBegin,
-        CommentBegin,
-        CommentEnd,
         Char,
         Text
     }

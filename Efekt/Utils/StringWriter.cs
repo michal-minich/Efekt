@@ -18,6 +18,8 @@ namespace Efekt
 
         public string GetAndReset()
         {
+            C.ReturnsNn();
+
             var s = sb.ToString();
             sb.Clear();
             return s;

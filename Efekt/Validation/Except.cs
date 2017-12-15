@@ -15,38 +15,41 @@ namespace Efekt
         }
 
 
-        private EfektException ex(Element subject, [CanBeNull] Element inExp, string message)
+        private EfektException ex(Element subject, string message)
         {
-            return prog.RemarkList.AddException(new Remark(
-                RemarkSeverity.Exception,
+            return prog.RemarkList.AddException(Remark.NewRemark(RemarkSeverity.Exception,
                 message,
-                subject.FilePath,
-                subject.LineIndex,
                 subject,
-                inExp,
                 prog.Interpreter.CallStack));
         }
 
 
-        [Pure]
-        public EfektException DifferentTypeExpected(Element value, string expectedTypeName, Element inExp)
+        private EfektException fatal(Element subject, string message)
         {
-            return ex(value, inExp, "Expected type '" + expectedTypeName
-                                    + "' but the expression is of type '" + value.GetType().Name + "'");
+            return prog.RemarkList.AddFatal(Remark.NewRemark(RemarkSeverity.Fatal, message, subject));
+        }
+
+
+        [Pure]
+        public EfektException ExpectedDifferentType(Element inExp, Element value, string expectedTypeName)
+        {
+            return ex(inExp,
+                "Expected type '" + expectedTypeName
+                                  + "' but the expression is of type '" + value.GetType().Name + "'");
         }
 
         [Pure]
         // TODO move to structure validation eventually
         public EfektException VariableIsNotDeclared(Ident ident)
         {
-            return ex(ident, null, "Variable '" + ident.Name + "' is not declared");
+            return fatal(ident, "Variable '" + ident.Name + "' is not declared");
         }
 
         [Pure]
         // TODO move to structure validation eventually
         public EfektException MoreVariableCandidates(Dictionary<QualifiedIdent, Value> candidates, Ident ident)
         {
-            return ex(ident, null,
+            return fatal(ident,
                 "Variable '" + ident.Name + "' can be found multiple times: " +
                 Environment.NewLine +
                 String.Join(Environment.NewLine, candidates.Select(
@@ -57,14 +60,14 @@ namespace Efekt
         // TODO move to structure validation eventually
         public EfektException VariableIsAlreadyDeclared(Ident ident)
         {
-            return ex(ident, null, "Variable '" + ident.Name + "' is already declared");
+            return fatal(ident, "Variable '" + ident.Name + "' is already declared");
         }
 
         [Pure]
         // TODO move to structure validation eventually
         public EfektException ExtensionFuncHasNoParameters(Fn extFn, MemberAccess ma)
         {
-            return ex(extFn, ma, "Function must accept at least 1 parameter to be an extension function.");
+            return fatal(extFn, "Function must accept at least 1 parameter to be an extension function.");
         }
     }
 }

@@ -10,9 +10,19 @@ namespace Efekt
     public interface Element
     {
         int LineIndex { get; set; }
+        int ColumnIndex { get; set; }
+        int LineIndexEnd { get; set; }
+        int ColumnIndexEnd { get; set; }
         string FilePath { get; set; }
         Element Parent { get; set; }
         bool IsBraced { get; set; }
+    }
+
+
+    public interface Declr: Stm
+    {
+        Ident Ident { get; }
+        Exp Exp { get; }
     }
 
 
@@ -25,6 +35,9 @@ namespace Efekt
         }
 
         public int LineIndex { get; set; }
+        public int ColumnIndex { get; set; }
+        public int LineIndexEnd { get; set; }
+        public int ColumnIndexEnd { get; set; }
         public string FilePath { get; set; }
         public Element Parent { get; set; }
         public bool IsBraced { get; set; }
@@ -34,6 +47,7 @@ namespace Efekt
             return GetType().Name + ": " + this.ToDebugString();
         }
     }
+
 
     public interface Exp : SequenceItem
     {
@@ -82,7 +96,7 @@ namespace Efekt
 
     public abstract class ElementList<T> : IElementList<T> where T : Element
     {
-        protected List<T> items;
+        protected readonly List<T> items;
 
         [DebuggerStepThrough]
         protected ElementList(List<T> items)
@@ -100,29 +114,11 @@ namespace Efekt
     }
 
 
-    public sealed class ElementListBuilder
-    {
-        public List<Element> Items { get; } = new List<Element>();
-
-        [DebuggerStepThrough]
-        public void Add(Element e)
-        {
-            C.Nn(e);
-            Items.Add(e);
-        }
-    }
-
-
     public sealed class Sequence : ElementList<SequenceItem>, SequenceItem
     {
         [DebuggerStepThrough]
         public Sequence(List<SequenceItem> items) : base(items)
         {
-            if (TokenIterator.Instance != null)
-            {
-                //LineIndex = TokenIterator.Instance.LineIndex;
-                //FilePath = TokenIterator.Instance.FilePath;
-            }
             LineIndex = -1;
             FilePath = "runtime.ef";
             foreach (var i in items)
@@ -130,9 +126,17 @@ namespace Efekt
         }
 
         public int LineIndex { get; set; }
+        public int ColumnIndex { get; set; }
+        public int LineIndexEnd { get; set; }
+        public int ColumnIndexEnd { get; set; }
         public string FilePath { get; set; }
         public Element Parent { get; set; }
         public bool IsBraced { get; set; }
+
+        public void InsertImport(Import i)
+        {
+            items.Insert(0, i);
+        }
     }
 
 
@@ -141,11 +145,6 @@ namespace Efekt
         [DebuggerStepThrough]
         public ClassBody(List<ClassItem> items) : base(items)
         {
-        }
-
-        public void Add(ClassItem ci)
-        {
-            items = items.Concat(new[] {ci}).ToList();
         }
     }
 
@@ -196,7 +195,7 @@ namespace Efekt
     public sealed class Builtin : AElement, Value
     {
         [DebuggerStepThrough]
-        public Builtin(string name, Func<FnArguments, Exp, Value> fn)
+        public Builtin(string name, Func<FnArguments, FnApply, Value> fn)
         {
             C.Req(!string.IsNullOrWhiteSpace(name));
             C.Req(name.Trim().Length == name.Length);
@@ -207,7 +206,17 @@ namespace Efekt
         }
 
         public string Name { get; }
-        public Func<FnArguments, Exp, Value> Fn { get; }
+        public Func<FnArguments, FnApply, Value> Fn { get; }
+    }
+
+    public class Invalid : AElement
+    {
+        public Invalid(string text)
+        {
+            C.Nn(text);
+            Text = text;
+        }
+        public string Text { get; }
     }
 
 
@@ -216,8 +225,8 @@ namespace Efekt
         [DebuggerStepThrough]
         public Ident(string name, TokenType tokenType)
         {
-            C.Assert(!string.IsNullOrWhiteSpace(name));
-            C.Assert(name.Trim().Length == name.Length);
+            C.Req(!string.IsNullOrWhiteSpace(name));
+            C.Req(name.Trim().Length == name.Length);
 
             Name = name;
             TokenType = tokenType;
@@ -228,13 +237,12 @@ namespace Efekt
         public TokenType TokenType { get; }
     }
 
-    public sealed class Var : AElement, SequenceItem, ClassItem
+    public sealed class Var : AElement, Declr, SequenceItem, ClassItem
     {
         [DebuggerStepThrough]
         public Var(Ident ident, Exp exp)
         {
-            C.Nn(ident);
-            C.Nn(exp);
+            C.Nn(ident, exp);
 
             Ident = ident;
             Exp = exp;
@@ -248,13 +256,12 @@ namespace Efekt
     }
 
 
-    public sealed class Let : AElement, SequenceItem, ClassItem
+    public sealed class Let : AElement, Declr, SequenceItem, ClassItem
     {
         [DebuggerStepThrough]
         public Let(Ident ident, Exp exp)
         {
-            C.Nn(ident);
-            C.Nn(exp);
+            C.Nn(ident, exp);
 
             Ident = ident;
             Exp = exp;
@@ -287,8 +294,7 @@ namespace Efekt
         [DebuggerStepThrough]
         public Assign(AssignTarget to, Exp exp)
         {
-            C.Nn(to);
-            C.Nn(exp);
+            C.Nn(to, exp);
 
             To = to;
             Exp = exp;
@@ -307,8 +313,7 @@ namespace Efekt
         [DebuggerStepThrough]
         public When(Exp test, Element then, [CanBeNull] Element otherwise)
         {
-            C.Nn(test);
-            C.Nn(then);
+            C.Nn(test, then);
 
             Test = test;
             Then = then;
@@ -380,8 +385,7 @@ namespace Efekt
         [DebuggerStepThrough]
         public Fn(FnParameters parameters, Sequence sequence)
         {
-            C.Nn(parameters);
-            C.Nn(sequence);
+            C.Nn(parameters, sequence);
 
             Parameters = parameters;
             Sequence = sequence;
@@ -468,8 +472,7 @@ namespace Efekt
         [DebuggerStepThrough]
         public FnApply(Exp fn, FnArguments arguments)
         {
-            C.Nn(fn);
-            C.Nn(arguments);
+            C.Nn(fn, arguments);
 
             Fn = fn;
             Arguments = arguments;
@@ -525,8 +528,7 @@ namespace Efekt
         [DebuggerStepThrough]
         public Obj(ClassBody body, Env env)
         {
-            C.Nn(body);
-            C.Nn(env);
+            C.Nn(body, env);
 
             Body = body;
             Env = env;
@@ -545,8 +547,7 @@ namespace Efekt
         [DebuggerStepThrough]
         public MemberAccess(Exp exp, Ident ident)
         {
-            C.Nn(exp);
-            C.Nn(ident);
+            C.Nn(exp, ident);
 
             Exp = exp;
             Ident = ident;

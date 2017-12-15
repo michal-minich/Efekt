@@ -130,6 +130,7 @@
   <ItemGroup>
     <Compile Include="EfektException.cs" />
     <Compile Include="Evaluating\ElementExtensions.cs" />
+    <Compile Include="Utils\C.cs" />
     <Compile Include="Validation\Except.cs" />
     <Compile Include="Validation\RemarkList.cs" />
     <Compile Include="Validation\StructureValidator.cs" />
@@ -138,7 +139,6 @@
     <Compile Include="Evaluating\Builtins.cs" />
     <Compile Include="Validation\Error.cs" />
     <Compile Include="Evaluating\Env.cs" />
-    <Compile Include="Parsing\ElementIterator.cs" />
     <Compile Include="Printing\PlainTextCodeWriter.cs" />
     <Compile Include="Printing\Printer.cs" />
     <Compile Include="Printing\ConsoleWriter.cs" />
@@ -178,6 +178,7 @@
   <ItemGroup>
     <Content Include="todo.txt" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\CodeContracts.MSBuild.1.11.0-alpha\build\CodeContracts.MSBuild.targets" Condition="Exists('..\packages\CodeContracts.MSBuild.1.11.0-alpha\build\CodeContracts.MSBuild.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

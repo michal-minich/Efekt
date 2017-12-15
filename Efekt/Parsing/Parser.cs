@@ -9,21 +9,22 @@ namespace Efekt
     public delegate Element ParseElement();
 
 
-    public sealed class Parser : ElementIterator
+    public sealed class Parser
     {
         private readonly List<ParseElement> parsers;
-        private TokenIterator Ti;
-        private string Text => Ti.Current.Text;
-        private TokenType Type => Ti.Current.Type;
-        private readonly RemarkList RemarkList;
+        private TokenIterator ti;
+        private string text => ti.Current.Text;
+        private TokenType type => ti.Current.Type;
+        private readonly RemarkList remarkList;
 
 
-        private readonly Stack<int> StartLineIndex = new Stack<int>();
+        private readonly Stack<int> startLineIndex = new Stack<int>();
+        private readonly Stack<int> startColumnIndex = new Stack<int>();
 
         //private static readonly List<string> rightAssociativeOps = new List<string>
         //    {":", "="};
 
-        public static readonly Dictionary<string, int> opPrecedence
+        private static readonly Dictionary<string, int> opPrecedence
             = new Dictionary<string, int>
             {
                 ["."] = 160,
@@ -47,25 +48,50 @@ namespace Efekt
 
         private void markStart()
         {
-            StartLineIndex.Push(Ti.LineIndex);
+            startLineIndex.Push(ti.LineIndex);
+            startColumnIndex.Push(ti.ColumnIndex);
         }
+
+
+        private void markStart(Element firstInComplex)
+        {
+            startLineIndex.Push(firstInComplex.LineIndex);
+            startColumnIndex.Push(firstInComplex.ColumnIndex);
+        }
+
 
         private void pop()
         {
-            StartLineIndex.Pop();
+            startLineIndex.Pop();
+            startColumnIndex.Pop();
         }
+
 
         private T post<T>(T element) where T : Element
         {
-            element.FilePath = Ti.FilePath;
-            element.LineIndex = StartLineIndex.Pop();
+            element.FilePath = ti.FilePath;
+            element.LineIndex = startLineIndex.Pop();
+            element.ColumnIndex = startColumnIndex.Pop();
+            element.LineIndexEnd = endLineIndex;//Ti.LineIndex;
+            element.ColumnIndexEnd = endColumnIndex;//Ti.ColumnIndex;
             return element;
+        }
+
+
+
+        private int endLineIndex;
+        private int endColumnIndex;
+        private void next()
+        {
+            endLineIndex = ti.LineIndex;
+            endColumnIndex = ti.ColumnIndex + text.Length;
+            ti.Next();
         }
 
 
         public Parser(RemarkList remarkList)
         {
-            this.RemarkList = remarkList;
+            this.remarkList = remarkList;
             parsers = new List<ParseElement>
             {
                 ParseIdent,
@@ -94,33 +120,32 @@ namespace Efekt
         private Sequence ParseMandatorySequence()
         {
             markStart();
-            var elb = ParseBracedList('}', false);
-            return post(new Sequence(elb.Items.Cast<SequenceItem>().ToList()));
+            return post(new Sequence(ParseBracedList<SequenceItem>('}', false)));
         }
 
 
         private ClassBody ParseClassBody()
         {
-            return new ClassBody(ParseBracedList('}', false).Items.Cast<ClassItem>().ToList());
+            return new ClassBody(ParseBracedList<ClassItem>('}', false));
         }
 
 
         private FnArguments ParseFnArguments(char end)
         {
-            return new FnArguments(ParseBracedList(end, true).Items.Cast<Exp>().ToList());
+            return new FnArguments(ParseBracedList<Exp>(end, true));
         }
 
 
         private FnParameters ParseFnParameters()
         {
-            return new FnParameters(ParseList('{', true).Items.Cast<Ident>().Select(i => new Param(i)).ToList());
+            return new FnParameters(ParseList<Ident>('{', true).Select(i => new Param(i)).ToList());
         }
 
         private bool crossedLine;
-        private ElementListBuilder ParseBracedList(char endBrace, bool isComaSeparated)
+        private List<T> ParseBracedList<T>(char endBrace, bool isComaSeparated) where T : class, Element
         {
             char end;
-            var t = Text[0];
+            var t = text[0];
             if (t == '(')
                 end = ')';
             else if (t == '{')
@@ -128,42 +153,45 @@ namespace Efekt
             else if (t == '[')
                 end = ']';
             else
-                throw RemarkList.Structure.BraceExpected();
+                throw remarkList.Structure.BraceExpected();
             if (endBrace != end)
                 throw new ArgumentException();
-            Ti.Next();
-            var elb = ParseList(endBrace, isComaSeparated);
-            if (Text[0] != end)
-                throw RemarkList.Structure.EndBraceDoesNotMatchesStart();
-            var lineIndex = Ti.LineIndex;
-            Ti.Next();
-            crossedLine = lineIndex != Ti.LineIndex;
-            return elb;
+            next();
+            var list = ParseList<T>(endBrace, isComaSeparated);
+            if (text[0] != end)
+                throw remarkList.Structure.EndBraceDoesNotMatchesStart();
+            next();
+            crossedLine = ti.CrossedLine;
+            return list;
         }
 
-        private ElementListBuilder ParseList(char end, bool isComaSeparated)
+        private List<T> ParseList<T>(char end, bool isComaSeparated) where T : class, Element
         {
-            var elb = new ElementListBuilder();
-            while (Ti.HasWork)
+            var list = new List<T>();
+            while (ti.HasWork)
             {
-                if (Text[0] == end)
+                if (text[0] == end)
                     break;
                 var e = ParseOne();
-                elb.Add(e);
+                var t = e as T;
+                if (t == null)
+                    throw remarkList.Structure.ExpectedDifferentElement(e, typeof(T));
+                list.AddValue(t);
                 if (isComaSeparated)
-                    if (Text == ",")
-                        Ti.Next();
+                    if (text == ",")
+                        next();
                     else
                         break;
             }
-            return elb;
+
+            return list;
         }
 
 
         [CanBeNull]
         private Sequence ParseSequence()
         {
-            if (Text[0] != '{')
+            if (text[0] != '{')
                 return null;
             return ParseMandatorySequence();
         }
@@ -172,10 +200,10 @@ namespace Efekt
         [CanBeNull]
         private Loop ParseLoop()
         {
-            if (Text != "loop")
+            if (text != "loop")
                 return null;
             markStart();
-            Ti.Next();
+            next();
             var s = ParseMandatorySequence();
             return post(new Loop(s));
         }
@@ -184,29 +212,29 @@ namespace Efekt
         [CanBeNull]
         private Fn ParseFn()
         {
-            if (Text != "fn")
+            if (text != "fn")
                 return null;
             markStart();
-            Ti.Next();
-            var p = Text == "{" ? new FnParameters() : ParseFnParameters();
+            next();
+            var p = text == "{" ? new FnParameters() : ParseFnParameters();
             var s = ParseMandatorySequence();
             return post(new Fn(p, s));
         }
 
         public Element Parse(string filePath, IEnumerable<Token> tokens)
         {
-            Ti = new TokenIterator(filePath, tokens);
-            var elb = new ElementListBuilder();
-            Ti.Next();
-            while (Ti.HasWork)
+            ti = new TokenIterator(filePath, tokens, remarkList);
+            var list = new List<Element>();
+            next();
+            while (ti.HasWork)
             {
                 var e = ParseOne();
-                elb.Add(e);
+                list.AddValue(e);
             }
-            var first = elb.Items.FirstOrDefault();
-            return elb.Items.Count == 1 && first is Exp 
+            var first = list.FirstOrDefault();
+            return list.Count == 1 && first is Exp 
                 ? first 
-                : new Sequence(elb.Items.Cast<SequenceItem>().ToList());
+                : new Sequence(list.ManyAs<SequenceItem>(remarkList).ToList());
         }
 
 
@@ -219,15 +247,26 @@ namespace Efekt
                 var e = p();
                 if (e == null)
                     continue;
-                if (withOps || Text == ".")
+                if (withOps || text == ".")
                     e = ParseWithOp(e);
                 if (withFn && !crossedLine && e is Exp exp)
                     e = ParseFnApply(exp);
                 crossedLine = false;
                 return e;
             }
-            throw new Exception();
+
+            return ParseInvalid();
         }
+
+
+        private Element ParseInvalid()
+        {
+            markStart();
+            var t = text;
+            next();
+            return post(new Invalid(t));
+        }
+
 
         private Element ParseWithOp(Element e)
         {
@@ -250,7 +289,7 @@ namespace Efekt
             {
                 if (e2 is Exp ee)
                     return ParseWithOp(new Assign(aa.To, ee));
-                throw RemarkList.Structure.SecondOperandMustBeExpression(e2);
+                throw remarkList.Structure.SecondOperandMustBeExpression(e2);
             }
             
             return ParseWithOp(e2);
@@ -277,28 +316,28 @@ namespace Efekt
         [CanBeNull]
         private Element ParseOpApply1(Exp prev)
         {
-            if (Type != TokenType.Op)
+            if (type != TokenType.Op)
                 return null;
             markStart();
-            var opText = Text;
-            Ti.Next();
+            var opText = text;
+            next();
             var ident = post(new Ident(opText, TokenType.Op));
-            markStart();
+            markStart(prev);
             var second = ParseOne(false, opText != ".");
             if (opText == ".")
             {
                 if (second is Ident i)
                     return post(new MemberAccess(prev, i));
-                throw RemarkList.Structure.ExpectedIdentifierAfterDot(second);
+                throw remarkList.Structure.ExpectedIdentifierAfterDot(second);
             }
             var e2 = second as Exp;
             if (e2 == null)
-                throw RemarkList.Structure.FunctionArgumentMustBeExpression(second);
+                throw remarkList.Structure.FunctionArgumentMustBeExpression(second);
             if (opText == "=")
             {
                 if (prev is AssignTarget at)
                     return post(new Assign(at, e2));
-                throw RemarkList.Structure.AssignTargetIsInvalid(prev);
+                throw remarkList.Structure.AssignTargetIsInvalid(prev);
             }
             if (!prev.IsBraced
                 && prev is FnApply fna
@@ -306,20 +345,31 @@ namespace Efekt
                 && prevOp.TokenType == TokenType.Op
                 && opPrecedence[prevOp.Name] < opPrecedence[opText])
             {
-                var x = post(new FnApply(ident, new FnArguments(new List<Exp> {fna.Arguments.Skip(1).First(), e2})));
-                fna.Arguments = new FnArguments(new List<Exp> {fna.Arguments.First(), x});
+                var firstArg = fna.Arguments.First();
+                var secondArg = fna.Arguments.Skip(1).First();
+                var x = post(new FnApply(ident, new FnArguments(new List<Exp> {secondArg, e2})));
+                fna.Arguments = new FnArguments(new List<Exp> {firstArg, x});
+                fna.LineIndex = firstArg.LineIndex;
+                fna.ColumnIndex = firstArg.ColumnIndex;
+                fna.LineIndexEnd = e2.LineIndexEnd;
+                fna.ColumnIndexEnd = e2.ColumnIndexEnd;
                 return fna;
             }
-            return post(new FnApply(ident, new FnArguments(new List<Exp> {prev, e2})));
+            var fna3 = post(new FnApply(ident, new FnArguments(new List<Exp> {prev, e2})));
+            fna3.LineIndex = prev.LineIndex;
+            fna3.ColumnIndex = prev.ColumnIndex;
+            fna3.LineIndexEnd = e2.LineIndexEnd;
+            fna3.ColumnIndexEnd = e2.ColumnIndexEnd;
+            return fna3;
         }
 
 
         [NotNull]
         private Exp ParseFnApply(Exp prev)
         {
-            if (crossedLine || Text[0] != '(')
+            if (crossedLine || text[0] != '(')
                 return prev;
-            markStart();
+            markStart(prev);
             var args = ParseFnArguments(')');
             var fna = post(new FnApply(prev, args));
             return crossedLine ? fna : ParseFnApply(fna);
@@ -329,7 +379,7 @@ namespace Efekt
         [CanBeNull]
         private ArrConstructor ParseArr()
         {
-            if (Text[0] != '[')
+            if (text[0] != '[')
                 return null;
             markStart();
             var args = ParseFnArguments(']');
@@ -340,27 +390,27 @@ namespace Efekt
         [CanBeNull]
         private Element ParseSingleBraced()
         {
-            if (Text[0] != '(')
+            if (text[0] != '(')
                 return null;
             markStart();
-            var elb = ParseBracedList(')', false);
-            if (elb.Items.Count == 1)
+            var list = ParseBracedList<Element>(')', false);
+            if (list.Count == 1)
             {
-                var e = post(elb.Items.First());
+                var e = post(list.First());
                 e.IsBraced = true;
                 return e;
             }
-            throw RemarkList.Structure.ExpectedOnlyOneExpressionInsideBraces(elb.Items);
+            throw remarkList.Structure.ExpectedOnlyOneExpressionInsideBraces(list);
         }
 
 
         [CanBeNull]
         private New ParseNew()
         {
-            if (Text != "new")
+            if (text != "new")
                 return null;
             markStart();
-            Ti.Next();
+            next();
             var body = ParseClassBody();
             return post(new New(body));
         }
@@ -369,24 +419,24 @@ namespace Efekt
         [CanBeNull]
         private Import ParseImport()
         {
-            if (Text != "import")
+            if (text != "import")
                 return null;
             markStart();
-            Ti.Next();
+            next();
             var e = ParseOne();
             if (e is QualifiedIdent qi)
                 return post(new Import(qi));
-            throw new Exception();
+            throw remarkList.Structure.ExpectedQualifiedIdentAfterImport(e);
         }
 
 
         [CanBeNull]
         private Break ParseBreak()
         {
-            if (Text != "break")
+            if (text != "break")
                 return null;
             markStart();
-            Ti.Next();
+            next();
             return post(new Break());
         }
 
@@ -394,10 +444,10 @@ namespace Efekt
         [CanBeNull]
         private Continue ParseContinue()
         {
-            if (Text != "continue")
+            if (text != "continue")
                 return null;
             markStart();
-            Ti.Next();
+            next();
             return post(new Continue());
         }
 
@@ -405,65 +455,78 @@ namespace Efekt
         [CanBeNull]
         private Ident ParseIdent()
         {
-            if (Type != TokenType.Ident && Type != TokenType.Op)
+            if (type != TokenType.Ident && type != TokenType.Op)
                 return null;
             markStart();
-            var i = post(new Ident(Text, Type));
-            Ti.Next();
-            return i;
+            var i = new Ident(text, type);
+            next();
+            return post(i);
         }
 
 
         [CanBeNull]
         private Int ParseInt()
         {
-            if (Type != TokenType.Int)
+            if (type != TokenType.Int)
                 return null;
             markStart();
-            var i = post(new Int(int.Parse(Text.Replace("_", ""))));
-            Ti.Next();
-            return i;
+            var i = new Int(int.Parse(text.Replace("_", "")));
+            next();
+            return post(i);
         }
 
 
         [CanBeNull]
         private Char ParseChar()
         {
-            if (Type != TokenType.Char)
+            if (type != TokenType.Char)
                 return null;
             markStart();
-            if (Text.Length != 3)
-                throw RemarkList.Structure.CharShouldHaveOnlyOneChar();
-            var i = post(new Char(Text[1]));
-            Ti.Next();
-            return i;
+            var txt = replaceEsapes(text);
+            if (txt.Length != 3)
+                throw remarkList.Structure.CharShouldHaveOnlyOneChar();
+            var ch = txt[1];
+            next();
+            return post(new Char(ch));
         }
 
 
         [CanBeNull]
         private Text ParseText()
         {
-            if (Type != TokenType.Text)
+            if (type != TokenType.Text)
                 return null;
             markStart();
-            var i = post(new Text(Text.Substring(1, Text.Length - 2)));
-            Ti.Next();
-            return i;
+            var txt = replaceEsapes(text);
+            var t = txt.Substring(1, txt.Length - 2);
+            next();
+            return post(new Text(t));
         }
 
+        private string replaceEsapes(string txt)
+        {
+            return txt.Replace("\\n", "\n").Replace("\\r", "\r").Replace("\\t", "\t")
+                .Replace("\\0", "\0").Replace("\\\'", "\'").Replace("\\\"", "\"").Replace("\\\\", "\\");
+
+        }
+        /*
+            if (ch != 'n' && ch != 'r' && ch != 't' && ch != '0' && ch != '\'' && ch != '"'
+                    && ch != '\\')
+                    tokType = TokenType.Invalid;
+           */
 
         [CanBeNull]
         private Bool ParseBool()
         {
             markStart();
-            if (Text == "true")
+            if (text == "true")
             {
-                Ti.Next();
+                next();
                 return post(new Bool(true));
             }
-            if (Text == "false")
+            if (text == "false")
             {
-                Ti.Next();
+                next();
                 return post(new Bool(false));
             }
             pop();
@@ -475,14 +538,14 @@ namespace Efekt
         private Element ParseVarOrLet()
         {
             bool isVar;
-            if (Text == "var")
+            if (text == "var")
                 isVar = true;
-            else if (Text == "let")
+            else if (text == "let")
                 isVar = false;
             else
                 return null;
             markStart();
-            Ti.Next();
+            next();
             var se = ParseOne();
             if (se is Ident i2)
             {
@@ -492,56 +555,55 @@ namespace Efekt
             {
                 if (a.To is Ident i)
                     return post(isVar ? (Element) new Var(i, a.Exp) : new Let(i, a.Exp));
-                throw RemarkList.Structure.OnlyIdentifierCanBeDeclared(a.To);
+                throw remarkList.Structure.OnlyIdentifierCanBeDeclared(a.To);
             }
-            throw RemarkList.Structure.InvalidElementAfterVar(se);
+            throw remarkList.Structure.InvalidElementAfterVar(se);
         }
 
 
         [CanBeNull]
         private Return ParseReturn()
         {
-            if (Text != "return")
+            if (text != "return")
                 return null;
-            var lineIndexOnReturn = Ti.LineIndex;
             markStart();
-            Ti.Next();
-            if (Ti.Finished || lineIndexOnReturn != Ti.LineIndex)
+            next();
+            if (ti.Finished || ti.CrossedLine)
                 return post(new Return(Void.Instance));
             var se = ParseOne();
             if (se is Exp exp)
                 return post(new Return(exp));
-            throw RemarkList.Structure.ExpectedExpression(se);
+            throw remarkList.Structure.ExpectedExpression(se);
         }
 
 
         [CanBeNull]
         private Toss ParseThrow()
         {
-            if (Text != "throw")
+            if (text != "throw")
                 return null;
             markStart();
-            Ti.Next();
+            next();
             var se = ParseOne();
             if (se is Exp exp)
                 return post(new Toss(exp));
-            throw RemarkList.Structure.ExpectedExpression(se);
+            throw remarkList.Structure.ExpectedExpression(se);
         }
 
 
         [CanBeNull]
         private Attempt ParseTry()
         {
-            if (Text != "try")
+            if (text != "try")
                 return null;
             markStart();
-            Ti.Next();
+            next();
             var body = ParseMandatorySequence();
 
             Sequence grab;
-            if (Text == "catch")
+            if (text == "catch")
             {
-                Ti.Next();
+                next();
                 grab = ParseMandatorySequence();
             }
             else
@@ -550,9 +612,9 @@ namespace Efekt
             }
 
             Sequence atLast;
-            if (Text == "finally")
+            if (text == "finally")
             {
-                Ti.Next();
+                next();
                 atLast = ParseMandatorySequence();
             }
             else
@@ -567,22 +629,22 @@ namespace Efekt
         [CanBeNull]
         private When ParseWhen()
         {
-            if (Text != "if")
+            if (text != "if")
                 return null;
             markStart();
-            Ti.Next();
+            next();
             var test = ParseOne();
             var testExp = test as Exp;
             if (testExp == null)
-                throw RemarkList.Structure.MissingTestExpression();
-            if (Text != "then")
-                throw RemarkList.Structure.ExpectedWordThen(testExp);
-            Ti.Next();
+                throw remarkList.Structure.MissingTestExpression();
+            if (text != "then")
+                throw remarkList.Structure.ExpectedWordThen(testExp);
+            next();
             var then = ParseOne();
             Element otherwise;
-            if (Text == "else")
+            if (text == "else")
             {
-                Ti.Next();
+                next();
                 otherwise = ParseOne();
             }
             else

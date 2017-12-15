@@ -1,11 +1,12 @@
 fix: declaring var in loop now fails with already declared
-fix stack trace
 fix various crashes - (build on prelude/wrong paths?, not matching braces)
-reevaluate all the safe casts to nicer mesages
 error: when loop does not have break or return statement inside (to prevent infinite loop)
 error: validate usage of break and continue outside loop
 error: validate inequal count of params and args
+fix: parse member access and fn apply with multi line comment after dot lie a./*\n*/b()
 
+tokenizer - make \0 in middle of file invalid token or fatal
+warn: when hiding variable in outer scope (file only?)
 warn: when declaring variable of type void
 info: when return can be skipped
 import candidates - nicer output with location
@@ -18,9 +19,7 @@ more tests
 static validation where possible
 nicer code
 
-rerport elements details on warning
 elements holds its tokens
-report line column range with error
 prog runtime writter output (for throw)
 
 how to reolve nested module names vs paths

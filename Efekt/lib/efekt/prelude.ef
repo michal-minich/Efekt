@@ -1,12 +1,12 @@
-﻿var not = fn a { if a then false else true }
-var or = fn a, b { if a then true else { if b then true else false } }
-var and = fn a, b { if a then { if b then true else false } else false }
-var >= = fn a, b { not(a < b) }
-var <= = fn a, b { a < b or a == b }
-var > = fn a, b { not(a < b) and not(a == b) }
-var printLine = fn a { print(a) print('\n') }
+﻿let not = fn a { if a then false else true }
+let or = fn a, b { if a then true else { if b then true else false } }
+let and = fn a, b { if a then { if b then true else false } else false }
+let >= = fn a, b { not(a < b) }
+let <= = fn a, b { a < b or a == b }
+let > = fn a, b { not(a < b) and not(a == b) }
+let printLine = fn a { print(a) print('\n') }
 
-var arrayIterator = fn a {
+let arrayIterator = fn a {
     return new {
         var arr = a
         var position = 0 - 1
@@ -21,7 +21,7 @@ var arrayIterator = fn a {
     }
 }
 
-var whereIterator = fn i, p {
+let whereIterator = fn i, p {
     return new {
         var iterator = i
         var predicate = p
@@ -39,7 +39,7 @@ var whereIterator = fn i, p {
     }
 }
 
-var forEach = fn i, f {
+let forEach = fn i, f {
     /*var i = iterable.getForwardIterator()*/
     loop {
         if not(i.moveForward()) then
@@ -48,16 +48,16 @@ var forEach = fn i, f {
     }
 }
 
-var where = fn i, p {
+let where = fn i, p {
     return whereIterator(i, p)
 }
 
-var assert = fn condition {
+let assert = fn condition {
     if not(condition) then
         throw "assert is false"
 }
 
-var for = fn from, to, do {
+let for = fn from, to, do {
     assert(from <= to)
     var i = from
     loop {
