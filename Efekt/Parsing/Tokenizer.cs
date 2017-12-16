@@ -179,10 +179,11 @@ namespace Efekt
 
                 final:
 
-                C.Assume(ix - startIx > 0);
 
-                if (tokType == TokenType.Terminal && ch != '\0')
+                if (ch != '\0' && ix - startIx == 0)
                     mark(TokenType.Invalid);
+
+                C.Assume(ix - startIx > 0);
 
                 var text2 = code.Substring(startIx, ix - startIx);
                 if (tokType == TokenType.Ident && keywords.Contains(text2))

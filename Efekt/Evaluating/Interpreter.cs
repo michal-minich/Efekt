@@ -98,7 +98,7 @@ namespace Efekt
                         {
                             var extFn = envV.AsFn(fna, prog);
                             if (extFn.Parameters.Count == 0)
-                                throw prog.RemarkList.Except.ExtensionFuncHasNoParameters(extFn, extMemAcc);
+                                throw prog.RemarkList.ExtensionFuncHasNoParameters(extFn, extMemAcc);
                             var newArgs = new FnArguments(new[] {exp2}.Concat(fna.Arguments).ToList());
                             var newFna = new FnApply(extFn, newArgs)
                             {
@@ -115,7 +115,7 @@ namespace Efekt
                             callStack.Pop();
                             return res;
                         }
-                        throw prog.RemarkList.Except.VariableIsNotDeclared(extMemAcc.Ident);
+                        throw prog.RemarkList.VariableIsNotDeclared(extMemAcc.Ident);
                     }
                     fn = eval(fna.Fn, env);
                     noExtMethodApply:
@@ -242,16 +242,13 @@ namespace Efekt
                     return Void.Instance;
                 case Toss ts:
                     var exVal = eval(ts.Exception, env);
-                    throw prog.RemarkList.AddInterpretedException(Remark.NewRemark(RemarkSeverity.InterpretedException,
-                        "Interpreted Exception: " + exVal.ToDebugString(),
-                        ts,
-                        callStack.ToList()));
+                    throw prog.RemarkList.ProgramException(exVal, ts, callStack.ToList());
                 case Attempt att:
                     try
                     {
                         return eval(att.Body, env);
                     }
-                    catch (EfektInterpretedException ex)
+                    catch (EfektProgramException ex)
                     {
                         var grabEnv = Env.Create(prog, env);
                         grabEnv.Declare(new Ident("exception", TokenType.Ident), ex.Value, true);
@@ -282,9 +279,9 @@ namespace Efekt
             if (bodyVal != Void.Instance)
             {
                 if (bodyElement is FnApply fna2)
-                    prog.RemarkList.Warn.ValueReturnedFromFunctionNotUsed(fna2);
+                    prog.RemarkList.ValueReturnedFromFunctionNotUsed(fna2);
                 else
-                    prog.RemarkList.Warn.ValueIsNotAssigned(bodyElement);
+                    prog.RemarkList.ValueIsNotAssigned(bodyElement);
             }
         }
 

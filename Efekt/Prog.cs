@@ -65,7 +65,7 @@ namespace Efekt
             var modules = new List<ClassItem>();
             foreach (var fp in rootPaths)
             {
-                var codeFilesPaths = getAllCodeFiles(fp);
+                var codeFilesPaths = getAllCodeFiles(fp, prog.RemarkList);
                 var shortest = codeFilesPaths.OrderBy(cfp => cfp.Length).First();
                 var numSeparators = shortest.Split('\\').Length - 2;
                 foreach (var cfp in codeFilesPaths)
@@ -74,11 +74,16 @@ namespace Efekt
                     var f = cfp.Substring(startIndex, cfp.Length - ".ef".Length - startIndex);
                     var sections = f.Split('\\').Skip(numSeparators).ToList();
                     var e = parseFile(prog, cfp);
-                    addMod(sections, e, modules, prog);
+                    Sequence moduleBody;
+                    if (e is Sequence seq)
+                        moduleBody = seq;
+                    else
+                        moduleBody = new Sequence(new[] {e}.AsSequenceItems(prog.RemarkList));
+                    addMod(sections, moduleBody, modules, prog);
                 }
             }
 
-            var start = new FnApply(getStartQualifiedName(modules), new FnArguments());
+            var start = new FnApply(getStartQualifiedName(modules, prog.RemarkList), new FnArguments());
             var seqItems = modules.Cast<SequenceItem>().Append(start).ToList();
             prog.RootElement = new FnApply(
                 new Fn(new FnParameters(), new Sequence(seqItems)),
@@ -86,12 +91,12 @@ namespace Efekt
             return prog;
         }
 
-        private static QualifiedIdent getStartQualifiedName(List<ClassItem> modules)
+        private static QualifiedIdent getStartQualifiedName(List<ClassItem> modules, RemarkList remarkList)
         {
             var candidates = new List<List<string>>();
             findStart(modules, candidates, new List<string>());
             if (candidates.Count != 1)
-                throw new Exception();
+                throw remarkList.CannotFindStartFunction();
             var fn = candidates[0]
                 .Append("start")
                 .Select(section => (QualifiedIdent) new Ident(section, TokenType.Ident))
@@ -118,7 +123,7 @@ namespace Efekt
         }
 
 
-        private static void addMod(IReadOnlyList<string> sections, Element mod, List<ClassItem> modules, Prog prog)
+        private static void addMod(IReadOnlyList<string> sections, Sequence moduleBody, List<ClassItem> modules, Prog prog)
         {
             C.Nn(modules);
 
@@ -139,7 +144,7 @@ namespace Efekt
             var m2 = findParentModule(modules, lastSection);
             if (m2 != null)
                 throw new Exception();
-            modules.AddValue(getNewModule(lastSection, mod, prog));
+            modules.AddValue(getNewModule(lastSection, moduleBody, prog));
         }
 
 
@@ -153,21 +158,17 @@ namespace Efekt
         }
 
 
-        private static Let getNewModule(string name, Element body, Prog prog)
+        private static Let getNewModule(string name, Sequence moduleBody, Prog prog)
         {
             var preludeImport = new Import(new Ident("prelude", TokenType.Ident));
-            if (body is Sequence seq)
-            {
-                if (name != "prelude")
-                    seq.InsertImport(preludeImport);
-                return new Let(new Ident(name, TokenType.Ident), 
-                    new New(new ClassBody(seq.ManyAs<ClassItem>(prog.RemarkList).ToList())));
-            }
-            throw new Exception();
+            if (name != "prelude")
+                moduleBody.InsertImport(preludeImport);
+            return new Let(new Ident(name, TokenType.Ident), 
+                new New(new ClassBody(moduleBody.AsClassItems(prog.RemarkList))));
         }
 
         
-        private static IReadOnlyList<string> getAllCodeFiles(string rootPath)
+        private static IReadOnlyList<string> getAllCodeFiles(string rootPath, RemarkList remarkList)
         {
             var files = new List<string>();
             if (Directory.Exists(rootPath))
@@ -178,13 +179,13 @@ namespace Efekt
             {
                 if (!rootPath.EndsWith(".ef"))
                 {
-                    throw new Exception("File is not supported '" + rootPath + "'.");
+                    throw remarkList.OlnyEfFilesAreSupported(rootPath);
                 }
                 files.AddValue(rootPath);
             }
             else
             {
-                throw new Exception("Could not locate file system entry '" + rootPath + "'.");
+                throw remarkList.CouldNotLocateFileOrFolder(rootPath);
             }
 
             return files.Distinct().ToList();

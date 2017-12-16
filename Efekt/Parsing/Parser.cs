@@ -120,19 +120,19 @@ namespace Efekt
         private Sequence ParseMandatorySequence()
         {
             markStart();
-            return post(new Sequence(ParseBracedList<SequenceItem>('}', false)));
+            return post(new Sequence(ParseBracedList<SequenceItem>('{', false)));
         }
 
 
         private ClassBody ParseClassBody()
         {
-            return new ClassBody(ParseBracedList<ClassItem>('}', false));
+            return new ClassBody(ParseBracedList<ClassItem>('{', false));
         }
 
 
-        private FnArguments ParseFnArguments(char end)
+        private FnArguments ParseFnArguments(char startBrace)
         {
-            return new FnArguments(ParseBracedList<Exp>(end, true));
+            return new FnArguments(ParseBracedList<Exp>(startBrace, true));
         }
 
 
@@ -142,24 +142,24 @@ namespace Efekt
         }
 
         private bool crossedLine;
-        private List<T> ParseBracedList<T>(char endBrace, bool isComaSeparated) where T : class, Element
+        private List<T> ParseBracedList<T>(char startBrace, bool isComaSeparated) where T : class, Element
         {
-            char end;
-            var t = text[0];
-            if (t == '(')
-                end = ')';
-            else if (t == '{')
-                end = '}';
-            else if (t == '[')
-                end = ']';
+            char endBrace;
+            if (startBrace == '(')
+                endBrace = ')';
+            else if (startBrace == '{')
+                endBrace = '}';
+            else if (startBrace == '[')
+                endBrace = ']';
             else
-                throw remarkList.Structure.BraceExpected();
-            if (endBrace != end)
-                throw new ArgumentException();
+                throw new NotSupportedException();
+
+            if (text[0] != startBrace)
+                throw remarkList.OpeningBraceIsExpected(ti, startBrace);
             next();
             var list = ParseList<T>(endBrace, isComaSeparated);
-            if (text[0] != end)
-                throw remarkList.Structure.EndBraceDoesNotMatchesStart();
+            if (text[0] != endBrace)
+                throw remarkList.ClosingBraceDoesNotMatchesOpening(ti, startBrace, text);
             next();
             crossedLine = ti.CrossedLine;
             return list;
@@ -175,7 +175,7 @@ namespace Efekt
                 var e = ParseOne();
                 var t = e as T;
                 if (t == null)
-                    throw remarkList.Structure.ExpectedDifferentElement(e, typeof(T));
+                    throw remarkList.ExpectedDifferentElement(e, typeof(T));
                 list.AddValue(t);
                 if (isComaSeparated)
                     if (text == ",")
@@ -234,7 +234,7 @@ namespace Efekt
             var first = list.FirstOrDefault();
             return list.Count == 1 && first is Exp 
                 ? first 
-                : new Sequence(list.ManyAs<SequenceItem>(remarkList).ToList());
+                : new Sequence(list.AsSequenceItems(remarkList));
         }
 
 
@@ -289,7 +289,7 @@ namespace Efekt
             {
                 if (e2 is Exp ee)
                     return ParseWithOp(new Assign(aa.To, ee));
-                throw remarkList.Structure.SecondOperandMustBeExpression(e2);
+                throw remarkList.OnlyExpressionCanBeAssigned(e2);
             }
             
             return ParseWithOp(e2);
@@ -328,17 +328,19 @@ namespace Efekt
             {
                 if (second is Ident i)
                     return post(new MemberAccess(prev, i));
-                throw remarkList.Structure.ExpectedIdentifierAfterDot(second);
+                throw remarkList.ExpectedIdentifierAfterDot(second);
             }
             var e2 = second as Exp;
-            if (e2 == null)
-                throw remarkList.Structure.FunctionArgumentMustBeExpression(second);
             if (opText == "=")
             {
+                if (e2 == null)
+                    throw remarkList.OnlyExpressionCanBeAssigned(second);
                 if (prev is AssignTarget at)
                     return post(new Assign(at, e2));
-                throw remarkList.Structure.AssignTargetIsInvalid(prev);
+                throw remarkList.AssignTargetIsInvalid(prev);
             }
+            if (e2 == null)
+                throw remarkList.SecondOperandMustBeExpression(second);
             if (!prev.IsBraced
                 && prev is FnApply fna
                 && fna.Fn is Ident prevOp
@@ -370,7 +372,7 @@ namespace Efekt
             if (crossedLine || text[0] != '(')
                 return prev;
             markStart(prev);
-            var args = ParseFnArguments(')');
+            var args = ParseFnArguments('(');
             var fna = post(new FnApply(prev, args));
             return crossedLine ? fna : ParseFnApply(fna);
         }
@@ -382,7 +384,7 @@ namespace Efekt
             if (text[0] != '[')
                 return null;
             markStart();
-            var args = ParseFnArguments(']');
+            var args = ParseFnArguments('[');
             return post(new ArrConstructor(args));
         }
 
@@ -393,14 +395,14 @@ namespace Efekt
             if (text[0] != '(')
                 return null;
             markStart();
-            var list = ParseBracedList<Element>(')', false);
+            var list = ParseBracedList<Element>('(', false);
             if (list.Count == 1)
             {
                 var e = post(list.First());
                 e.IsBraced = true;
                 return e;
             }
-            throw remarkList.Structure.ExpectedOnlyOneExpressionInsideBraces(list);
+            throw remarkList.ExpectedOnlyOneExpressionInsideBraces(list);
         }
 
 
@@ -426,7 +428,7 @@ namespace Efekt
             var e = ParseOne();
             if (e is QualifiedIdent qi)
                 return post(new Import(qi));
-            throw remarkList.Structure.ExpectedQualifiedIdentAfterImport(e);
+            throw remarkList.ExpectedQualifiedIdentAfterImport(e);
         }
 
 
@@ -484,7 +486,7 @@ namespace Efekt
             markStart();
             var txt = replaceEsapes(text);
             if (txt.Length != 3)
-                throw remarkList.Structure.CharShouldHaveOnlyOneChar();
+                throw remarkList.CharShouldHaveOnlyOneChar(ti);
             var ch = txt[1];
             next();
             return post(new Char(ch));
@@ -555,9 +557,9 @@ namespace Efekt
             {
                 if (a.To is Ident i)
                     return post(isVar ? (Element) new Var(i, a.Exp) : new Let(i, a.Exp));
-                throw remarkList.Structure.OnlyIdentifierCanBeDeclared(a.To);
+                throw remarkList.OnlyIdentifierCanBeDeclared(a.To);
             }
-            throw remarkList.Structure.InvalidElementAfterVar(se);
+            throw remarkList.InvalidElementAfterVar(se);
         }
 
 
@@ -573,7 +575,7 @@ namespace Efekt
             var se = ParseOne();
             if (se is Exp exp)
                 return post(new Return(exp));
-            throw remarkList.Structure.ExpectedExpression(se);
+            throw remarkList.ExpectedExpression(se);
         }
 
 
@@ -587,7 +589,7 @@ namespace Efekt
             var se = ParseOne();
             if (se is Exp exp)
                 return post(new Toss(exp));
-            throw remarkList.Structure.ExpectedExpression(se);
+            throw remarkList.ExpectedExpression(se);
         }
 
 
@@ -635,10 +637,10 @@ namespace Efekt
             next();
             var test = ParseOne();
             var testExp = test as Exp;
-            if (testExp == null)
-                throw remarkList.Structure.MissingTestExpression();
+            if (testExp == null || testExp is Ident i && i.Name == "then")
+                throw remarkList.ExpectedTestExpression(ti); // TODO the position is at testExp, should be at 'if'
             if (text != "then")
-                throw remarkList.Structure.ExpectedWordThen(testExp);
+                throw remarkList.ExpectedWordThen(testExp);
             next();
             var then = ParseOne();
             Element otherwise;

@@ -7,18 +7,14 @@ namespace Efekt
         public EfektException(string message) : base(message)
         {
         }
-
-        public EfektException(string message, Element inExp) : base(message)
-        {
-        }
     }
 
 
-    public class EfektInterpretedException : EfektException
+    public class EfektProgramException : Exception
     {
         public Value Value { get; }
 
-        public EfektInterpretedException(Value value) : base("Interpreted excpetion " + value.ToDebugString())
+        public EfektProgramException(string message, Value value) : base(message)
         {
             Value = value;
         }

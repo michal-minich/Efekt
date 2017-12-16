@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Diagnostics;
 
 // ReSharper disable once CheckNamespace
 namespace Efekt.Tests
 {
     public static class Tests
     {
+        [Conditional("DEBUG")]
         public static void RunAllTests()
         {
             //test("var a = + return a(1, 2)", "3");
@@ -150,6 +152,7 @@ namespace Efekt.Tests
             //test("var c = 1 + 2 return [c = c + 1, c = c + 1, c = c + 1]", "[4, 5, 6]");
             //test("var c = 3 var a = [c = c + 1, c = c + 1] c = 5 var b = a return a", "[4, 5]");
 
+            Console.WriteLine("All tests executed");
         }
 
         /*

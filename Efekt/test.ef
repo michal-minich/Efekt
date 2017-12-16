@@ -2,18 +2,18 @@
 let start = fn {
     let arr = [1, 2, 3, 4, 5]
     arrayIterator(arr)
-      .where(fn c { c > 3 })
-      .forEach(fn c { c.printLine() + 1 })
+      .where(fn c {c > 3 })
+      .forEach(fn c { c.printLine() })
 
     var a = 0
     loop {
-         var b = 1
+         //var bbb = 1
          a = a + 1
          print(a)
          if a == 1 then
              break
     }
-    aa()
+    //aa()
 }
 
 let aa = fn {
@@ -25,9 +25,7 @@ let b = fn {
 }
 
 let c = fn {
-    d(fn {
-    if 1 then true
-    })
+    d(fn {if 1 then true})
 }
 
 let d = fn f {

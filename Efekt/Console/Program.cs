@@ -23,7 +23,7 @@ namespace Efekt
                     prog.OutputPrinter.Write(res);
                 return 0;
             }
-            catch (EfektInterpretedException)
+            catch (EfektProgramException)
             {
                 return 3;
             }

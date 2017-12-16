@@ -47,9 +47,7 @@ namespace Efekt
                 Current = te.Current;
                 if (Current.Type == TokenType.Invalid)
                 {
-                    throw remarkList.AddFatal(Remark.NewRemark(RemarkSeverity.Fatal,
-                        "Invalid token '" + Current.Text + "'", "fp",
-                        LineIndex, ColumnIndex, Current));
+                    throw remarkList.TokenIsInvalid(this);
                 }
             }
             else

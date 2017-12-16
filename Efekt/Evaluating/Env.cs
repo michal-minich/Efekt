@@ -64,7 +64,7 @@ namespace Efekt
             var v = GetOrNull(ident);
             if (v != null)
                 return v;
-            throw prog.RemarkList.Except.VariableIsNotDeclared(ident);
+            throw prog.RemarkList.VariableIsNotDeclared(ident);
         }
 
 
@@ -103,7 +103,7 @@ namespace Efekt
                 return candidates.First().Value;
             if (candidates.Count == 0)
                 return null;
-            throw prog.RemarkList.Except.MoreVariableCandidates(candidates, ident);
+            throw prog.RemarkList.MoreVariableCandidates(candidates, ident);
         }
 
         private void GetFromImports(Ident ident, Dictionary<QualifiedIdent, Value> candidates)
@@ -127,7 +127,7 @@ namespace Efekt
 
             var v  = GetWithImportOrNull(ident);
             if (v == null)
-                throw prog.RemarkList.Except.VariableIsNotDeclared(ident);
+                throw prog.RemarkList.VariableIsNotDeclared(ident);
             return v;
         }
 
@@ -137,7 +137,7 @@ namespace Efekt
             C.Nn(ident, value);
 
             if (dict.ContainsKey(ident.Name))
-                throw prog.RemarkList.Except.VariableIsAlreadyDeclared(ident);
+                throw prog.RemarkList.VariableIsAlreadyDeclared(ident);
             dict.Add(ident.Name, new EnvValue(value, isLet));
         }
 
@@ -153,15 +153,15 @@ namespace Efekt
                 {
                     var old = e.dict[ident.Name];
                     if (old.Value != Void.Instance && old.Value.GetType() != value.GetType())
-                        prog.RemarkList.Warn.AssigningDifferentType(ident, old.Value, value);
+                        prog.RemarkList.AssigningDifferentType(ident, old.Value, value);
                     if (old.IsLet)
-                        prog.RemarkList.Warn.ReasigingLet(ident);
+                        prog.RemarkList.ReasigingLet(ident);
                     e.dict[ident.Name] = new EnvValue(value, old.IsLet);
                     return;
                 }
                 e = e.parent;
             } while (e != null);
-            throw prog.RemarkList.Except.VariableIsNotDeclared(ident);
+            throw prog.RemarkList.VariableIsNotDeclared(ident);
         }
 
 

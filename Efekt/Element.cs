@@ -19,10 +19,10 @@ namespace Efekt
     }
 
 
-    public interface Declr: Stm
+    public interface Declr : Stm
     {
         Ident Ident { get; }
-        Exp Exp { get; }
+        [CanBeNull] Exp Exp { get; }
     }
 
 
@@ -275,7 +275,7 @@ namespace Efekt
     }
     
 
-    public sealed class Param : AElement
+    public sealed class Param : AElement, Declr
     {
         [DebuggerStepThrough]
         public Param(Ident ident)
@@ -286,6 +286,7 @@ namespace Efekt
         }
 
         public Ident Ident { get; }
+        public Exp Exp => null;
     }
 
 
