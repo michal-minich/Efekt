@@ -23,6 +23,7 @@ namespace Efekt
     {
         Ident Ident { get; }
         [CanBeNull] Exp Exp { get; }
+        List<Ident> UsedBy { get; }
     }
 
 
@@ -235,7 +236,9 @@ namespace Efekt
         public string Name { get; }
         
         public TokenType TokenType { get; }
+        public Declr DeclareBy { get; }
     }
+
 
     public sealed class Var : AElement, Declr, SequenceItem, ClassItem
     {
@@ -246,6 +249,7 @@ namespace Efekt
 
             Ident = ident;
             Exp = exp;
+            UsedBy = new List<Ident>();
 
             ident.Parent = this;
             exp.Parent = this;
@@ -253,6 +257,7 @@ namespace Efekt
 
         public Ident Ident { get; }
         public Exp Exp { get; }
+        public List<Ident> UsedBy { get; }
     }
 
 
@@ -265,6 +270,7 @@ namespace Efekt
 
             Ident = ident;
             Exp = exp;
+            UsedBy = new List<Ident>();
 
             ident.Parent = this;
             exp.Parent = this;
@@ -272,6 +278,7 @@ namespace Efekt
 
         public Ident Ident { get; }
         public Exp Exp { get; }
+        public List<Ident> UsedBy { get; }
     }
     
 
@@ -283,10 +290,12 @@ namespace Efekt
             C.Nn(ident);
             Ident = ident;
             ident.Parent = this;
+            UsedBy = new List<Ident>();
         }
 
         public Ident Ident { get; }
         public Exp Exp => null;
+        public List<Ident> UsedBy { get; }
     }
 
 
@@ -395,7 +404,7 @@ namespace Efekt
         }
 
         [DebuggerStepThrough]
-        public Fn(FnParameters parameters, Sequence sequence, Env env)
+        public Fn(FnParameters parameters, Sequence sequence, Env<Value> env)
             : this(parameters, sequence)
         {
             C.Nn(env);
@@ -404,7 +413,7 @@ namespace Efekt
 
         public FnParameters Parameters { get; }
         public Sequence Sequence { get; }
-        public Env Env { get; }
+        public Env<Value> Env { get; }
     }
 
 
@@ -527,7 +536,7 @@ namespace Efekt
     public sealed class Obj : AElement, Value
     {
         [DebuggerStepThrough]
-        public Obj(ClassBody body, Env env)
+        public Obj(ClassBody body, Env<Value> env)
         {
             C.Nn(body, env);
 
@@ -539,7 +548,7 @@ namespace Efekt
         // ReSharper disable once MemberCanBePrivate.Global
         public ClassBody Body { get; }
 
-        public Env Env { get; }
+        public Env<Value> Env { get; }
     }
 
 

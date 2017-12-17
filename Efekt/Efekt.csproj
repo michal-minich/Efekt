@@ -132,6 +132,7 @@
     <Compile Include="Evaluating\ElementExtensions.cs" />
     <Compile Include="Utils\C.cs" />
     <Compile Include="Validation\RemarkList.cs" />
+    <Compile Include="Validation\Namer.cs" />
     <Compile Include="Validation\StructureValidator.cs" />
     <Compile Include="Evaluating\Builtins.cs" />
     <Compile Include="Evaluating\Env.cs" />

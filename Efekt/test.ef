@@ -7,27 +7,10 @@ let start = fn {
 
     var a = 0
     loop {
-         //var bbb = 1
+         var b = 1
          a = a + 1
          print(a)
          if a == 1 then
              break
     }
-    //aa()
-}
-
-let aa = fn {
-    b()
-}
-
-let b = fn {
-    c()
-}
-
-let c = fn {
-    d(fn {if 1 then true})
-}
-
-let d = fn f {
-    f()
 }

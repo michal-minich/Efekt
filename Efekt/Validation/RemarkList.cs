@@ -378,7 +378,7 @@ namespace Efekt
 
         [Pure]
         // TODO move to structure validation eventually
-        public EfektException MoreVariableCandidates(Dictionary<QualifiedIdent, Value> candidates, Ident ident)
+        public EfektException MoreVariableCandidates<T>(Dictionary<QualifiedIdent, T> candidates, Ident ident)
         {
             return fail(ident, "Variable '" + ident.Name + "' can be found multiple times: " +
                                Environment.NewLine +
@@ -419,7 +419,7 @@ namespace Efekt
 
 
         // TODO move to type validation eventually
-        public void AssigningDifferentType(Ident ident, Value old, Value @new)
+        public void AssigningDifferentType<T>(Ident ident, T old, T @new)
         {
             w(ident, "Variable '" + ident.Name + "' of type '"
                      + old.GetType().Name + "' is being assigned value of type '"

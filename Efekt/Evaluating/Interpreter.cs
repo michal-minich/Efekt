@@ -29,7 +29,7 @@ namespace Efekt
         private bool isBreak;
         private bool isContinue;
         private Prog prog;
-        private bool IsImportContext;
+        private bool isImportContext;
 
         private Stack<StackItem> callStack { get; set; }
 
@@ -40,11 +40,11 @@ namespace Efekt
         {
             prog = program;
             callStack = new Stack<StackItem>();
-            return eval(prog.RootElement, Env.CreateRoot(prog));
+            return eval(prog.RootElement, Env<Value>.CreateValueRoot(prog));
         }
 
 
-        private Value eval(Element se, Env env)
+        private Value eval(Element se, Env<Value> env)
         {
             C.Nn(se, env);
             C.ReturnsNn();
@@ -72,7 +72,7 @@ namespace Efekt
                     }
                     return Void.Instance;
                 case Ident i:
-                    if (IsImportContext)
+                    if (isImportContext)
                         return env.Get(i);
                     else
                         return env.GetWithImport(i);
@@ -129,14 +129,14 @@ namespace Efekt
                         return res;
                     }
                     var fn2 = fn.AsFn(fna, prog);
-                    var paramsEnv = Env.Create(prog, fn2.Env);
+                    var paramsEnv = Env<Value>.Create(prog, fn2.Env);
                     var ix = 0;
                     foreach (var p in fn2.Parameters)
                     {
                         var eArg = (Value) eArgs[ix++];
                         paramsEnv.Declare(p.Ident, eArg, true);
                     }
-                    var fnEnv = Env.Create(prog, paramsEnv);
+                    var fnEnv = Env<Value>.Create(prog, paramsEnv);
                     callStack.Push(new StackItem(fn2));
                     if (fn2.Sequence.Count == 1)
                     {
@@ -183,13 +183,13 @@ namespace Efekt
                     var test = eval(w.Test, env);
                     var testB = test.AsBool(w.Test, prog);
                     if (testB.Value)
-                        return eval(w.Then, Env.Create(prog, env));
+                        return eval(w.Then, Env<Value>.Create(prog, env));
                     else if (w.Otherwise != null)
-                        return eval(w.Otherwise, Env.Create(prog, env));
+                        return eval(w.Otherwise, Env<Value>.Create(prog, env));
                     else
                         return Void.Instance;
                 case Loop l:
-                    var loopEnv = Env.Create(prog, env);
+                    var loopEnv = Env<Value>.Create(prog, env);
                     while (true)
                     {
                         continueLoop:
@@ -223,14 +223,14 @@ namespace Efekt
                     var o = exp.AsObj(ma, prog);
                     return o.Env.Get(ma.Ident);
                 case New n:
-                    var objEnv = Env.Create(prog, env);
+                    var objEnv = Env<Value>.Create(prog, env);
                     foreach (var v in n.Body)
                         eval(v, objEnv);
                     return new Obj(n.Body, objEnv);
                 case Value ve:
                     return ve;
                 case Sequence seq:
-                    var scopeEnv = Env.Create(prog, env);
+                    var scopeEnv = Env<Value>.Create(prog, env);
                     if (seq.Count == 1)
                         return eval(seq.First(), scopeEnv);
                     foreach (var item in seq)
@@ -250,7 +250,7 @@ namespace Efekt
                     }
                     catch (EfektProgramException ex)
                     {
-                        var grabEnv = Env.Create(prog, env);
+                        var grabEnv = Env<Value>.Create(prog, env);
                         grabEnv.Declare(new Ident("exception", TokenType.Ident), ex.Value, true);
                         if (att.Grab != null)
                             eval(att.Grab, grabEnv);
@@ -262,9 +262,9 @@ namespace Efekt
                             eval(att.AtLast, env);
                     }
                 case Import imp:
-                    IsImportContext = true;
+                    isImportContext = true;
                     var modImpEl = eval(imp.QualifiedIdent, env);
-                    IsImportContext = false;
+                    isImportContext = false;
                     var modImp = modImpEl.AsObj(imp, prog);
                     env.AddImport(imp.QualifiedIdent, modImp);
                     return Void.Instance;
@@ -273,7 +273,7 @@ namespace Efekt
             }
         }
 
-        private void evalSequenceItemFull(Element bodyElement, Env env)
+        private void evalSequenceItemFull(Element bodyElement, Env<Value> env)
         {
             var bodyVal = evalSequenceItem(bodyElement, env);
             if (bodyVal != Void.Instance)
@@ -285,7 +285,7 @@ namespace Efekt
             }
         }
 
-        private Value evalSequenceItem(Element bodyElement, Env env)
+        private Value evalSequenceItem(Element bodyElement, Env<Value> env)
         {
             C.ReturnsNn();
 

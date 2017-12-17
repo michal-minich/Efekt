@@ -4,12 +4,12 @@ using JetBrains.Annotations;
 
 namespace Efekt
 {
-    public sealed class EnvValue
+    public sealed class EnvValue<T> where T : class, Element
     {
-        public readonly Value Value;
+        public readonly T Value;
         public readonly bool IsLet;
 
-        public EnvValue(Value value, bool isLet)
+        public EnvValue(T value, bool isLet)
         {
             Value = value;
             IsLet = isLet;
@@ -17,11 +17,11 @@ namespace Efekt
     }
 
 
-    public sealed class Env
+    public sealed class Env<T> where T : class, Element
     {
-        private readonly Dictionary<string, EnvValue> dict = new Dictionary<string, EnvValue>();
+        private readonly Dictionary<string, EnvValue<T>> dict = new Dictionary<string, EnvValue<T>>();
         private readonly Dictionary<QualifiedIdent, Obj> imports = new Dictionary<QualifiedIdent, Obj>();
-        [CanBeNull] private readonly Env parent;
+        [CanBeNull] private readonly Env<T> parent;
         private readonly Prog prog;
 
 
@@ -32,32 +32,45 @@ namespace Efekt
         }
         
 
-        private Env(Prog prog, Env parent)
+        private Env(Prog prog, Env<T> parent)
         {
             this.prog = prog;
             this.parent = parent;
         }
 
 
-        public static Env CreateRoot(Prog prog)
+        public static Env<Value> CreateValueRoot(Prog prog)
         {
             C.ReturnsNn();
 
-            var env = new Env(prog);
+            var env = new Env<Value>(prog);
             foreach (var b in new Builtins(prog).Values)
-                env.dict.Add(b.Name, new EnvValue(b, true));
+                env.dict.Add(b.Name, new EnvValue<Value>(b, true));
             return env;
         }
 
 
-        public static Env Create(Prog prog, Env parent)
+        public static Env<Declr> CreateDeclrRoot(Prog prog)
         {
             C.ReturnsNn();
 
-            return new Env(prog, parent);
+            var env = new Env<Declr>(prog);
+            foreach (var b in new Builtins(prog).Values)
+                env.dict.Add(b.Name, new EnvValue<Declr>(new Let(new Ident(b.Name, TokenType.Ident), b), true));
+            // TODO toke type ident/op
+            return env;
         }
 
-        public Value Get(Ident ident)
+
+
+        public static Env<T> Create(Prog prog, Env<T> parent)
+        {
+            C.ReturnsNn();
+
+            return new Env<T>(prog, parent);
+        }
+
+        public T Get(Ident ident)
         {
             C.ReturnsNn();
 
@@ -69,7 +82,7 @@ namespace Efekt
 
 
         [CanBeNull]
-        public Value GetDirectlyOrNull(Ident ident)
+        public T GetDirectlyOrNull(Ident ident)
         {
             if (dict.TryGetValue(ident.Name, out var envValue))
                 return envValue.Value;
@@ -78,7 +91,7 @@ namespace Efekt
 
 
         [CanBeNull]
-        public Value GetOrNull(Ident ident)
+        public T GetOrNull(Ident ident)
         {
             if (dict.TryGetValue(ident.Name, out var envValue))
                 return envValue.Value;
@@ -89,9 +102,9 @@ namespace Efekt
 
 
         [CanBeNull]
-        public Value GetWithImportOrNull(Ident ident)
+        public T GetWithImportOrNull(Ident ident)
         {
-            var candidates = new Dictionary<QualifiedIdent, Value>();
+            var candidates = new Dictionary<QualifiedIdent, T>();
 
             var local = GetOrNull(ident);
             if (local != null)
@@ -106,7 +119,7 @@ namespace Efekt
             throw prog.RemarkList.MoreVariableCandidates(candidates, ident);
         }
 
-        private void GetFromImports(Ident ident, Dictionary<QualifiedIdent, Value> candidates)
+        private void GetFromImports(Ident ident, Dictionary<QualifiedIdent, T> candidates)
         {
             C.Nn(ident);
 
@@ -114,14 +127,14 @@ namespace Efekt
             {
                 var x = i.Value.Env.GetDirectlyOrNull(ident);
                 if (x != null && !candidates.Any(c => c.Key.ToDebugString() == i.Key.ToDebugString()))
-                    candidates.Add(i.Key, x);
+                    candidates.Add(i.Key, (T)x);
             }
             if (parent != null)
                 parent.GetFromImports(ident, candidates);
         }
 
 
-        public Value GetWithImport(Ident ident)
+        public T GetWithImport(Ident ident)
         {
             C.ReturnsNn();
 
@@ -132,17 +145,17 @@ namespace Efekt
         }
 
 
-        public void Declare(Ident ident, Value value, bool isLet)
+        public void Declare(Ident ident, T value, bool isLet)
         {
             C.Nn(ident, value);
 
             if (dict.ContainsKey(ident.Name))
                 throw prog.RemarkList.VariableIsAlreadyDeclared(ident);
-            dict.Add(ident.Name, new EnvValue(value, isLet));
+            dict.Add(ident.Name, new EnvValue<T>(value, isLet));
         }
 
 
-        public void Set(Ident ident, Value value)
+        public void Set(Ident ident, T value)
         {
             C.Nn(ident, value);
 
@@ -156,7 +169,7 @@ namespace Efekt
                         prog.RemarkList.AssigningDifferentType(ident, old.Value, value);
                     if (old.IsLet)
                         prog.RemarkList.ReasigingLet(ident);
-                    e.dict[ident.Name] = new EnvValue(value, old.IsLet);
+                    e.dict[ident.Name] = new EnvValue<T>(value, old.IsLet);
                     return;
                 }
                 e = e.parent;
