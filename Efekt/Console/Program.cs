@@ -8,7 +8,7 @@ namespace Efekt
         {
             try
             {
-                Tests.Tests.RunAllTests();
+                //Tests.Tests.RunAllTests();
 
                 if (args.Length == 0)
                 {
@@ -18,9 +18,9 @@ namespace Efekt
 
                 var cw = new ConsoleWriter();
                 var prog = Prog.Load2(cw, cw, args);
-                var res = prog.Run();
-                if (res != Void.Instance)
-                    prog.OutputPrinter.Write(res);
+                //var res = prog.Run();
+                //if (res != Void.Instance)
+                //    prog.OutputPrinter.Write(res);
                 return 0;
             }
             catch (EfektProgramException)

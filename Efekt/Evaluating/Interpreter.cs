@@ -33,7 +33,7 @@ namespace Efekt
 
         private Stack<StackItem> callStack { get; set; }
 
-        public IReadOnlyList<StackItem> CallStack => callStack.ToList();
+        public IReadOnlyList<StackItem> CallStack => callStack?.ToList();
 
 
         public Value Eval(Prog program)
@@ -182,7 +182,7 @@ namespace Efekt
                 case When w:
                     var test = eval(w.Test, env);
                     var testB = test.AsBool(w.Test, prog);
-                    if (testB.Value)
+                    if (testB.Value) // FIX - return void if otherwise is missing - or better fail when used as exp
                         return eval(w.Then, Env<Value>.Create(prog, env));
                     else if (w.Otherwise != null)
                         return eval(w.Otherwise, Env<Value>.Create(prog, env));

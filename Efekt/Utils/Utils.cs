@@ -74,5 +74,32 @@ namespace Efekt
 
             list.Add(value);
         }
+
+
+        public static IEnumerable<T> SkipLast<T>(this IEnumerable<T> source, int count = 1)
+        {
+            if (source == null)
+                throw new ArgumentNullException(nameof(source));
+
+            if (count < 0)
+                throw new ArgumentOutOfRangeException(nameof(count),
+                    "Argument n should be non-negative.");
+
+            return InternalSkipLast(source, count);
+        }
+
+
+        private static IEnumerable<T> InternalSkipLast<T>(IEnumerable<T> source, int count)
+        {
+            Queue<T> buffer = new Queue<T>(count + 1);
+
+            foreach (T x in source)
+            {
+                buffer.Enqueue(x);
+
+                if (buffer.Count == count + 1)
+                    yield return buffer.Dequeue();
+            }
+        }
     }
 }

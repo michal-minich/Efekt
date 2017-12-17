@@ -16,8 +16,8 @@ namespace Efekt
         string FilePath { get; set; }
         Element Parent { get; set; }
         bool IsBraced { get; set; }
+        Spec Spec { get; set; }
     }
-
 
     public interface Declr : Stm
     {
@@ -42,6 +42,7 @@ namespace Efekt
         public string FilePath { get; set; }
         public Element Parent { get; set; }
         public bool IsBraced { get; set; }
+        public Spec Spec { get; set; }
 
         public override string ToString()
         {
@@ -133,6 +134,7 @@ namespace Efekt
         public string FilePath { get; set; }
         public Element Parent { get; set; }
         public bool IsBraced { get; set; }
+        public Spec Spec { get; set; }
 
         public void InsertImport(Import i)
         {
@@ -196,18 +198,21 @@ namespace Efekt
     public sealed class Builtin : AElement, Value
     {
         [DebuggerStepThrough]
-        public Builtin(string name, Func<FnArguments, FnApply, Value> fn)
+        public Builtin(string name, List<Spec> signature, Func<FnArguments, FnApply, Value> fn)
         {
             C.Req(!string.IsNullOrWhiteSpace(name));
             C.Req(name.Trim().Length == name.Length);
+            C.AllNotNull(signature);
             C.Nn(fn);
 
             Name = name;
+            FnSpec = new FnSpec(signature);
             Fn = fn;
         }
 
         public string Name { get; }
         public Func<FnArguments, FnApply, Value> Fn { get; }
+        public FnSpec FnSpec { get; }
     }
 
     public class Invalid : AElement
@@ -236,7 +241,7 @@ namespace Efekt
         public string Name { get; }
         
         public TokenType TokenType { get; }
-        public Declr DeclareBy { get; }
+        public Declr DeclareBy { get; set; }
     }
 
 
@@ -622,5 +627,87 @@ namespace Efekt
         }
 
         public readonly QualifiedIdent QualifiedIdent;
+    }
+
+
+    public interface Spec : Element
+    {
+    }
+
+    public abstract class ASpec : AElement, Spec
+    {
+    }
+
+    public sealed class AnySpec : ASpec
+    {
+        public static AnySpec Instance { get; } = new AnySpec();
+    }
+
+
+    public sealed class AnyOfSpec : ASpec
+    {
+        public List<Spec> Possible { get; }
+
+        public AnyOfSpec(List<Spec> possible)
+        {
+            C.AllNotNull(possible);
+            Possible = possible;
+        }
+    }
+
+
+    public sealed class ArrSpec : ASpec
+    {
+    }
+
+
+    public sealed class BoolSpec : ASpec
+    {
+        public static BoolSpec Instance { get; } = new BoolSpec();
+    }
+
+
+    public sealed class CharSpec : ASpec
+    {
+        public static CharSpec Instance { get; } = new CharSpec();
+    }
+
+
+    public sealed class FnSpec : ASpec
+    {
+        public FnSpec(List<Spec> signature)
+        {
+            C.AllNotNull(signature);
+            Signature = signature;
+        }
+
+        public List<Spec> Signature { get; }
+
+        public List<Spec> ArgSpec
+        {
+            get { return Signature.SkipLast().ToList(); }
+        }
+
+        public Spec ReturnSpec
+        {
+            get { return Signature.Last(); }
+        }
+    }
+
+
+    public sealed class IntSpec : ASpec
+    {
+        public static IntSpec Instance { get; } = new IntSpec();
+    }
+
+
+    public sealed class ObjSpec : ASpec
+    {
+    }
+
+
+    public sealed class VoidSpec : ASpec
+    {
+        public static VoidSpec Instance { get; } = new VoidSpec();
     }
 }

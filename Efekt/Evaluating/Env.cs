@@ -4,7 +4,7 @@ using JetBrains.Annotations;
 
 namespace Efekt
 {
-    public sealed class EnvValue<T> where T : class, Element
+    public sealed class EnvValue<T> where T : class
     {
         public readonly T Value;
         public readonly bool IsLet;
@@ -17,7 +17,7 @@ namespace Efekt
     }
 
 
-    public sealed class Env<T> where T : class, Element
+    public sealed class Env<T> where T : class
     {
         private readonly Dictionary<string, EnvValue<T>> dict = new Dictionary<string, EnvValue<T>>();
         private readonly Dictionary<QualifiedIdent, Obj> imports = new Dictionary<QualifiedIdent, Obj>();
@@ -46,6 +46,17 @@ namespace Efekt
             var env = new Env<Value>(prog);
             foreach (var b in new Builtins(prog).Values)
                 env.dict.Add(b.Name, new EnvValue<Value>(b, true));
+            return env;
+        }
+
+
+        public static Env<Spec> CreateSpecRoot(Prog prog)
+        {
+            C.ReturnsNn();
+
+            var env = new Env<Spec>(prog);
+            foreach (var b in new Builtins(prog).Values)
+                env.dict.Add(b.Name, new EnvValue<Spec>(b.FnSpec, true));
             return env;
         }
 

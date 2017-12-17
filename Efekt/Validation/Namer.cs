@@ -35,8 +35,11 @@ namespace Efekt
                     name(a.Exp, env);
                     break;
                 case Ident i:
-                    var dBy = env.Get(i);
+                    var dBy = env.GetOrNull(i); // TODO use Get
+                    if (dBy == null)
+                        return;
                     dBy.UsedBy.Add(i);
+                    i.DeclareBy = dBy;
                     break;
                 case Return r:
                     name(r.Exp, env);
