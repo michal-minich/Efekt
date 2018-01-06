@@ -18,8 +18,6 @@ namespace Efekt
         private readonly RemarkList remarkList;
 
 
-        private readonly Stack<int> startLineIndex = new Stack<int>();
-        private readonly Stack<int> startColumnIndex = new Stack<int>();
 
         //private static readonly List<string> rightAssociativeOps = new List<string>
         //    {":", "="};
@@ -45,7 +43,11 @@ namespace Efekt
                 ["="] = 3
             };
 
-
+        
+        private readonly Stack<int> startLineIndex = new Stack<int>();
+        private readonly Stack<int> startColumnIndex = new Stack<int>();
+        private int endLineIndex;
+        private int endColumnIndex;
         private void markStart()
         {
             startLineIndex.Push(ti.LineIndex);
@@ -67,20 +69,17 @@ namespace Efekt
         }
 
 
-        private T post<T>(T element) where T : Element
+        private T post<T>(T e) where T : Element
         {
-            element.FilePath = ti.FilePath;
-            element.LineIndex = startLineIndex.Pop();
-            element.ColumnIndex = startColumnIndex.Pop();
-            element.LineIndexEnd = endLineIndex;//Ti.LineIndex;
-            element.ColumnIndexEnd = endColumnIndex;//Ti.ColumnIndex;
-            return element;
+            e.FilePath = ti.FilePath;
+            e.LineIndex = startLineIndex.Pop();
+            e.ColumnIndex = startColumnIndex.Pop();
+            e.LineIndexEnd = endLineIndex;
+            e.ColumnIndexEnd = endColumnIndex;
+            return e;
         }
+        
 
-
-
-        private int endLineIndex;
-        private int endColumnIndex;
         private void next()
         {
             endLineIndex = ti.LineIndex;

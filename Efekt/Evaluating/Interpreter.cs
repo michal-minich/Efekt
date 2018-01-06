@@ -266,7 +266,7 @@ namespace Efekt
                     var modImpEl = eval(imp.QualifiedIdent, env);
                     isImportContext = false;
                     var modImp = modImpEl.AsObj(imp, prog);
-                    env.AddImport(imp.QualifiedIdent, modImp);
+                    env.AddImport(imp.QualifiedIdent, modImp.Env);
                     return Void.Instance;
                 default:
                     throw new NotSupportedException();

@@ -535,6 +535,7 @@ namespace Efekt
         }
 
         public ClassBody Body { get; }
+        public string FullStaticName { get; }
     }
 
 
@@ -636,6 +637,15 @@ namespace Efekt
 
     public abstract class ASpec : AElement, Spec
     {
+        public override bool Equals(object obj)
+        {
+            return GetType().Name.Equals(obj);
+        }
+
+        public override int GetHashCode()
+        {
+            return GetType().Name.GetHashCode();
+        }
     }
 
     public sealed class AnySpec : ASpec
@@ -673,6 +683,12 @@ namespace Efekt
     }
 
 
+    public sealed class TextSpec : ASpec
+    {
+        public static TextSpec Instance { get; } = new TextSpec();
+    }
+
+
     public sealed class FnSpec : ASpec
     {
         public FnSpec(List<Spec> signature)
@@ -703,6 +719,33 @@ namespace Efekt
 
     public sealed class ObjSpec : ASpec
     {
+        public ObjSpec()
+        {
+            Members = new List<ObjSpecMember>();
+        }
+
+        public ObjSpec(List<ObjSpecMember> members)
+        {
+            C.AllNotNull(members);
+            Members = members;
+        }
+
+        public List<ObjSpecMember> Members { get; set; }
+    }
+
+
+    public sealed class ObjSpecMember
+    {
+        public ObjSpecMember(string name, Spec spec, bool isLet)
+        {
+            Name = name;
+            Spec = spec;
+            IsLet = isLet;
+        }
+
+        public string Name { get; set; }
+        public Spec Spec { get; set; }
+        public bool IsLet { get; set; }
     }
 
 

@@ -6,7 +6,7 @@ let start = fn {
       .forEach(fn c { c.printLine() })
 
     var a = 0
-    a = 'x'
+    //a = 'x'
     loop {
          var b = 1
          a = a + 1

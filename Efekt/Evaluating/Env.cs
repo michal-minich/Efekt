@@ -20,13 +20,14 @@ namespace Efekt
     public sealed class Env<T> where T : class
     {
         private readonly Dictionary<string, EnvValue<T>> dict = new Dictionary<string, EnvValue<T>>();
-        private readonly Dictionary<QualifiedIdent, Obj> imports = new Dictionary<QualifiedIdent, Obj>();
+        private readonly Dictionary<QualifiedIdent, Env<T>> imports = new Dictionary<QualifiedIdent, Env<T>>();
         [CanBeNull] private readonly Env<T> parent;
         private readonly Prog prog;
 
 
         private Env(Prog prog)
         {
+            C.Nn(prog);
             this.prog = prog;
             parent = null;
         }
@@ -34,6 +35,7 @@ namespace Efekt
 
         private Env(Prog prog, Env<T> parent)
         {
+            C.Nn(prog, parent);
             this.prog = prog;
             this.parent = parent;
         }
@@ -41,6 +43,7 @@ namespace Efekt
 
         public static Env<Value> CreateValueRoot(Prog prog)
         {
+            C.Nn(prog);
             C.ReturnsNn();
 
             var env = new Env<Value>(prog);
@@ -52,6 +55,7 @@ namespace Efekt
 
         public static Env<Spec> CreateSpecRoot(Prog prog)
         {
+            C.Nn(prog);
             C.ReturnsNn();
 
             var env = new Env<Spec>(prog);
@@ -63,6 +67,7 @@ namespace Efekt
 
         public static Env<Declr> CreateDeclrRoot(Prog prog)
         {
+            C.Nn(prog);
             C.ReturnsNn();
 
             var env = new Env<Declr>(prog);
@@ -76,6 +81,7 @@ namespace Efekt
 
         public static Env<T> Create(Prog prog, Env<T> parent)
         {
+            C.Nn(prog, parent);
             C.ReturnsNn();
 
             return new Env<T>(prog, parent);
@@ -83,6 +89,7 @@ namespace Efekt
 
         public T Get(Ident ident)
         {
+            C.Nn(ident);
             C.ReturnsNn();
 
             var v = GetOrNull(ident);
@@ -95,6 +102,7 @@ namespace Efekt
         [CanBeNull]
         public T GetDirectlyOrNull(Ident ident)
         {
+            C.Nn(ident);
             if (dict.TryGetValue(ident.Name, out var envValue))
                 return envValue.Value;
             return null;
@@ -104,6 +112,7 @@ namespace Efekt
         [CanBeNull]
         public T GetOrNull(Ident ident)
         {
+            C.Nn(ident);
             if (dict.TryGetValue(ident.Name, out var envValue))
                 return envValue.Value;
             if (parent != null)
@@ -115,6 +124,7 @@ namespace Efekt
         [CanBeNull]
         public T GetWithImportOrNull(Ident ident)
         {
+            C.Nn(ident);
             var candidates = new Dictionary<QualifiedIdent, T>();
 
             var local = GetOrNull(ident);
@@ -136,7 +146,7 @@ namespace Efekt
 
             foreach (var i in imports)
             {
-                var x = i.Value.Env.GetDirectlyOrNull(ident);
+                var x = i.Value.GetDirectlyOrNull(ident);
                 if (x != null && !candidates.Any(c => c.Key.ToDebugString() == i.Key.ToDebugString()))
                     candidates.Add(i.Key, (T)x);
             }
@@ -147,6 +157,7 @@ namespace Efekt
 
         public T GetWithImport(Ident ident)
         {
+            C.Nn(ident);
             C.ReturnsNn();
 
             var v  = GetWithImportOrNull(ident);
@@ -189,7 +200,7 @@ namespace Efekt
         }
 
 
-        public void AddImport(QualifiedIdent qi, Obj module)
+        public void AddImport(QualifiedIdent qi, Env<T> module)
         {
             C.Nn(qi, module);
 

@@ -368,6 +368,13 @@ namespace Efekt
         }
 
 
+        public void ExpectedDifferentType(Element subject, Spec expected, Spec actual)
+        {
+            w(subject,
+                "Expected type " + expected.GetType().Name + " but the expression is of type " + actual.GetType().Name);
+        }
+
+
         [Pure]
         // TODO move to structure validation eventually
         public EfektException VariableIsNotDeclared(Ident ident)
@@ -456,9 +463,24 @@ namespace Efekt
         }
 
 
-        public Exception CannotFindStartFunction()
+        [Pure]
+        public EfektException CannotFindStartFunction()
         {
             return fail("Function named 'start' is needed. It can be in any file");
+        }
+
+
+        [Pure]
+        public EfektException VariableIsNotYetInitializied(Ident ident)
+        {
+            return fail(ident, "Variable is not yet initialized and cannot be read");
+        }
+
+
+        [Pure]
+        public EfektException VariableMightNotYetBeInitialized(Ident ident)
+        {
+            return fail(ident, "Variable might net yet be initialized and reading it might be unvanted");
         }
     }
 }

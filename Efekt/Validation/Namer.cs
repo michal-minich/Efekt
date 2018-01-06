@@ -35,9 +35,11 @@ namespace Efekt
                     name(a.Exp, env);
                     break;
                 case Ident i:
-                    var dBy = env.GetOrNull(i); // TODO use Get
-                    if (dBy == null)
-                        return;
+                    Declr dBy;
+                    if (isImportContext)
+                        dBy = env.Get(i);
+                    else
+                        dBy = env.GetWithImport(i);
                     dBy.UsedBy.Add(i);
                     i.DeclareBy = dBy;
                     break;
@@ -101,12 +103,13 @@ namespace Efekt
                         name(att.AtLast, env);
                     break;
                 case Import imp:
-                    // TODO
+                    if (imp.QualifiedIdent is Ident i2){
                     isImportContext = true;
-                    /*var modImpEl = *///name(imp.QualifiedIdent, env);
+                    name(i2, env);
                     isImportContext = false;
-                    //var modImp = modImpEl.AsObj(imp, prog);
-                    //env.AddImport(imp.QualifiedIdent, modImp);
+                        //var modImp = modImpEl.AsObj(imp, prog);
+                        //env.AddImport(imp.QualifiedIdent, i2);
+                    }
                     break;
                 default:
                     throw new NotSupportedException();
