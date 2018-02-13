@@ -1,5 +1,10 @@
 ﻿
 let start = fn {
+
+    var ax = 1
+    //typeof(not)
+    printLine("")
+
     let arr = [1, 2, 3, 4, 5]
     arrayIterator(arr)
       .where(fn c {c > 3 })
@@ -10,7 +15,7 @@ let start = fn {
     loop {
          var b = 1
          a = a + 1
-         print(a)
+         printLine(a)
          if a == 1 then
              break
     }

@@ -40,7 +40,7 @@ namespace Efekt
             var ts = new Tokenizer().Tokenize(codeText);
             var e = new Parser(prog.RemarkList).Parse(asIfFilePath, ts);
             prog.RootElement = transform(e);
-            new Namer(prog).Name();
+            //new Namer(prog).Name();
             new Specer(prog).Spec();
             new StructureValidator(prog).Validate();
             return prog;
@@ -91,8 +91,8 @@ namespace Efekt
             prog.RootElement = new FnApply(
                 new Fn(new FnParameters(), new Sequence(seqItems)),
                 new FnArguments());
-            new Namer(prog).Name();
-            new Specer(prog).Spec();
+            //new Namer(prog).Name();
+            //new Specer(prog).Spec();
             new StructureValidator(prog).Validate();
             return prog;
         }

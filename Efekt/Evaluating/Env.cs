@@ -60,7 +60,7 @@ namespace Efekt
 
             var env = new Env<Spec>(prog);
             foreach (var b in new Builtins(prog).Values)
-                env.dict.Add(b.Name, new EnvValue<Spec>(b.FnSpec, true));
+                env.dict.Add(b.Name, new EnvValue<Spec>(b.Spec, true));
             return env;
         }
 
@@ -94,27 +94,27 @@ namespace Efekt
 
             var v = GetOrNull(ident);
             if (v != null)
-                return v;
+                return v.Value;
             throw prog.RemarkList.VariableIsNotDeclared(ident);
         }
 
 
         [CanBeNull]
-        public T GetDirectlyOrNull(Ident ident)
+        public EnvValue<T> GetDirectlyOrNull(Ident ident)
         {
             C.Nn(ident);
             if (dict.TryGetValue(ident.Name, out var envValue))
-                return envValue.Value;
+                return envValue;
             return null;
         }
 
 
         [CanBeNull]
-        public T GetOrNull(Ident ident)
+        private EnvValue<T> GetOrNull(Ident ident)
         {
             C.Nn(ident);
             if (dict.TryGetValue(ident.Name, out var envValue))
-                return envValue.Value;
+                return envValue;
             if (parent != null)
                 return parent.GetOrNull(ident);
             return null;
@@ -122,10 +122,10 @@ namespace Efekt
 
 
         [CanBeNull]
-        public T GetWithImportOrNull(Ident ident)
+        public EnvValue<T> GetWithImportOrNull(Ident ident)
         {
             C.Nn(ident);
-            var candidates = new Dictionary<QualifiedIdent, T>();
+            var candidates = new Dictionary<QualifiedIdent, EnvValue<T>>();
 
             var local = GetOrNull(ident);
             if (local != null)
@@ -140,7 +140,7 @@ namespace Efekt
             throw prog.RemarkList.MoreVariableCandidates(candidates, ident);
         }
 
-        private void GetFromImports(Ident ident, Dictionary<QualifiedIdent, T> candidates)
+        private void GetFromImports(Ident ident, Dictionary<QualifiedIdent, EnvValue<T>> candidates)
         {
             C.Nn(ident);
 
@@ -148,7 +148,7 @@ namespace Efekt
             {
                 var x = i.Value.GetDirectlyOrNull(ident);
                 if (x != null && !candidates.Any(c => c.Key.ToDebugString() == i.Key.ToDebugString()))
-                    candidates.Add(i.Key, (T)x);
+                    candidates.Add(i.Key, x);
             }
             if (parent != null)
                 parent.GetFromImports(ident, candidates);
@@ -163,7 +163,7 @@ namespace Efekt
             var v  = GetWithImportOrNull(ident);
             if (v == null)
                 throw prog.RemarkList.VariableIsNotDeclared(ident);
-            return v;
+            return v.Value;
         }
 
 
@@ -187,9 +187,14 @@ namespace Efekt
                 if (e.dict.ContainsKey(ident.Name))
                 {
                     var old = e.dict[ident.Name];
-                    if (old.Value != Void.Instance && old.Value.GetType() != value.GetType())
+                    if (old.Value != Void.Instance &&
+                        old.Value != UnknownSpec.Instance &&
+                        old.Value.GetType().Name != "AnySpec" &&
+                        //old.Value != AnySpec.Instance && 
+                        old.Value.GetType() != value.GetType())
                         prog.RemarkList.AssigningDifferentType(ident, old.Value, value);
-                    if (old.IsLet)
+
+                    if (!(value is Spec) && old.IsLet)
                         prog.RemarkList.ReasigingLet(ident);
                     e.dict[ident.Name] = new EnvValue<T>(value, old.IsLet);
                     return;

@@ -80,6 +80,12 @@ namespace Efekt
                     ret = eval(r.Exp, env);
                     return Void.Instance;
                 case FnApply fna:
+                    if (fna.Fn is Ident fnI && fnI.Name == "typeof")
+                    {
+                        var ofS = fna.Arguments[0].Spec.ToString();
+                        prog.OutputWriter.Write(ofS);
+                        return Void.Instance;
+                    }
                     Exp fn;
                     if (fna.Fn is MemberAccess extMemAcc)
                     {
@@ -89,14 +95,14 @@ namespace Efekt
                             var v = o2.Env.GetDirectlyOrNull(extMemAcc.Ident);
                             if (v != null)
                             {
-                                fn = v;
+                                fn = v.Value;
                                 goto noExtMethodApply;
                             }
                         }
                         var envV = env.GetWithImportOrNull(extMemAcc.Ident);
                         if (envV != null)
                         {
-                            var extFn = envV.AsFn(fna, prog);
+                            var extFn = envV.Value.AsFn(fna, prog);
                             if (extFn.Parameters.Count == 0)
                                 throw prog.RemarkList.ExtensionFuncHasNoParameters(extFn, extMemAcc);
                             var newArgs = new FnArguments(new[] {exp2}.Concat(fna.Arguments).ToList());
@@ -182,12 +188,18 @@ namespace Efekt
                 case When w:
                     var test = eval(w.Test, env);
                     var testB = test.AsBool(w.Test, prog);
-                    if (testB.Value) // FIX - return void if otherwise is missing - or better fail when used as exp
-                        return eval(w.Then, Env<Value>.Create(prog, env));
-                    else if (w.Otherwise != null)
-                        return eval(w.Otherwise, Env<Value>.Create(prog, env));
-                    else
+                    if (w.Otherwise == null)
+                    {
+                        if (testB.Value)
+                            eval(w.Then, Env<Value>.Create(prog, env));
                         return Void.Instance;
+                    }
+                    else
+                    {
+                        if (testB.Value)
+                            return eval(w.Then, Env<Value>.Create(prog, env));
+                        return eval(w.Otherwise, Env<Value>.Create(prog, env));
+                    }
                 case Loop l:
                     var loopEnv = Env<Value>.Create(prog, env);
                     while (true)
@@ -250,10 +262,12 @@ namespace Efekt
                     }
                     catch (EfektProgramException ex)
                     {
-                        var grabEnv = Env<Value>.Create(prog, env);
-                        grabEnv.Declare(new Ident("exception", TokenType.Ident), ex.Value, true);
                         if (att.Grab != null)
+                        {
+                            var grabEnv = Env<Value>.Create(prog, env);
+                            grabEnv.Declare(new Ident("exception", TokenType.Ident), ex.Value, true);
                             eval(att.Grab, grabEnv);
+                        }
                         return Void.Instance;
                     }
                     finally

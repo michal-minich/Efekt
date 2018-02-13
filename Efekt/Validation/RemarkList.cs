@@ -428,9 +428,18 @@ namespace Efekt
         // TODO move to type validation eventually
         public void AssigningDifferentType<T>(Ident ident, T old, T @new)
         {
-            w(ident, "Variable '" + ident.Name + "' of type '"
-                     + old.GetType().Name + "' is being assigned value of type '"
-                     + @new.GetType().Name + "'");
+            if (old is Spec)
+            {
+                w(ident, "Variable '" + ident.Name + "' of type '"
+                         + old + "' is being assigned value of type '"
+                         + @new + "'");
+            }
+            else
+            {
+                w(ident, "Variable '" + ident.Name + "' of type '"
+                         + old.GetType().Name + "' is being assigned value of type '"
+                         + @new.GetType().Name + "'");
+            }
         }
 
 

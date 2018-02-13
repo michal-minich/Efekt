@@ -71,7 +71,7 @@ namespace Efekt
                     }),
 
                 new Builtin("at",
-                    new List<Spec> {new ArrSpec(), IntSpec.Instance, AnySpec.Instance},
+                    new List<Spec> {new ArrSpec(AnySpec.Instance), IntSpec.Instance, AnySpec.Instance},
                     (@params, fna) =>
                     {
                         var items = @params[0].AsArr(fna.Arguments[0], prog).Values;
@@ -81,7 +81,7 @@ namespace Efekt
                     }),
 
                 new Builtin("setAt",
-                    new List<Spec> {new ArrSpec(), IntSpec.Instance, AnySpec.Instance, VoidSpec.Instance},
+                    new List<Spec> {new ArrSpec(AnySpec.Instance), IntSpec.Instance, AnySpec.Instance, VoidSpec.Instance},
                     (@params, fna) =>
                     {
                         var items = @params[0].AsArr(fna.Arguments[0], prog).Values;
@@ -92,7 +92,7 @@ namespace Efekt
                     }),
 
                 new Builtin("count",
-                    new List<Spec> {new ArrSpec(), IntSpec.Instance},
+                    new List<Spec> {new ArrSpec(AnySpec.Instance), IntSpec.Instance},
                     (@params, fna) =>
                     {
                         var items = @params[0].AsArr(fna.Arguments[0], prog).Values;

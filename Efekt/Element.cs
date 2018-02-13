@@ -29,6 +29,8 @@ namespace Efekt
 
     public abstract class AElement : Element
     {
+        private Spec _spec;
+
         protected AElement()
         {
             LineIndex = -1;
@@ -42,7 +44,16 @@ namespace Efekt
         public string FilePath { get; set; }
         public Element Parent { get; set; }
         public bool IsBraced { get; set; }
-        public Spec Spec { get; set; }
+
+        public Spec Spec
+        {
+            get => _spec;
+            set
+            {
+                C.Req(Spec == null);
+                _spec = value;
+            }
+        }
 
         public override string ToString()
         {
@@ -116,7 +127,7 @@ namespace Efekt
     }
 
 
-    public sealed class Sequence : ElementList<SequenceItem>, SequenceItem
+    public sealed class Sequence : ElementList<SequenceItem>, Stm, SequenceItem
     {
         [DebuggerStepThrough]
         public Sequence(List<SequenceItem> items) : base(items)
@@ -125,6 +136,8 @@ namespace Efekt
             FilePath = "runtime.ef";
             foreach (var i in items)
                 i.Parent = this;
+
+            Spec = VoidSpec.Instance;
         }
 
         public int LineIndex { get; set; }
@@ -206,13 +219,12 @@ namespace Efekt
             C.Nn(fn);
 
             Name = name;
-            FnSpec = new FnSpec(signature);
+            Spec = new FnSpec(signature);
             Fn = fn;
         }
 
         public string Name { get; }
         public Func<FnArguments, FnApply, Value> Fn { get; }
-        public FnSpec FnSpec { get; }
     }
 
     public class Invalid : AElement
@@ -258,6 +270,8 @@ namespace Efekt
 
             ident.Parent = this;
             exp.Parent = this;
+
+            Spec = VoidSpec.Instance;
         }
 
         public Ident Ident { get; }
@@ -279,6 +293,8 @@ namespace Efekt
 
             ident.Parent = this;
             exp.Parent = this;
+
+            Spec = VoidSpec.Instance;
         }
 
         public Ident Ident { get; }
@@ -304,7 +320,7 @@ namespace Efekt
     }
 
 
-    public sealed class Assign : AElement, SequenceItem
+    public sealed class Assign : AElement, Stm, SequenceItem
     {
         [DebuggerStepThrough]
         public Assign(AssignTarget to, Exp exp)
@@ -316,6 +332,8 @@ namespace Efekt
 
             to.Parent = this;
             exp.Parent = this;
+
+            Spec = VoidSpec.Instance;
         }
 
         public AssignTarget To { get; }
@@ -357,6 +375,8 @@ namespace Efekt
             C.Nn(body);
             Body = body;
             body.Parent = this;
+
+            Spec = VoidSpec.Instance;
         }
 
         public Sequence Body { get; }
@@ -371,6 +391,8 @@ namespace Efekt
             C.Nn(exp);
             Exp = exp;
             exp.Parent = this;
+
+            Spec = VoidSpec.Instance;
         }
 
         public Exp Exp { get; }
@@ -382,6 +404,7 @@ namespace Efekt
         [DebuggerStepThrough]
         public Break()
         {
+            Spec = VoidSpec.Instance;
         }
     }
 
@@ -391,6 +414,7 @@ namespace Efekt
         [DebuggerStepThrough]
         public Continue()
         {
+            Spec = VoidSpec.Instance;
         }
     }
 
@@ -428,6 +452,7 @@ namespace Efekt
         public Int(int value)
         {
             Value = value;
+            Spec = IntSpec.Instance;
         }
 
         public int Value { get; }
@@ -440,6 +465,7 @@ namespace Efekt
         public Char(char value)
         {
             Value = value;
+            Spec = CharSpec.Instance;
         }
 
         public char Value { get; }
@@ -453,6 +479,7 @@ namespace Efekt
             : base(new Values(value.Select(v => new Char(v) as Value).ToList()))
         {
             Value = value;
+            Spec = TextSpec.Instance;
         }
 
         public string Value { get; }
@@ -465,6 +492,7 @@ namespace Efekt
         public Bool(bool value)
         {
             Value = value;
+            Spec = BoolSpec.Instance;
         }
 
         public bool Value { get; }
@@ -476,6 +504,7 @@ namespace Efekt
         [DebuggerStepThrough]
         private Void()
         {
+            Spec = VoidSpec.Instance;
         }
 
         public static Void Instance { get; } = new Void();
@@ -586,6 +615,8 @@ namespace Efekt
             C.Nn(exception);
             Exception = exception;
             exception.Parent = this;
+
+            Spec = VoidSpec.Instance;
         }
 
         public Exp Exception { get; }
@@ -609,6 +640,8 @@ namespace Efekt
                 grab.Parent = this;
             if (atLast != null)
                 atLast.Parent = this;
+
+            Spec = VoidSpec.Instance;
         }
 
 
@@ -625,9 +658,25 @@ namespace Efekt
         {
             C.Nn(qualifiedIdent);
             QualifiedIdent = qualifiedIdent;
+
+            Spec = VoidSpec.Instance;
         }
 
         public readonly QualifiedIdent QualifiedIdent;
+    }
+
+
+    public sealed class SpecComparer : IEqualityComparer<Spec>
+    {
+        public bool Equals(Spec x, Spec y)
+        {
+            return x.Equals(y);
+        }
+
+        public int GetHashCode(Spec obj)
+        {
+            return obj.GetHashCode();
+        }
     }
 
 
@@ -635,18 +684,31 @@ namespace Efekt
     {
     }
 
+
     public abstract class ASpec : AElement, Spec
     {
         public override bool Equals(object obj)
         {
-            return GetType().Name.Equals(obj);
+            return ToString().Equals(obj.ToString());
         }
 
         public override int GetHashCode()
         {
-            return GetType().Name.GetHashCode();
+            return ToString().GetHashCode();
+        }
+
+        public override string ToString()
+        {
+            var n = GetType().Name;
+            return n.Substring(0, n.Length - 4);
         }
     }
+
+    public sealed class UnknownSpec : ASpec
+    {
+        public static UnknownSpec Instance { get; } = new UnknownSpec();
+    }
+
 
     public sealed class AnySpec : ASpec
     {
@@ -663,11 +725,22 @@ namespace Efekt
             C.AllNotNull(possible);
             Possible = possible;
         }
+
+        public override string ToString()
+        {
+            return "AnyOf(" + String.Join(", ", Possible.Select(s => s.ToString())) + ")";
+        }
     }
 
 
     public sealed class ArrSpec : ASpec
     {
+        public ArrSpec(Spec itemSpec)
+        {
+            ItemSpec = itemSpec;
+        }
+
+        public Spec ItemSpec { get; }
     }
 
 
@@ -699,7 +772,7 @@ namespace Efekt
 
         public List<Spec> Signature { get; }
 
-        public List<Spec> ArgSpec
+        public List<Spec> ParameterSpec
         {
             get { return Signature.SkipLast().ToList(); }
         }
@@ -707,6 +780,11 @@ namespace Efekt
         public Spec ReturnSpec
         {
             get { return Signature.Last(); }
+        }
+
+        public override string ToString()
+        {
+            return "Fn(" + String.Join(", ", ParameterSpec.Select(s => s.ToString())) + ") -> " + ReturnSpec;
         }
     }
 
@@ -724,13 +802,17 @@ namespace Efekt
             Members = new List<ObjSpecMember>();
         }
 
-        public ObjSpec(List<ObjSpecMember> members)
+        public ObjSpec(List<ObjSpecMember> members, Env<Spec> env)
         {
             C.AllNotNull(members);
+            C.Nn(env);
             Members = members;
+            Env = env;
         }
 
-        public List<ObjSpecMember> Members { get; set; }
+        public List<ObjSpecMember> Members { get; }
+
+        public Env<Spec> Env { get; }
     }
 
 

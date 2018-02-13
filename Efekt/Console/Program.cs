@@ -8,12 +8,13 @@ namespace Efekt
         {
             try
             {
-                //Tests.Tests.RunAllTests();
-
+                Tests.Tests.RunAllTests();
+               
                 if (args.Length == 0)
                 {
                     Console.WriteLine("Efekt interpreter. pass file(s) and folder(s) arguments to evaluate.");
-                    return 1;
+
+                    Console.Read(); return 1;
                 }
 
                 var cw = new ConsoleWriter();
@@ -21,6 +22,7 @@ namespace Efekt
                 var res = prog.Run();
                 if (res != Void.Instance)
                     prog.OutputPrinter.Write(res);
+                
                 return 0;
             }
             catch (EfektProgramException)

@@ -37,7 +37,7 @@ namespace Efekt
         }
 
 
-        public static B As<B>(this Element element, Element subject, Prog prog) where B : class, Exp
+        public static B As<B>(this Element element, Element subject, Prog prog) where B : class, Element
         {
             C.Nn(element, subject, prog);
             C.ReturnsNn();

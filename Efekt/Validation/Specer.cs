@@ -7,13 +7,14 @@ namespace Efekt
 {
     public sealed class Specer
     {
-        [CanBeNull] private Spec wantsRead;
-        private List<Spec> rets;
-        private bool isBreak;
-        private bool isContinue;
-        private Prog prog;
+        [CanBeNull] private Spec ret;
+        private readonly Prog prog;
         private bool isImportContext;
+        private Stack<StackItem> callStack { get; set; }
 
+        public IReadOnlyList<StackItem> CallStack => callStack?.ToList();
+
+        
         public Specer(Prog prog)
         {
             this.prog = prog;
@@ -26,115 +27,62 @@ namespace Efekt
         }
 
 
-        private Spec set(Element e, [NotNull] Spec spec)
-        {
-            C.Nn(e, spec);
-            C.Req(e.Spec == null);
-            C.Ens(e.Spec != null);
-            e.Spec = spec;
-            return spec;
-        }
-
-
         [Pure]
-        private Spec declareAs(Ident i, [NotNull] Spec spec)
+        private static Spec common([NotNull] params Spec[] specs)
         {
-            C.Nn(i, spec);
-            C.Ens(i.Spec != null);
-
-            i.Spec = addTypeUsage(i.Spec, spec);
-            return i.Spec;
-        }
-
-
-        [Pure]
-        private Spec readAs(Ident i, [NotNull] Spec spec)
-        {
-            C.Nn(i, spec);
-            C.Ens(i.Spec != null);
-
-            if (spec == VoidSpec.Instance)
-                throw prog.RemarkList.VariableIsNotYetInitializied(i);
-
-            if (i.Spec is AnyOfSpec anyOf && anyOf.Possible.Contains(VoidSpec.Instance))
-                throw prog.RemarkList.VariableMightNotYetBeInitialized(i);
-
-            i.Spec = addTypeUsage(i.Spec, spec);
-            return i.Spec;
-        }
-
-
-        [Pure]
-        private Spec writeAs(Ident i, [NotNull] Spec spec)
-        {
-            C.Nn(i, spec);
-            //C.Req(spec != VoidSpec.Instance);
-            C.Ens(i.Spec != null);
-
-            if (spec == VoidSpec.Instance)
-                i.Spec = null;
-
-            if (i.Spec == AnySpec.Instance)
-                i.Spec = null;
-
-            i.Spec = addTypeUsage(i.Spec, spec);
-            return i.Spec;
-        }
-
-
-        [Pure]
-        private static Spec addTypeUsage([CanBeNull] Spec current, Spec toAdd)
-        {
-            C.Nn(toAdd);
+            C.Nn(specs);
             C.ReturnsNn();
-
-            if (current == null)
-                return toAdd;
-
-            if (current == toAdd) // todo value comparison
-                return current;
-
-            if (current is AnyOfSpec anyOf)
-            {
-                C.Assume(!anyOf.Possible.Contains(AnySpec.Instance));
-                foreach (var ao in anyOf.Possible)
-                    if (ao == toAdd) // todo value comparison
-                        return current;
-                anyOf.Possible.Add(toAdd);
-            }
-            else
-            {
-                current = new AnyOfSpec(new List<Spec> {current, toAdd});
-            }
-
-            return current;
-        }
-
-
-        [Pure]
-        private static bool isAssignable([CanBeNull] Spec current, Spec toBeAssigned)
-        {
-            C.Nn(current, toBeAssigned);
             
-            if (current == AnySpec.Instance || current == toBeAssigned) // todo value comparison
-                return true;
+            var possible = new List<Spec>();
 
-            if (current is AnyOfSpec anyOf)
+            foreach (var s in specs)
             {
-                C.Assume(!anyOf.Possible.Contains(AnySpec.Instance));
-                if (anyOf.Possible.Contains(toBeAssigned))
-                    return true;
+                if (s == null || s is AnySpec || s is UnknownSpec)
+                    continue;
+                if (s is AnyOfSpec anyOf)
+                    possible.AddRange(anyOf.Possible);
+                else
+                    possible.Add(s);
             }
 
-            return false;
+            C.Assume(!possible.Contains(AnySpec.Instance));
+
+            var c = possible.Distinct(new SpecComparer()).ToList();
+
+            if (c.Count == 0)
+                return AnySpec.Instance;
+
+            if (c.Count == 1)
+                return c[0];
+            else
+                return new AnyOfSpec(c);
         }
 
 
-        private static Spec simplify(List<Spec> specs)
+        private static void update(Ident ident, Spec spec, Env<Spec> env)
         {
-            Spec s = null;
-            foreach (var ss in specs)
-                s = addTypeUsage(s, ss);
+            var oldS = env.Get(ident);
+            env.Set(ident, common(oldS, spec));
+        }
+
+
+        private void read(Element e)
+        {
+            if (wantsRead == null)
+                return;
+            e.Spec = common(e.Spec, wantsRead);
+            wantsRead = null;
+        }
+
+
+        [CanBeNull]
+        private Spec wantsRead;
+        private Spec spec(Element e, Env<Spec> env, Spec specToBeRead)
+        {
+            if (e is Ident)
+                wantsRead = specToBeRead;
+            var s = spec(e, env);
+            wantsRead = null;
             return s;
         }
 
@@ -142,144 +90,206 @@ namespace Efekt
         private Spec spec(Element e, Env<Spec> env)
         {
             C.Nn(e, env);
-            C.Req(e.Spec == null);
+            //C.Req(e.Spec == null);
             C.Ens(e.Spec != null);
             
             switch (e)
             {
-                case Param p:
-                    set(p, AnySpec.Instance);
-                    declareAs(p.Ident, AnySpec.Instance);
-                    env.Declare(p.Ident, AnySpec.Instance, true);
-                    return p.Spec;
                 case Declr d:
-                    var s = spec(d.Exp, env);
-                    set(d, AnySpec.Instance);
-                    declareAs(d.Ident, s);
-                    env.Declare(d.Ident, s, !(d is Var));
-                    return s;
+                    spec(d.Exp, env);
+                    d.Ident.Spec = d.Exp.Spec;
+                    env.Declare(d.Ident, d.Ident.Spec, d is Let);
+                    return d.Spec;
                 case Assign a:
+                    spec(a.Exp, env);
                     switch (a.To)
                     {
                         case Ident ident:
-                            var expSpec = spec(a.Exp, env);
-                            writeAs(ident, expSpec);
-                            ident.DeclareBy.Spec = ident.Spec;
-                            env.Set(ident, ident.Spec);
+                            update(ident, a.Exp.Spec, env);
                             break;
                         case MemberAccess ma:
-                            // TODO
+                            var obj = spec(ma.Exp, env);
+                            var o2 = obj.As<ObjSpec>(ma, prog);
+                            update(ma.Ident, a.Exp.Spec, o2.Env);
                             break;
                         default:
                             throw new NotSupportedException();
                     }
-                    return set(a, VoidSpec.Instance);
+                    return a.Spec;
                 case Ident i:
-                    //C.Assume(i.DeclareBy != null);
-                    set(i, env.Get(i));
-                    if (wantsRead != null)
-                    {
-                        writeAs(i, wantsRead);
-                        wantsRead = null;
-                    }
-                    if (i.DeclareBy == null || i.DeclareBy.Spec == null)
-                        return i.Spec;
-                    if (!isAssignable(i.DeclareBy.Spec, i.Spec))
-                        prog.RemarkList.ExpectedDifferentType(i, i.DeclareBy.Spec, i.Spec);
-                    return i.Spec;
+                    read(i);
+                    Spec s;
+                    if (isImportContext)
+                        s = env.Get(i);
+                    else
+                        s = env.GetWithImport(i);
+                    var c = common(i.Spec, s);
+                    env.Set(i, c);
+                    if (i.Spec == null)
+                        i.Spec = c;
+                    return c;
                 case Return r:
-                    rets.AddValue(spec(r.Exp, env));
-                    return VoidSpec.Instance;
+                    var retS = spec(r.Exp, env);
+                    ret = common(ret, retS);
+                    return r.Spec;
                 case FnApply fna:
-                    spec(fna.Fn, env);
-                    foreach (var a in fna.Arguments)
-                        spec(a, env);
-                    return set(fna, VoidSpec.Instance); // TODO
+                    if (!(fna.Fn is Ident fnI) || fnI.Name != "typeof")
+                        spec(fna.Fn, env);
+                    var fnS = fna.Fn.Spec as FnSpec;
+                    var ix = 0;
+                    foreach (var aa in fna.Arguments) // todo validate macing  count of params vs args
+                    {
+                        if (fnS != null)
+                            spec(aa, env, fnS.ParameterSpec[ix++]);
+                        else
+                            spec(aa, env);
+                    }
+
+                    if (fnS != null)
+                        fna.Spec = fnS.ReturnSpec;
+                    else
+                        fna.Spec = UnknownSpec.Instance;
+                    return fna.Spec;
                 case Fn f:
-                    rets = new List<Spec>();
-                    var fnParamsEnv = Env<Spec>.Create(prog, env);
-                    var sig = new List<Spec>();
+                    var paramsEnv = Env<Spec>.Create(prog, env);
                     foreach (var p in f.Parameters)
-                        spec(p, fnParamsEnv);
-                    var fnBodyEnv = Env<Spec>.Create(prog, fnParamsEnv);
-                    spec(f.Sequence, fnBodyEnv);
-                    C.Assume(rets != null && rets.Count >= 1);
-                    foreach (var p in f.Parameters)
-                        sig.AddValue(p.Ident.DeclareBy.Spec);
-                    var sret = simplify(rets);
-                    sig.AddValue(sret);
-                    return set(f, new FnSpec(sig)); // TODO
+                    {
+                        p.Ident.Spec = UnknownSpec.Instance;
+                        paramsEnv.Declare(p.Ident, p.Ident.Spec, true);
+                    }
+
+                    var fnEnv = Env<Spec>.Create(prog, paramsEnv);
+                    if (f.Sequence.Count == 1)
+                    {
+                        var r = evalSequenceItem(f.Sequence[0], fnEnv);
+                        if (ret == null)
+                            ret = r;
+                        var tmp = ret;
+                        ret = null;
+                        //callStack.Pop();
+                        f.Spec = new FnSpec(f.Parameters.Select(p => fnEnv.Get(p.Ident)).Append(tmp).ToList());
+                        return f.Spec;
+                    }
+                    foreach (var fnItem in f.Sequence)
+                    {
+                        evalSequenceItemFull(fnItem, fnEnv);
+                    }
+
+                    f.Spec = new FnSpec(f.Parameters.Select(p => fnEnv.Get(p.Ident)).Append(ret ?? VoidSpec.Instance).ToList());
+                    return f.Spec;
                 case When w:
-                    wantsRead = BoolSpec.Instance;
-                    var test = spec(w.Test, env);
-                    if (test != BoolSpec.Instance)
-                        prog.RemarkList.ExpectedDifferentType(w.Test, BoolSpec.Instance, w.Test.Spec);
-                    var th = spec(w.Then, env);
-                    set(w, VoidSpec.Instance);
+                    var test = spec(w.Test, env, BoolSpec.Instance);
+                    //var _ = test.As<BoolSpec>(w.Test, prog); // todo
+                    var specT = spec(w.Then, Env<Spec>.Create(prog, env));
                     if (w.Otherwise == null)
                     {
-                        return th;
+                        w.Spec = VoidSpec.Instance;
+                        return w.Spec;
                     }
                     else
                     {
-                        var os = spec(w.Otherwise, env);
-                        if (th == os) // TODO value coparison
-                            return th;
-                        return new AnyOfSpec(new List<Spec> {th, os});
+                        var specO = spec(w.Otherwise, Env<Spec>.Create(prog, env));
+                        w.Spec = common(specT, specO);
+                        return w.Spec;
                     }
                 case Loop l:
-                    spec(l.Body, env);
-                    return set(l, VoidSpec.Instance); // TODO
+                    var loopEnv = Env<Spec>.Create(prog, env);
+                    foreach (var be in l.Body)
+                    {
+                        evalSequenceItemFull(be, loopEnv);
+                    }
+                    return VoidSpec.Instance;
                 case Break br:
-                    return set(br, VoidSpec.Instance);
+                    return br.Spec;
                 case Continue ct:
-                    return set(ct, VoidSpec.Instance);
+                    return ct.Spec;
                 case ArrConstructor ae:
-                    return set(ae, new ArrSpec()); // TODO
+                    var items = ae.Arguments.Select(a => spec(a, env)).ToArray();
+                    ae.Spec = new ArrSpec(common(items));
+                    return ae.Spec;
                 case MemberAccess ma:
-                    return set(ma, VoidSpec.Instance); // TODO
+                    var exp = spec(ma.Exp, env);
+                    //var o = exp.As<ObjSpec>(ma, prog);
+                    if (exp is ObjSpec o)
+                        ma.Spec = o.Env.Get(ma.Ident);
+                    else
+                        ma.Spec = UnknownSpec.Instance;
+                    return ma.Spec;
                 case New n:
                     var objEnv = Env<Spec>.Create(prog, env);
+                    var members = new List<ObjSpecMember>();
                     foreach (var v in n.Body)
+                    {
                         spec(v, objEnv);
-                    return set(n, new ObjSpec()); // TODO
-                case Bool b:
-                    return set(b, BoolSpec.Instance);
-                case Builtin bu:
-                    return set(bu, bu.FnSpec); // TODO
-                case Char ch:
-                    return set(ch, CharSpec.Instance);
-                case Text t:
-                    return set(t, TextSpec.Instance);
-                case Int i:
-                    return set(i, IntSpec.Instance);
-                case Void v:
-                    return set(v, VoidSpec.Instance);
+                        if (v is Declr d)
+                        {
+                            members.Add(new ObjSpecMember(d.Ident.Name, d.Spec, d is Let));
+                        }
+                    }
+                    n.Spec = new ObjSpec(members, objEnv);
+                    return n.Spec;
+                case Value v:
+                    return v.Spec;
                 case Sequence seq:
                     var scopeEnv = Env<Spec>.Create(prog, env);
                     if (seq.Count == 1)
+                        return spec(seq.First(), scopeEnv);
+                    foreach (var item in seq)
                     {
-                        rets.AddValue(spec(seq.First(), scopeEnv));
-                        return set(seq, VoidSpec.Instance);
+                        evalSequenceItemFull(item, scopeEnv);
                     }
-                    foreach (var si in seq)
-                        spec(si, scopeEnv);
-                    return set(seq, VoidSpec.Instance);
+                    return seq.Spec;
                 case Toss ts:
                     spec(ts.Exception, env);
-                    return set(ts, VoidSpec.Instance);
+                    return ts.Spec;
                 case Attempt att:
                     spec(att.Body, env);
                     if (att.Grab != null)
-                        spec(att.Grab, env);
+                    {
+                        var grabEnv = Env<Spec>.Create(prog, env);
+                        var exIdent = new Ident("exception", TokenType.Ident) {Spec = AnySpec.Instance};
+                        grabEnv.Declare(exIdent, exIdent.Spec, true);
+                        spec(att.Grab, grabEnv);
+                    }
                     if (att.AtLast != null)
                         spec(att.AtLast, env);
-                    return set(att, VoidSpec.Instance);
+                    return att.Spec;
                 case Import imp:
-                    return set(imp, VoidSpec.Instance);
+                    isImportContext = true;
+                    var modImpEl = spec(imp.QualifiedIdent, env);
+                    isImportContext = false;
+                    var modImp = modImpEl.As<ObjSpec>(imp, prog);
+                    env.AddImport(imp.QualifiedIdent, modImp.Env);
+                    return imp.Spec;
                 default:
                     throw new NotSupportedException();
             }
+        }
+
+
+        private void evalSequenceItemFull(Element bodyElement, Env<Spec> env)
+        {
+            var bodyVal = evalSequenceItem(bodyElement, env);
+            // ReSharper disable once PossibleUnintendedReferenceComparison
+            if (bodyVal != VoidSpec.Instance)
+            {
+                if (bodyElement is FnApply fna2)
+                    prog.RemarkList.ValueReturnedFromFunctionNotUsed(fna2);
+                else
+                    prog.RemarkList.ValueIsNotAssigned(bodyElement);
+            }
+        }
+
+
+        private Spec evalSequenceItem(Element bodyElement, Env<Spec> env)
+        {
+            C.ReturnsNn();
+
+            //var stackItem = callStack.Peek();
+            //stackItem.LineIndex = bodyElement.LineIndex;
+            //stackItem.ColumnIndex = bodyElement.ColumnIndex;
+            var bodyVal = spec(bodyElement, env);
+            return bodyVal;
         }
     }
 }
