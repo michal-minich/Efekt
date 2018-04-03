@@ -40,9 +40,7 @@ namespace Efekt
             var ts = new Tokenizer().Tokenize(codeText);
             var e = new Parser(prog.RemarkList).Parse(asIfFilePath, ts);
             prog.RootElement = transform(e);
-            //new Namer(prog).Name();
-            new Specer(prog).Spec();
-            new StructureValidator(prog).Validate();
+            postProcess(prog);
             return prog;
         }
 
@@ -91,11 +89,18 @@ namespace Efekt
             prog.RootElement = new FnApply(
                 new Fn(new FnParameters(), new Sequence(seqItems)),
                 new FnArguments());
-            //new Namer(prog).Name();
-            //new Specer(prog).Spec();
-            new StructureValidator(prog).Validate();
+            postProcess(prog);
             return prog;
         }
+
+
+        private static void postProcess(Prog prog)
+        {
+            //new Namer(prog).Name();
+            new Specer(prog).Spec();
+            new StructureValidator(prog).Validate();
+        }
+
 
         private static QualifiedIdent getStartQualifiedName(List<ClassItem> modules, RemarkList remarkList)
         {

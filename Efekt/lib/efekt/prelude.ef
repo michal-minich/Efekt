@@ -5,6 +5,7 @@ let >= = fn a, b { not(a < b) }
 let <= = fn a, b { a < b or a == b }
 let > = fn a, b { not(a < b) and not(a == b) }
 let printLine = fn a { print(a) print('\n') }
+var id = fn a { a }
 
 let arrayIterator = fn a {
     return new {

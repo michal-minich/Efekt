@@ -82,8 +82,9 @@ namespace Efekt
                 case FnApply fna:
                     if (fna.Fn is Ident fnI && fnI.Name == "typeof")
                     {
-                        var ofS = fna.Arguments[0].Spec.ToString();
-                        prog.OutputWriter.Write(ofS);
+                        var spec = fna.Arguments[0].Spec;
+                        var ofS = spec?.ToString() ?? "NULL";
+                        prog.OutputWriter.WriteLine(ofS);
                         return Void.Instance;
                     }
                     Exp fn;

@@ -99,7 +99,7 @@ namespace Efekt
                     spec(d.Exp, env);
                     d.Ident.Spec = d.Exp.Spec;
                     env.Declare(d.Ident, d.Ident.Spec, d is Let);
-                    return d.Spec;
+                    return d.Spec; // void spec
                 case Assign a:
                     spec(a.Exp, env);
                     switch (a.To)
@@ -223,7 +223,8 @@ namespace Efekt
                         spec(v, objEnv);
                         if (v is Declr d)
                         {
-                            members.Add(new ObjSpecMember(d.Ident.Name, d.Spec, d is Let));
+                            var ss = d.Exp == null ? d.Spec : d.Exp.Spec;
+                            members.Add(new ObjSpecMember(d.Ident.Name, ss, d is Let));
                         }
                     }
                     n.Spec = new ObjSpec(members, objEnv);
@@ -271,13 +272,13 @@ namespace Efekt
         {
             var bodyVal = evalSequenceItem(bodyElement, env);
             // ReSharper disable once PossibleUnintendedReferenceComparison
-            if (bodyVal != VoidSpec.Instance)
+           /* if (bodyVal != VoidSpec.Instance)
             {
                 if (bodyElement is FnApply fna2)
                     prog.RemarkList.ValueReturnedFromFunctionNotUsed(fna2);
                 else
                     prog.RemarkList.ValueIsNotAssigned(bodyElement);
-            }
+            }*/
         }
 
 

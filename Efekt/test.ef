@@ -1,8 +1,39 @@
 ﻿
+
 let start = fn {
+    var int = 1
+    var void
+    typeof(1)
+    typeof('a')
+    typeof("abc123")
+    typeof([1, 2, 3, 4])
+    typeof(true)
+    typeof(new { var field = int })
+    typeof(void)
+    typeof(fn a { return a + 1 })
+    typeof(id)
+    typeof(id(1))
+
+    printLine("-----")
+    var int1 = int
+    typeof(int1)
+    typeof(1 + 2)
+    typeof(int1 + 2)
+    typeof(id(1))
+
+    printLine("-----")
+    typeof([1 + 1])
+    typeof([int1])
+    typeof([int1 + 1])
+    typeof([fn a { return a + 1 }])
+    typeof([id(1)])
+
+    printLine("-----")
+    //typeof(fn { var a a = 1 return a})
+
 
     var ax = 1
-    //typeof(not)
+    typeof(not)
     printLine("")
 
     let arr = [1, 2, 3, 4, 5]

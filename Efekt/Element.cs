@@ -741,6 +741,11 @@ namespace Efekt
         }
 
         public Spec ItemSpec { get; }
+
+        public override string ToString()
+        {
+            return "Arr(" + ItemSpec + ")";
+        }
     }
 
 
@@ -813,6 +818,11 @@ namespace Efekt
         public List<ObjSpecMember> Members { get; }
 
         public Env<Spec> Env { get; }
+
+        public override string ToString()
+        {
+            return "Obj(" + String.Join(", ", Members.Select(s => s.ToString())) + ")";
+        }
     }
 
 
@@ -828,6 +838,11 @@ namespace Efekt
         public string Name { get; set; }
         public Spec Spec { get; set; }
         public bool IsLet { get; set; }
+
+        public override string ToString()
+        {
+            return "" + String.Join(", ", Name + " : " + Spec) + "";
+        }
     }
 
 
