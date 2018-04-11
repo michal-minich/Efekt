@@ -699,8 +699,7 @@ namespace Efekt
 
         public override string ToString()
         {
-            var n = GetType().Name;
-            return n.Substring(0, n.Length - 4);
+            return this.ToDebugString();
         }
     }
 
@@ -725,11 +724,6 @@ namespace Efekt
             C.AllNotNull(possible);
             Possible = possible;
         }
-
-        public override string ToString()
-        {
-            return "AnyOf(" + String.Join(", ", Possible.Select(s => s.ToString())) + ")";
-        }
     }
 
 
@@ -741,11 +735,6 @@ namespace Efekt
         }
 
         public Spec ItemSpec { get; }
-
-        public override string ToString()
-        {
-            return "Arr(" + ItemSpec + ")";
-        }
     }
 
 
@@ -786,11 +775,6 @@ namespace Efekt
         {
             get { return Signature.Last(); }
         }
-
-        public override string ToString()
-        {
-            return "Fn(" + String.Join(", ", ParameterSpec.Select(s => s.ToString())) + ") -> " + ReturnSpec;
-        }
     }
 
 
@@ -818,11 +802,6 @@ namespace Efekt
         public List<ObjSpecMember> Members { get; }
 
         public Env<Spec> Env { get; }
-
-        public override string ToString()
-        {
-            return "Obj(" + String.Join(", ", Members.Select(s => s.ToString())) + ")";
-        }
     }
 
 
@@ -838,11 +817,6 @@ namespace Efekt
         public string Name { get; set; }
         public Spec Spec { get; set; }
         public bool IsLet { get; set; }
-
-        public override string ToString()
-        {
-            return "" + String.Join(", ", Name + " : " + Spec) + "";
-        }
     }
 
 

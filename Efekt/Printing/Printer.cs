@@ -185,6 +185,77 @@ namespace Efekt
                 case Invalid inv:
                     w.Markup(inv.Text);
                     break;
+                case Spec spec:
+                {
+                    switch (spec)
+                    {
+                        case AnyOfSpec aofs:
+                            w.Type("AnyOf").Markup("(");
+                            counter = 0;
+                            foreach (var p in aofs.Possible)
+                            {
+                                Write(p);
+                                if (++counter != aofs.Possible.Count)
+                                    w.Markup(",").Space();
+                            }
+
+                            w.Markup(")");
+                            break;
+                        case AnySpec @as:
+                            w.Type("Any");
+                            break;
+                        case ArrSpec ars:
+                            w.Type("Arr").Markup("(");
+                            Write(ars.ItemSpec).Markup(")");
+                            break;
+                        case BoolSpec bs:
+                            w.Type("Bool");
+                            break;
+                        case CharSpec chs:
+                            w.Type("Char");
+                            break;
+                        case FnSpec fs:
+                            w.Type("Fn").Markup("(");
+                            counter = 0;
+                            foreach (var p in fs.ParameterSpec)
+                            {
+                                Write(p);
+                                if (++counter != fs.ParameterSpec.Count)
+                                    w.Markup(",").Space();
+                            }
+
+                            w.Markup(")").Space().Op("->").Space();
+                            Write(fs.ReturnSpec);
+                            break;
+                        case IntSpec @is:
+                            w.Type("Int");
+                            break;
+                        case ObjSpec os:
+                            w.Type("Obj").Markup("(");
+                            counter = 0;
+                            foreach (var m in os.Members)
+                            {
+                                w.Ident(m.Name).Space().Op(":").Space();
+                                Write(m.Spec);
+                                if (++counter != os.Members.Count)
+                                    w.Markup(",").Space();
+                            }
+
+                            w.Markup(")");
+                            break;
+                        case TextSpec ts:
+                            w.Type("Text");
+                            break;
+                        case UnknownSpec unks:
+                            w.Type("Unknown");
+                            break;
+                        case VoidSpec vs:
+                            w.Type("Void");
+                            break;
+                    }
+
+                    break;
+                }
                 default:
                     w.Markup("<" + se.GetType().Name + ">");
                     break;

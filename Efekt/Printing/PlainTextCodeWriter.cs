@@ -51,6 +51,13 @@ namespace Efekt
         }
 
 
+        public PlainTextCodeWriter Type(string value)
+        {
+            writer.Write(value);
+            return this;
+        }
+
+
         public PlainTextCodeWriter Key(string value)
         {
             writer.Write(value);

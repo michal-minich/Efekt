@@ -8,6 +8,7 @@ namespace Efekt
 {
     public sealed class Prog
     {
+        private bool CheckTypes { get; }
         public Interpreter Interpreter { get; }
         public RemarkList RemarkList { get; }
 
@@ -21,7 +22,7 @@ namespace Efekt
         public Element RootElement { get; private set; }
 
         
-        internal Prog(TextWriter outputWriter, TextWriter errorWriter)
+        internal Prog(TextWriter outputWriter, TextWriter errorWriter, bool checkTypes)
         {
             Interpreter = new Interpreter();
             RemarkList = new RemarkList(this);
@@ -31,16 +32,18 @@ namespace Efekt
 
             ErrorWriter = errorWriter;
             ErrorPrinter = new Printer(new PlainTextCodeWriter(errorWriter), true);
+
+            CheckTypes = checkTypes;
         }
 
 
-        public static Prog Init(TextWriter outputWriter, TextWriter errorWriter, string asIfFilePath, string codeText)
+        public static Prog Init(TextWriter outputWriter, TextWriter errorWriter, string asIfFilePath, string codeText, bool checkTypes)
         {
-            var prog = new Prog(outputWriter, errorWriter);
+            var prog = new Prog(outputWriter, errorWriter, checkTypes);
             var ts = new Tokenizer().Tokenize(codeText);
             var e = new Parser(prog.RemarkList).Parse(asIfFilePath, ts);
             prog.RootElement = transform(e);
-            postProcess(prog);
+            postProcess(prog, checkTypes);
             return prog;
         }
 
@@ -53,16 +56,16 @@ namespace Efekt
         }
 
 
-        public static Prog Load(TextWriter outputWriter, TextWriter errorWriter, string filePath)
+        public static Prog Load(TextWriter outputWriter, TextWriter errorWriter, string filePath, bool checkTypes)
         {
-            return Init(outputWriter, errorWriter, filePath, File.ReadAllText(filePath));
+            return Init(outputWriter, errorWriter, filePath, File.ReadAllText(filePath), checkTypes);
         }
 
 
-        public static Prog Load2(TextWriter outputWriter, TextWriter errorWriter, IReadOnlyList<string> rootPaths)
+        public static Prog Load2(TextWriter outputWriter, TextWriter errorWriter, IReadOnlyList<string> rootPaths, bool checkTypes)
         {
             rootPaths = rootPaths.Select(Path.GetFullPath).ToList();
-            var prog = new Prog(outputWriter, errorWriter);
+            var prog = new Prog(outputWriter, errorWriter, checkTypes);
             var modules = new List<ClassItem>();
             foreach (var fp in rootPaths)
             {
@@ -89,15 +92,16 @@ namespace Efekt
             prog.RootElement = new FnApply(
                 new Fn(new FnParameters(), new Sequence(seqItems)),
                 new FnArguments());
-            postProcess(prog);
+            postProcess(prog, checkTypes);
             return prog;
         }
 
 
-        private static void postProcess(Prog prog)
+        private static void postProcess(Prog prog, bool checkTypes)
         {
             //new Namer(prog).Name();
-            new Specer(prog).Spec();
+            if (checkTypes)
+                new Specer(prog).Spec();
             new StructureValidator(prog).Validate();
         }
 

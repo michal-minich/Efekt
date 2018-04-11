@@ -1,3 +1,6 @@
+!fix: typer tries to find common type with imported variable on usage of it, but cannot access env in lexical scope
+!fix: channgin type of void variable should not be any warning
+
 fix: declaring var in loop now fails with already declared
 fix various crashes - (build on prelude/wrong paths?, not matching braces)
 error: when loop does not have break or return statement inside (to prevent infinite loop)
@@ -15,7 +18,7 @@ warn: import - warn on duplicate import in same scope
 info: when there is no need to crate new fn and name is enough, like fn a { print(a) }
 info: when var can be let
 
-more tests
+tests for import
 static validation where possible
 nicer code
 

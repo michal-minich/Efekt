@@ -18,7 +18,7 @@ namespace Efekt
                 }
 
                 var cw = new ConsoleWriter();
-                var prog = Prog.Load2(cw, cw, args);
+                var prog = Prog.Load2(cw, cw, args, true);
                 var res = prog.Run();
                 if (res != Void.Instance)
                     prog.OutputPrinter.Write(res);

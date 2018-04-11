@@ -149,10 +149,64 @@ namespace Efekt.Tests
             // array
             test("var c = 1 + 2 return [1, 2, c]", "[1, 2, 3]");
             test("var c = 1 + 2 return [c + 1, c + 1, c + 1]", "[4, 4, 4]");
-            //test("var c = 1 + 2 return [c = c + 1, c = c + 1, c = c + 1]", "[4, 5, 6]");
-            //test("var c = 3 var a = [c = c + 1, c = c + 1] c = 5 var b = a return a", "[4, 5]");
 
+            // objects
+            test("var a = new { var a = 1 } return a.a", "1");
+            test("var a = new { var a = 1 } a.a = a.a + 2 return a.a", "3");
+            test("var a = new { var a = 1 var b = 3} return a.a + a.b", "4");
+            test("var a = new { var a = 1 } var b = new { var b = 3 } a.a = a.a + b.b return a.a", "4");
+            test("var mk = fn (v) { new { var a = v } } var a = mk(1) var b = mk(3) a.a = 4 return a.a + b.a", "7");
+
+            // import
+
+            // types
+            RunTypeTests();
+            
             Console.WriteLine("All tests executed");
+        }
+
+
+        private static void RunTypeTests()
+        {
+            type("1", "Int");
+            type("1", "Int");
+            type("'a'", "Char");
+            type("\"abc123\"", "Text");
+            type("[1, 2, 3, 4]", "Arr(Int)");
+            type("true", "Bool");
+            type2("var int = 1 typeof(new { var field = int })", "Obj(field : Int)");
+            type2("var void\ntypeof(void)", "Void");
+            type("fn a { return a + 1 }", "Fn(Int) -> Int");
+            type2("var id = fn a { a } typeof(id)", "Fn(Any) -> Any");
+            type2("var id = fn a { a } typeof(id(1))", "Any");
+
+            type2("var int = 1 var int1 = int typeof(int1)", "Int");
+            type("1 + 2", "Int");
+            type2("var int1 = 1 typeof(int1 + 2)", "Int");
+            type2("var id = fn a { a } var int1 = 1 typeof(id(int1))", "Any");
+
+            type("[1 + 1]", "Arr(Int)");
+            type2("var int1 = 1 typeof([int1])", "Arr(Int)");
+            type2("var int1 = 1 typeof([int1 + 1])", "Arr(Int)");
+            type("[fn a { return a + 1 }]", "Arr(Fn(Int) -> Int)");
+            type2("var id = fn a { a } typeof([id(1)])", "Arr(Any)");
+            //type("fn { var a a = 1 return a}", "Fn() -> Int"); // TODO FIX
+        }
+
+
+        private static void type(
+            string code,
+            string expectedResult)
+        {
+            type2("typeof(" + code + ")", expectedResult);
+        }
+
+
+        private static void type2(
+            string code,
+            string expectedResult)
+        {
+            test(code, "<Void>", expectedResult + "\r\n", true);
         }
 
         /*
@@ -179,12 +233,13 @@ namespace Efekt.Tests
         private static void test(
                 string code,
                 string expectedResult,
-                string expectedOutput = "")
+                string expectedOutput = "",
+                bool checkTypes = true)
             // ReSharper restore ParameterOnlyUsedForPreconditionCheck.Local
         {
             var outputWriter = new StringWriter();
             var errorWriter = new StringWriter();
-            var prog = Prog.Init(outputWriter, errorWriter, "unittest.ef", code);
+            var prog = Prog.Init(outputWriter, errorWriter, "unittest.ef", code, checkTypes);
             var res = prog.Interpreter.Eval(prog);
             var val = res.ToDebugString();
             if (val != expectedResult)
