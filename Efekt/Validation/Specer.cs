@@ -40,9 +40,14 @@ namespace Efekt
                 if (s == null || s is AnySpec || s is UnknownSpec)
                     continue;
                 if (s is AnyOfSpec anyOf)
+                {
                     possible.AddRange(anyOf.Possible);
+                    possible.Remove(VoidSpec.Instance);
+                }
                 else
+                {
                     possible.Add(s);
+                }
             }
 
             C.Assume(!possible.Contains(AnySpec.Instance));
@@ -137,7 +142,7 @@ namespace Efekt
                         spec(fna.Fn, env);
                     var fnS = fna.Fn.Spec as FnSpec;
                     var ix = 0;
-                    foreach (var aa in fna.Arguments) // todo validate macing  count of params vs args
+                    foreach (var aa in fna.Arguments) // todo validate matccing count of params vs args
                     {
                         if (fnS != null)
                             spec(aa, env, fnS.ParameterSpec[ix++]);
@@ -179,7 +184,7 @@ namespace Efekt
                     return f.Spec;
                 case When w:
                     var test = spec(w.Test, env, BoolSpec.Instance);
-                    //var _ = test.As<BoolSpec>(w.Test, prog); // todo
+                    //var _ = test.As<BoolSpec>(test, prog); // todo
                     var specT = spec(w.Then, Env<Spec>.Create(prog, env));
                     if (w.Otherwise == null)
                     {
@@ -209,7 +214,7 @@ namespace Efekt
                     return ae.Spec;
                 case MemberAccess ma:
                     var exp = spec(ma.Exp, env);
-                    //var o = exp.As<ObjSpec>(ma, prog);
+                    // var objSpec = exp.As<ObjSpec>(ma, prog); // todo
                     if (exp is ObjSpec o)
                         ma.Spec = o.Env.Get(ma.Ident);
                     else

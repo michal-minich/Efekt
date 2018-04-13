@@ -64,8 +64,8 @@ namespace Efekt.Tests
             test("var o = new { var f = fn a { fn b { a + b } } } return o.f(1)(10) + o.f(100)(1000)", "1111");
 
             // fn apply & braced & curly
-            test("var p = fn a { print(a) }\r\n(1).p()", "<Void>", "1");
-            test("var p = fn a { print(a) }\r\n(1).p()\r\n(2).p()", "<Void>", "12");
+            test("var p = fn a { print(a) }\r\n(1).p()", "<Void>", "1", false);
+            test("var p = fn a { print(a) }\r\n(1).p()\r\n(2).p()", "<Void>", "12", false);
 
             // if
             test("if true then 1 else 2", "1");
@@ -168,29 +168,60 @@ namespace Efekt.Tests
 
         private static void RunTypeTests()
         {
-            type("1", "Int");
+            // simple literals
             type("1", "Int");
             type("'a'", "Char");
-            type("\"abc123\"", "Text");
-            type("[1, 2, 3, 4]", "Arr(Int)");
             type("true", "Bool");
-            type2("var int = 1 typeof(new { var field = int })", "Obj(field : Int)");
-            type2("var void\ntypeof(void)", "Void");
+
+            // text literal
+            type("\"abc123\"", "Text");
+            type("\"abc\n123\"", "Text");
+            type("\"abc\\n123\"", "Text");
+
+            // fn literal
+            type("fn { }", "Fn() -> Void");
+            type("fn { 1 }", "Fn() -> Int");
+            type("fn { return 1 }", "Fn() -> Int");
+            //type("fn a { }", "Fn(Any) -> Void"); // Fn(Unknown) -> Void
+            type("fn a { a + 1 }", "Fn(Int) -> Int");
             type("fn a { return a + 1 }", "Fn(Int) -> Int");
             type2("var id = fn a { a } typeof(id)", "Fn(Any) -> Any");
             type2("var id = fn a { a } typeof(id(1))", "Any");
 
-            type2("var int = 1 var int1 = int typeof(int1)", "Int");
-            type("1 + 2", "Int");
-            type2("var int1 = 1 typeof(int1 + 2)", "Int");
+            // fn application
             type2("var id = fn a { a } var int1 = 1 typeof(id(int1))", "Any");
+            type2("var a = fn a { a + 1 } typeof(a(1))", "Int");
 
+            // array literal
             type("[1 + 1]", "Arr(Int)");
-            type2("var int1 = 1 typeof([int1])", "Arr(Int)");
-            type2("var int1 = 1 typeof([int1 + 1])", "Arr(Int)");
+            type("[1, 2, 3, 4]", "Arr(Int)");
+            type2("var i = 1 typeof([i])", "Arr(Int)");
+            type2("var i = 1 typeof([i + 1])", "Arr(Int)");
             type("[fn a { return a + 1 }]", "Arr(Fn(Int) -> Int)");
             type2("var id = fn a { a } typeof([id(1)])", "Arr(Any)");
-            //type("fn { var a a = 1 return a}", "Fn() -> Int"); // TODO FIX
+
+            // object literal
+            type2("var i = 1 typeof(new { var f = i })", "Obj(f : Int)");
+
+            // change type fron void
+            type2("var void\ntypeof(void)", "Void");
+            type2("var b\n b = true typeof(b)", "Bool");
+
+            // based on usage in 'if'
+            type("fn (b) { if b then 1 else 2 }", "Fn(Bool) -> Int");
+            type("fn { var a a = 1 return a}", "Fn() -> Int");
+
+            // operators
+            type("1 + 2", "Int");
+            type("1 < 2", "Bool");
+
+            // passing type between identifers
+            type2("var i = 1 var i2 = i typeof(i)", "Int");
+            type2("var i = 1 typeof(i + 2)", "Int");
+
+            // member access
+            // type2("fn a { var x = a.b typeof(a) }", "Obj(b : Any)"); // Void
+            // type2("fn a { a.b = 1 typeof(a) }", "Obj(b : Int)"); // Void
         }
 
 

@@ -1,5 +1,7 @@
 !fix: typer tries to find common type with imported variable on usage of it, but cannot access env in lexical scope
-!fix: channgin type of void variable should not be any warning
+
+specer: should add Obj(fieldName:Type) to common type on member access?
+
 
 fix: declaring var in loop now fails with already declared
 fix various crashes - (build on prelude/wrong paths?, not matching braces)

@@ -17,7 +17,7 @@ namespace Efekt
     }
 
 
-    public sealed class Env<T> where T : class
+    public sealed class Env<T> where T : class, Element
     {
         private readonly Dictionary<string, EnvValue<T>> dict = new Dictionary<string, EnvValue<T>>();
         private readonly Dictionary<QualifiedIdent, Env<T>> imports = new Dictionary<QualifiedIdent, Env<T>>();
@@ -187,12 +187,15 @@ namespace Efekt
                 if (e.dict.ContainsKey(ident.Name))
                 {
                     var old = e.dict[ident.Name];
-                    if (old.Value != Void.Instance &&
-                        old.Value != UnknownSpec.Instance &&
-                        old.Value.GetType().Name != "AnySpec" &&
-                        //old.Value != AnySpec.Instance && 
+                    if (old.Value != Void.Instance && (
+                            old.Value.Spec != null &&
+                            old.Value.Spec != UnknownSpec.Instance &&
+                            old.Value.Spec != UnknownSpec.Instance &&
+                            old.Value.Spec != AnySpec.Instance) &&
                         old.Value.GetType() != value.GetType())
+                    {
                         prog.RemarkList.AssigningDifferentType(ident, old.Value, value);
+                    }
 
                     if (!(value is Spec) && old.IsLet)
                         prog.RemarkList.ReasigingLet(ident);
