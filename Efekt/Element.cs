@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using JetBrains.Annotations;
 
@@ -50,7 +51,7 @@ namespace Efekt
             get => _spec;
             set
             {
-                C.Req(Spec == null);
+                C.Assert(Spec == null || Spec == AnySpec.Instance);
                 _spec = value;
             }
         }
@@ -667,10 +668,10 @@ namespace Efekt
 
 
     public sealed class SpecComparer : IEqualityComparer<Spec>
-    {
+    {   
         public bool Equals(Spec x, Spec y)
         {
-            return x.Equals(y);
+            return object.Equals(x, y);
         }
 
         public int GetHashCode(Spec obj)
@@ -695,11 +696,6 @@ namespace Efekt
         public override int GetHashCode()
         {
             return ToString().GetHashCode();
-        }
-
-        public override string ToString()
-        {
-            return this.ToDebugString();
         }
     }
 
@@ -786,35 +782,40 @@ namespace Efekt
 
     public sealed class ObjSpec : ASpec
     {
+        private readonly bool fromUsage;
+
         public ObjSpec()
         {
             Members = new List<ObjSpecMember>();
         }
 
-        public ObjSpec(List<ObjSpecMember> members, Env<Spec> env)
+        public ObjSpec(List<ObjSpecMember> members, Env<Spec> env, bool fromUsage = false)
         {
             C.AllNotNull(members);
             C.Nn(env);
             Members = members;
             Env = env;
+            FromUsage = fromUsage;
         }
 
         public List<ObjSpecMember> Members { get; }
 
         public Env<Spec> Env { get; }
+
+        public bool FromUsage { get; }
     }
 
 
     public sealed class ObjSpecMember
     {
-        public ObjSpecMember(string name, Spec spec, bool isLet)
+        public ObjSpecMember(Ident ident, Spec spec, bool isLet)
         {
-            Name = name;
+            Ident = ident;
             Spec = spec;
             IsLet = isLet;
         }
 
-        public string Name { get; set; }
+        public Ident Ident { get; set; }
         public Spec Spec { get; set; }
         public bool IsLet { get; set; }
     }

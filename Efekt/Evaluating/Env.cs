@@ -110,7 +110,7 @@ namespace Efekt
 
 
         [CanBeNull]
-        private EnvValue<T> GetOrNull(Ident ident)
+        public EnvValue<T> GetOrNull(Ident ident)
         {
             C.Nn(ident);
             if (dict.TryGetValue(ident.Name, out var envValue))

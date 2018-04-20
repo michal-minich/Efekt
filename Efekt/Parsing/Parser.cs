@@ -40,7 +40,7 @@ namespace Efekt
                 ["!="] = 60,
                 ["and"] = 20,
                 ["or"] = 10,
-                ["="] = 3
+                ["="] = 3 // right associative
             };
 
         

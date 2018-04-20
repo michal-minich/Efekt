@@ -83,11 +83,12 @@ namespace Efekt
                     if (fna.Fn is Ident fnI && fnI.Name == "typeof")
                     {
                         var spec = fna.Arguments[0].Spec;
-                        var ofS = spec?.ToString() ?? "NULL";
+                        var ofS = spec?.ToDebugString() ?? "NULL";
                         prog.OutputWriter.WriteLine(ofS);
                         return Void.Instance;
                     }
                     Exp fn;
+                    if (false) {
                     if (fna.Fn is MemberAccess extMemAcc)
                     {
                         var exp2 = eval(extMemAcc.Exp, env);
@@ -123,6 +124,7 @@ namespace Efekt
                             return res;
                         }
                         throw prog.RemarkList.VariableIsNotDeclared(extMemAcc.Ident);
+                    }
                     }
                     fn = eval(fna.Fn, env);
                     noExtMethodApply:

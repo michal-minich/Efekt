@@ -1,7 +1,9 @@
 !fix: typer tries to find common type with imported variable on usage of it, but cannot access env in lexical scope
 
-specer: should add Obj(fieldName:Type) to common type on member access?
+nicer mesage on perser error "fn () { 5 }" should be "fn { 5 }"
 
+specer: should add Obj(fieldName:Type) to common type on member access?
+specer - add test after fn apply like fn a { var b = a() + 1 }
 
 fix: declaring var in loop now fails with already declared
 fix various crashes - (build on prelude/wrong paths?, not matching braces)

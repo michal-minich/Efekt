@@ -76,7 +76,7 @@ namespace Efekt
                     {
                         var items = @params[0].AsArr(fna.Arguments[0], prog).Values;
                         var at = @params[1].AsInt(fna.Arguments[1], prog);
-                        // todo check index vs lenght
+                        // todo check index vs length
                         return items[at.Value];
                     }),
 
@@ -87,7 +87,7 @@ namespace Efekt
                         var items = @params[0].AsArr(fna.Arguments[0], prog).Values;
                         var at = @params[1].AsInt(fna.Arguments[1], prog);
                         var value = @params[2].AsValue(fna.Arguments[2], prog);
-                        // todo check index vs lenght
+                        // todo check index vs length
                         return items[at.Value] = value;
                     }),
 

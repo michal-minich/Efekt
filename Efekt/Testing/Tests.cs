@@ -9,8 +9,6 @@ namespace Efekt.Tests
         [Conditional("DEBUG")]
         public static void RunAllTests()
         {
-            //test("var a = + return a(1, 2)", "3");
-
             //error("~");
             test(" ", "<Void>");
             test("1", "1");
@@ -41,6 +39,16 @@ namespace Efekt.Tests
             test("(1 + (2 * 10))", "21");
             test("(10 * 1) + 2", "12");
 
+            // member access
+            var obj1 = "var o = new { var a = 1 var b = new { var c = ' ' var c2 = fn { new { var d = 4 var d2 = fn { 5 } } } } } return ";
+            test(obj1 + "o", "<Obj>");
+            test(obj1 + "o.b", "<Obj>");
+            test(obj1 + "(o.b).c", " ");
+            test(obj1 + "(o.b).c2", "fn { new {var d = 4\r\nvar d2 = fn { 5 }\r\n} }");
+            test(obj1 + "((o.b).c2()).d", "4");
+            test(obj1 + "((o.b).c2()).d2", "fn { 5 }");
+            test(obj1 + "((o.b).c2()).d2()", "5");
+
             // op precedence
             test("1 + 2 * 10", "21");
             test("0 * 1 + 2", "2");
@@ -64,8 +72,8 @@ namespace Efekt.Tests
             test("var o = new { var f = fn a { fn b { a + b } } } return o.f(1)(10) + o.f(100)(1000)", "1111");
 
             // fn apply & braced & curly
-            test("var p = fn a { print(a) }\r\n(1).p()", "<Void>", "1", false);
-            test("var p = fn a { print(a) }\r\n(1).p()\r\n(2).p()", "<Void>", "12", false);
+            //test("var p = fn a { print(a) }\r\n(1).p()", "<Void>", "1"/*, false*/);
+            //test("var p = fn a { print(a) }\r\n(1).p()\r\n(2).p()", "<Void>", "12"/*, false*/);
 
             // if
             test("if true then 1 else 2", "1");
@@ -96,7 +104,7 @@ namespace Efekt.Tests
             test("fn a, b { return b }((1), (2))", "2");
             test("fn a { return fn b { a + b } }(1)(2)", "3");
 
-            // labda
+            // lambda
             const string tt = "fn tt { return fn y { return tt } }";
             const string ff = "fn ff { return fn y { return y } }";
             const string tr = "var t = " + tt;
@@ -203,8 +211,8 @@ namespace Efekt.Tests
             // object literal
             type2("var i = 1 typeof(new { var f = i })", "Obj(f : Int)");
 
-            // change type fron void
-            type2("var void\ntypeof(void)", "Void");
+            // change type from void
+            type2("var void\n typeof(void)", "Void");
             type2("var b\n b = true typeof(b)", "Bool");
 
             // based on usage in 'if'
@@ -215,13 +223,16 @@ namespace Efekt.Tests
             type("1 + 2", "Int");
             type("1 < 2", "Bool");
 
-            // passing type between identifers
+            // passing type between identifiers
             type2("var i = 1 var i2 = i typeof(i)", "Int");
             type2("var i = 1 typeof(i + 2)", "Int");
 
             // member access
             // type2("fn a { var x = a.b typeof(a) }", "Obj(b : Any)"); // Void
             // type2("fn a { a.b = 1 typeof(a) }", "Obj(b : Int)"); // Void
+
+            // back transitive type
+            //type("fn a { var b = a b = b + 1 return a }", "Fn(Int) -> Int");
         }
 
 

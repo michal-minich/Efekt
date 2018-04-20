@@ -129,7 +129,9 @@ namespace Efekt
                     else
                         s = env.GetWithImport(i);
                     var c = common(i.Spec, s);
-                    env.Set(i, c);
+                    if (!isImportContext)
+                    if (env.GetOrNull(i) != null)
+                        env.Set(i, c);
                     if (i.Spec == null)
                         i.Spec = c;
                     return c;
@@ -142,7 +144,7 @@ namespace Efekt
                         spec(fna.Fn, env);
                     var fnS = fna.Fn.Spec as FnSpec;
                     var ix = 0;
-                    foreach (var aa in fna.Arguments) // todo validate matccing count of params vs args
+                    foreach (var aa in fna.Arguments) // todo validate matching count of params vs args
                     {
                         if (fnS != null)
                             spec(aa, env, fnS.ParameterSpec[ix++]);
@@ -213,9 +215,39 @@ namespace Efekt
                     ae.Spec = new ArrSpec(common(items));
                     return ae.Spec;
                 case MemberAccess ma:
-                    var exp = spec(ma.Exp, env);
-                    // var objSpec = exp.As<ObjSpec>(ma, prog); // todo
-                    if (exp is ObjSpec o)
+                    if (ma.Ident.Name == "bbb")
+                    {
+                    }
+
+                    spec(ma.Exp, env);
+                    if (ma.Exp.Spec is AnySpec)
+                    {
+                        var objSEnv = Env<Spec>.Create(prog, env);
+                        var objS = new ObjSpec(new List<ObjSpecMember>(), objSEnv, true);
+                        objSEnv.Declare(ma.Ident, UnknownSpec.Instance, false);
+                        spec(ma.Ident, objSEnv);
+                        objS.Members.Add(new ObjSpecMember(ma.Ident, ma.Ident.Spec, false));
+                        ma.Exp.Spec = objS;
+                        if (ma.Exp is Ident i)
+                        {
+                            env.Set(i, ma.Exp.Spec);
+                        }
+                    }
+                    
+                    var objS2 = (ObjSpec)ma.Exp.Spec;
+                    if (objS2.FromUsage)
+                    {
+                        var member = objS2.Members.FirstOrDefault(m => m.Ident.Name == ma.Ident.Name); // also use type and var/let?
+                        if (member == null)
+                        {
+                            objS2.Env.Declare(ma.Ident, UnknownSpec.Instance, false);
+                            spec(ma.Ident, objS2.Env);
+                            objS2.Members.Add(new ObjSpecMember(ma.Ident, ma.Ident.Spec, false));
+                        }
+                    }
+
+                    //var objSpec = exp.As<ObjSpec>(ma.Exp, prog); // todo
+                    if (ma.Exp.Spec is ObjSpec o)
                         ma.Spec = o.Env.Get(ma.Ident);
                     else
                         ma.Spec = UnknownSpec.Instance;
@@ -229,7 +261,7 @@ namespace Efekt
                         if (v is Declr d)
                         {
                             var ss = d.Exp == null ? d.Spec : d.Exp.Spec;
-                            members.Add(new ObjSpecMember(d.Ident.Name, ss, d is Let));
+                            members.Add(new ObjSpecMember(d.Ident, ss, d is Let));
                         }
                     }
                     n.Spec = new ObjSpec(members, objEnv);

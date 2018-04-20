@@ -1,11 +1,21 @@
 ﻿
 
 let start = fn {
-/*
+
+    var x =  fn a { a.bbb typeof(a) return a }
+    var aa = x(new { var bbb = 2 })
+    typeof(x)
+    typeof(x(new { var bbb = 2 }))
+
     let arr = [1, 2, 3, 4, 5]
+    /*
     arrayIterator(arr)
-      .where(fn c {c > 3 })
+      .where(fn c { c > 3 })
       .forEach(fn c { c.printLine() })
+    */
+
+    var w = where(arrayIterator(arr), fn c { c > 3 })
+    forEach(w, fn c { printLine(c) })
 
     var a = 0
     loop {
@@ -14,5 +24,15 @@ let start = fn {
          printLine(a)
          if a == 1 then
              break
-    }*/
+    }
+
+    var o = new { var a = 1 var b = new { var c = ' ' } }
+    o.a = 2
+    //printLine(o.a)
+    //typeof(o)
+    //typeof(o.a)
+    //typeof(o.b)
+    //typeof((o.b).c)
+    //var x = fn y { y.z = 1 return y }
+    //typeof(x)
 }
