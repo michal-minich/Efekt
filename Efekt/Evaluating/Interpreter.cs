@@ -53,10 +53,14 @@ namespace Efekt
             {
                 case Declr d:
                     var val = eval(d.Exp, env);
+                    if (d.Exp != Void.Instance && val == Void.Instance)
+                        throw prog.RemarkList.AttemptToAssignVoid(d.Exp);
                     env.Declare(d.Ident, val, d is Let);
                     return Void.Instance;
                 case Assign a:
                     var newValue = eval(a.Exp, env);
+                    if (newValue == Void.Instance)
+                        throw prog.RemarkList.AttemptToAssignVoid(a.Exp);
                     switch (a.To)
                     {
                         case Ident ident:
@@ -72,12 +76,18 @@ namespace Efekt
                     }
                     return Void.Instance;
                 case Ident i:
+                    Value vv;
                     if (isImportContext)
-                        return env.Get(i);
+                        vv = env.Get(i);
                     else
-                        return env.GetWithImport(i);
+                        vv = env.GetWithImport(i);
+                    if (vv == Void.Instance)
+                        throw prog.RemarkList.AttemptToReadUninitializedVariable(i);
+                    return vv;
                 case Return r:
                     ret = eval(r.Exp, env);
+                    if (r.Exp != Void.Instance && ret == Void.Instance)
+                        throw prog.RemarkList.CannotReturnVoid(r);
                     return Void.Instance;
                 case FnApply fna:
                     if (fna.Fn is Ident fnI && fnI.Name == "typeof")
@@ -129,7 +139,14 @@ namespace Efekt
                     fn = eval(fna.Fn, env);
                     noExtMethodApply:
                     var builtin = fn as Builtin;
-                    var eArgs = fna.Arguments.Select(a => (Exp)eval(a, env)).ToList();
+                    var eArgs = new List<Exp>();
+                    foreach (var arg in fna.Arguments)
+                    {
+                        var eArg = (Exp) eval(arg, env);
+                        if (eArg == Void.Instance)
+                            throw prog.RemarkList.AttemptToVoidToFunction(arg);
+                        eArgs.Add(eArg);
+                    }
                     if (builtin != null)
                     {
                         callStack.Push(new StackItem(builtin, builtin.Name));
@@ -138,8 +155,11 @@ namespace Efekt
                         return res;
                     }
                     var fn2 = fn.AsFn(fna, prog);
+                    if (fn2.Parameters.Count != fna.Arguments.Count)
+                        throw prog.RemarkList.ParameterArgumentCountMismatch(fna, fn2.Parameters.Count);
                     var paramsEnv = Env<Value>.Create(prog, fn2.Env);
                     var ix = 0;
+
                     foreach (var p in fn2.Parameters)
                     {
                         var eArg = (Value) eArgs[ix++];

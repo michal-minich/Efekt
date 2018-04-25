@@ -1,52 +1,53 @@
-!fix: typer tries to find common type with imported variable on usage of it, but cannot access env in lexical scope
+structure: error: validate usage of break and continue outside loop
+structure: error: when loop does not have break or return statement inside (to prevent infinite loop)
+structure: static validation where possible (instead of interpeter)
+structure: warn: when hiding variable in outer scope (file only?)
+structure: info: when return can be skipped
 
-nicer mesage on perser error "fn () { 5 }" should be "fn { 5 }"
+paser: fix: parse member access and fn apply with multi line comment after dot lie a./*\n*/b()
 
+i: fix: declaring var in loop now fails with already declared
+
+parser: nicer mesage on perser error "fn () { 5 }" should be "fn { 5 }"
+
+specer: tries to find common type with imported variable on usage of it, but cannot access env in lexical scope
 specer: should add Obj(fieldName:Type) to common type on member access?
 specer - add test after fn apply like fn a { var b = a() + 1 }
 
-fix: declaring var in loop now fails with already declared
-fix various crashes - (build on prelude/wrong paths?, not matching braces)
-error: when loop does not have break or return statement inside (to prevent infinite loop)
-error: validate usage of break and continue outside loop
-error: validate inequal count of params and args
-fix: parse member access and fn apply with multi line comment after dot lie a./*\n*/b()
+general: fix: various crashes - (build on prelude/wrong paths?, not matching braces)
 
-tokenizer - make \0 in middle of file invalid token or fatal
-warn: when hiding variable in outer scope (file only?)
-warn: when declaring variable of type void
-info: when return can be skipped
-import candidates - nicer output with location
-info: import - print info when importing the same module in inner scope
-warn: import - warn on duplicate import in same scope
-info: when there is no need to crate new fn and name is enough, like fn a { print(a) }
-info: when var can be let
+tokenizer: error: make \0 in middle of file invalid token or fatal
 
-tests for import
-static validation where possible
-nicer code
+import: candidates - nicer output with location
+import: info: print when importing the same module in inner scope
+import: warn: warn on duplicate import in same scope
+info: when there is no need to create new fn and name is enough, like fn a { print(a) }
 
-elements holds its tokens
-prog runtime writter output (for throw)
+namer: info: when var can be let
 
-how to reolve nested module names vs paths
-resolve imports based on lib folder?
-project config file? (instaed of cmd args)
+tests: import
+tests: add ability unittest errors
 
-enforce (optionally) readonly func parameters. how?
-lock - transform mutable value to immutalbe (objects)
-not operator - how?
-more and thought out builtins
-Double type
-interators
-? label goto
-public attribute
-attributes in general?
-? ref
-? function overloading (introduces polymorphism and introspection)
-? contracts: requires, ensures, assert, assume, invariant (scope, loop, fn body, object body)
+refactor: elements holds its tokens
+refactor: prog runtime writter output (for throw)
 
-allow only typed functions to be called as extensions
-builtins as extension methods (when typing for builtins is done)
+lib: more and thought out builtins
+lib: interators
 
-convert to JS, D, C#
+design: how to reolve nested module names vs paths
+design: resolve imports based on lib folder?
+design: project config file? (instaed of cmd args)
+design: enforce (optionally) readonly func parameters. how? (make default param as let, and require to use var keyword to make it writable)
+design: lock - transform mutable value to immutalbe (objects)
+design: not operator - how?
+design: Double type
+design: ? label goto
+design: public attribute
+design: attributes in general?
+design: ? ref
+design: ? function overloading (introduces polymorphism and introspection)
+design: ? contracts: requires, ensures, assert, assume, invariant (scope, loop, fn body, object body)
+design: allow only typed functions to be called as extensions
+design: builtins as extension methods (when typing for builtins is done)
+
+future: convert to JS, D, C#

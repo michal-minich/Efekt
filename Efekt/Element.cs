@@ -686,6 +686,11 @@ namespace Efekt
     }
 
 
+    public interface SimpleSpec : Spec
+    {
+    }
+
+
     public abstract class ASpec : AElement, Spec
     {
         public override bool Equals(object obj)
@@ -699,15 +704,46 @@ namespace Efekt
         }
     }
 
-    public sealed class UnknownSpec : ASpec
+
+    public sealed class UnknownSpec : ASpec, SimpleSpec
     {
         public static UnknownSpec Instance { get; } = new UnknownSpec();
     }
 
 
-    public sealed class AnySpec : ASpec
+    public sealed class VoidSpec : ASpec, SimpleSpec
+    {
+        public static VoidSpec Instance { get; } = new VoidSpec();
+    }
+
+
+    public sealed class AnySpec : ASpec, SimpleSpec
     {
         public static AnySpec Instance { get; } = new AnySpec();
+    }
+
+
+    public sealed class BoolSpec : ASpec, SimpleSpec
+    {
+        public static BoolSpec Instance { get; } = new BoolSpec();
+    }
+
+
+    public sealed class IntSpec : ASpec, SimpleSpec
+    {
+        public static IntSpec Instance { get; } = new IntSpec();
+    }
+
+
+    public sealed class CharSpec : ASpec, SimpleSpec
+    {
+        public static CharSpec Instance { get; } = new CharSpec();
+    }
+
+
+    public sealed class TextSpec : ASpec, SimpleSpec
+    {
+        public static TextSpec Instance { get; } = new TextSpec();
     }
 
 
@@ -734,24 +770,6 @@ namespace Efekt
     }
 
 
-    public sealed class BoolSpec : ASpec
-    {
-        public static BoolSpec Instance { get; } = new BoolSpec();
-    }
-
-
-    public sealed class CharSpec : ASpec
-    {
-        public static CharSpec Instance { get; } = new CharSpec();
-    }
-
-
-    public sealed class TextSpec : ASpec
-    {
-        public static TextSpec Instance { get; } = new TextSpec();
-    }
-
-
     public sealed class FnSpec : ASpec
     {
         public FnSpec(List<Spec> signature)
@@ -771,12 +789,6 @@ namespace Efekt
         {
             get { return Signature.Last(); }
         }
-    }
-
-
-    public sealed class IntSpec : ASpec
-    {
-        public static IntSpec Instance { get; } = new IntSpec();
     }
 
 
@@ -818,11 +830,5 @@ namespace Efekt
         public Ident Ident { get; set; }
         public Spec Spec { get; set; }
         public bool IsLet { get; set; }
-    }
-
-
-    public sealed class VoidSpec : ASpec
-    {
-        public static VoidSpec Instance { get; } = new VoidSpec();
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using JetBrains.Annotations;
 
@@ -10,9 +11,6 @@ namespace Efekt
         [CanBeNull] private Spec ret;
         private readonly Prog prog;
         private bool isImportContext;
-        private Stack<StackItem> callStack { get; set; }
-
-        public IReadOnlyList<StackItem> CallStack => callStack?.ToList();
 
         
         public Specer(Prog prog)
@@ -27,7 +25,7 @@ namespace Efekt
         }
 
 
-        [Pure]
+        [JetBrains.Annotations.Pure]
         private static Spec common([NotNull] params Spec[] specs)
         {
             C.Nn(specs);
@@ -64,9 +62,24 @@ namespace Efekt
         }
 
 
+        private static void setFromTop(Ident ident, Spec spec, Env<Spec> env)
+        {
+            C.Req(ident.Spec == null);
+            C.Req(spec != AnySpec.Instance);
+            ident.Spec = spec;
+            env.Set(ident, spec);
+        }
+
+
+        private static void setFromUsage(Ident ident, Spec spec, Env<Spec> env)
+        {
+        }
+
+
         private static void update(Ident ident, Spec spec, Env<Spec> env)
         {
             var oldS = env.Get(ident);
+            C.Assume(/*ident.Spec == null ||*/ ReferenceEquals(ident.Spec, oldS));
             env.Set(ident, common(oldS, spec));
         }
 
@@ -95,7 +108,7 @@ namespace Efekt
         private Spec spec(Element e, Env<Spec> env)
         {
             C.Nn(e, env);
-            //C.Req(e.Spec == null);
+            Contract.Requires(e.Spec == null || e.Spec  is SimpleSpec);
             C.Ens(e.Spec != null);
             
             switch (e)
@@ -104,18 +117,19 @@ namespace Efekt
                     spec(d.Exp, env);
                     d.Ident.Spec = d.Exp.Spec;
                     env.Declare(d.Ident, d.Ident.Spec, d is Let);
-                    return d.Spec; // void spec
+                    C.Assume(d.Spec == VoidSpec.Instance);
+                    return VoidSpec.Instance;
                 case Assign a:
                     spec(a.Exp, env);
                     switch (a.To)
                     {
                         case Ident ident:
-                            update(ident, a.Exp.Spec, env);
+                            setFromTop(ident, a.Exp.Spec, env);
                             break;
                         case MemberAccess ma:
                             var obj = spec(ma.Exp, env);
                             var o2 = obj.As<ObjSpec>(ma, prog);
-                            update(ma.Ident, a.Exp.Spec, o2.Env);
+                            setFromTop(ma.Ident, a.Exp.Spec, o2.Env);
                             break;
                         default:
                             throw new NotSupportedException();
@@ -144,7 +158,9 @@ namespace Efekt
                         spec(fna.Fn, env);
                     var fnS = fna.Fn.Spec as FnSpec;
                     var ix = 0;
-                    foreach (var aa in fna.Arguments) // todo validate matching count of params vs args
+                    if (fnS != null && fnS.ParameterSpec.Count != fna.Arguments.Count)
+                        throw prog.RemarkList.ParameterArgumentCountMismatch(fna, fnS.ParameterSpec.Count);
+                    foreach (var aa in fna.Arguments)
                     {
                         if (fnS != null)
                             spec(aa, env, fnS.ParameterSpec[ix++]);
@@ -215,10 +231,6 @@ namespace Efekt
                     ae.Spec = new ArrSpec(common(items));
                     return ae.Spec;
                 case MemberAccess ma:
-                    if (ma.Ident.Name == "bbb")
-                    {
-                    }
-
                     spec(ma.Exp, env);
                     if (ma.Exp.Spec is AnySpec)
                     {
@@ -322,10 +334,6 @@ namespace Efekt
         private Spec evalSequenceItem(Element bodyElement, Env<Spec> env)
         {
             C.ReturnsNn();
-
-            //var stackItem = callStack.Peek();
-            //stackItem.LineIndex = bodyElement.LineIndex;
-            //stackItem.ColumnIndex = bodyElement.ColumnIndex;
             var bodyVal = spec(bodyElement, env);
             return bodyVal;
         }

@@ -445,7 +445,7 @@ namespace Efekt
 
         public void ReasigingLet(Ident ident)
         {
-            w(ident, "Reasinging value in let variable '" + ident.Name + "'");
+            w(ident, "Reassigning value in let variable '" + ident.Name + "'");
         }
 
 
@@ -480,7 +480,7 @@ namespace Efekt
 
 
         [Pure]
-        public EfektException VariableIsNotYetInitializied(Ident ident)
+        public EfektException AttemptToReadUninitializedVariable(Ident ident)
         {
             return fail(ident, "Variable is not yet initialized and cannot be read");
         }
@@ -489,7 +489,41 @@ namespace Efekt
         [Pure]
         public EfektException VariableMightNotYetBeInitialized(Ident ident)
         {
-            return fail(ident, "Variable might net yet be initialized and reading it might be unvanted");
+            return fail(ident, "Variable might net yet be initialized and reading it might be unwanted");
+        }
+
+
+        [Pure]
+        public EfektException AttemptToAssignVoid(Exp voidExp)
+        {
+            return fail(voidExp, "Void value cannot be assigned to variable.");
+        }
+
+
+        [Pure]
+        public EfektException AttemptToVoidToFunction(Exp exp)
+        {
+            return fail(exp, "Void value cannot be passed as and argument to a function.");
+        }
+
+
+        [Pure]
+        public EfektException CannotReturnVoid(Return r)
+        {
+            return fail(r, "Return keyword cannot be used to return Void value from function.");
+        }
+
+
+        [Pure]
+        public EfektException ParameterArgumentCountMismatch(FnApply fna, int fnParametersCount)
+        {
+            return fail(
+                fna,
+                "Function has "
+                + fnParametersCount
+                + " parameters(s) and cannot be called with "
+                + fna.Arguments.Count
+                + " arguments(s).");
         }
     }
 }

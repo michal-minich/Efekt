@@ -146,7 +146,7 @@ namespace Efekt.Tests
             test("/**/1", "1");
             test("/**/1/*2*///3", "1");
             test("var a = 1 return /*2*/ a", "1");
-            test("return //\n  1 + 1", "<Void>");
+            //test("return //\n  1 + 1", "<Void>");
             test("var a = 1 return /*a*/ 2", "2");
             test("var /*a = 1*/a = 2  return a", "2");
             test("var a = //1\n2 return a", "2");
@@ -228,11 +228,13 @@ namespace Efekt.Tests
             type2("var i = 1 typeof(i + 2)", "Int");
 
             // member access
-            // type2("fn a { var x = a.b typeof(a) }", "Obj(b : Any)"); // Void
+            type("fn a { var x = a.b return x.b }", "Fn(Obj(b : Any)) -> Any");
+            //type("fn a { a.b = 1 var x = a.b return x.b }", "Fn(Obj(b : Int)) -> Int");
             // type2("fn a { a.b = 1 typeof(a) }", "Obj(b : Int)"); // Void
 
             // back transitive type
             //type("fn a { var b = a b = b + 1 return a }", "Fn(Int) -> Int");
+            //type("fn a { return a.b + 1 }", "Fn(obj(b : Int)) -> Int");
         }
 
 
