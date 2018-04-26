@@ -2,15 +2,15 @@
 
 let start = fn {
 
-    var voidFn = fn { }
-    var voidFn2 = fn { id(1) }
-    var void
+    loop {
+        loop {
+            loop {
+                break
+            }
+            break
+        }
+        break
+    }
 
-    //id(void)
-    //id(voidFn())
-
-    //var y = fn {} ()
-    //var y = voidFn()
-
-    voidFn2()
+    print(1)
 }

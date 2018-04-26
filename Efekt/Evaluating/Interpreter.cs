@@ -26,8 +26,8 @@ namespace Efekt
     public sealed class Interpreter
     {
         [CanBeNull] private Value ret;
-        private bool isBreak;
-        private bool isContinue;
+        private bool isBreak; // todo requires stack bool since loops can be nested
+        private bool isContinue; // todo requires stack bool since loops can be nested
         private Prog prog;
         private bool isImportContext;
 
@@ -38,6 +38,9 @@ namespace Efekt
 
         public Value Eval(Prog program)
         {
+            C.Nn(program);
+            C.ReturnsNn();
+
             prog = program;
             callStack = new Stack<StackItem>();
             return eval(prog.RootElement, Env<Value>.CreateValueRoot(prog));
@@ -82,12 +85,12 @@ namespace Efekt
                     else
                         vv = env.GetWithImport(i);
                     if (vv == Void.Instance)
-                        throw prog.RemarkList.AttemptToReadUninitializedVariable(i);
+                        throw prog.RemarkList.AttemptToReadUninitializedVariable(i); // todo can be done in structure
                     return vv;
                 case Return r:
                     ret = eval(r.Exp, env);
                     if (r.Exp != Void.Instance && ret == Void.Instance)
-                        throw prog.RemarkList.CannotReturnVoid(r);
+                        throw prog.RemarkList.AttemptToReturnVoid(r);
                     return Void.Instance;
                 case FnApply fna:
                     if (fna.Fn is Ident fnI && fnI.Name == "typeof")
@@ -144,7 +147,7 @@ namespace Efekt
                     {
                         var eArg = (Exp) eval(arg, env);
                         if (eArg == Void.Instance)
-                            throw prog.RemarkList.AttemptToVoidToFunction(arg);
+                            throw prog.RemarkList.AttemptToPassVoidToFunction(arg);
                         eArgs.Add(eArg);
                     }
                     if (builtin != null)
@@ -318,7 +321,7 @@ namespace Efekt
                 if (bodyElement is FnApply fna2)
                     prog.RemarkList.ValueReturnedFromFunctionNotUsed(fna2);
                 else
-                    prog.RemarkList.ValueIsNotAssigned(bodyElement);
+                    prog.RemarkList.ValueIsNotAssigned(bodyElement); // todo can be done in structure
             }
         }
 

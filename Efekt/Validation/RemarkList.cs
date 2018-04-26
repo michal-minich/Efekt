@@ -20,8 +20,12 @@ namespace Efekt
 
 
         public static Remark NewTokenRemark(
-            RemarkSeverity severity, string message, string filePath, int lineIndexStart,
-            int columnIndexStart, Token token)
+            RemarkSeverity severity,
+            string message,
+            string filePath,
+            int lineIndexStart,
+            int columnIndexStart,
+            Token token)
         {
             return new Remark(
                 severity, message, filePath, lineIndexStart, columnIndexStart,
@@ -154,7 +158,8 @@ namespace Efekt
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
         public int Count => remarks.Count;
 
-        [NotNull] public Remark this[int index] => remarks[index];
+        [NotNull]
+        public Remark this[int index] => remarks[index];
 
 
         private string Add(Remark remark)
@@ -294,7 +299,9 @@ namespace Efekt
         }
 
         [Pure]
-        public EfektException ClosingBraceDoesNotMatchesOpening(TokenIterator ti, char actualStartBrace,
+        public EfektException ClosingBraceDoesNotMatchesOpening(
+            TokenIterator ti,
+            char actualStartBrace,
             string expectedEndBrace)
         {
             return fail(ti,
@@ -501,14 +508,14 @@ namespace Efekt
 
 
         [Pure]
-        public EfektException AttemptToVoidToFunction(Exp exp)
+        public EfektException AttemptToPassVoidToFunction(Exp exp)
         {
             return fail(exp, "Void value cannot be passed as and argument to a function.");
         }
 
 
         [Pure]
-        public EfektException CannotReturnVoid(Return r)
+        public EfektException AttemptToReturnVoid(Return r)
         {
             return fail(r, "Return keyword cannot be used to return Void value from function.");
         }
@@ -524,6 +531,34 @@ namespace Efekt
                 + " parameters(s) and cannot be called with "
                 + fna.Arguments.Count
                 + " arguments(s).");
+        }
+
+
+        [Pure]
+        public EfektException ConinueOrReturnRequiredInLoop(Loop l)
+        {
+            return fail(l, "Loop needs to have at least one break or return statement, otherwise it will never terminate.");
+        }
+
+
+        [Pure]
+        public EfektException AttemptMustHaveGrabOrAtLastOrBoth(Attempt att)
+        {
+            return fail(att, "After 'try' add 'catch' or 'finally' or both.");
+        }
+
+
+        [Pure]
+        public EfektException ContinueOutsideLoop(Continue cont)
+        {
+            return fail(cont, "Statement 'continue' can be present only inside loop.");
+        }
+
+
+        [Pure]
+        public EfektException BreakOutsideLoop(Break brk)
+        {
+            return fail(brk, "Statement 'break' can be present only inside loop.");
         }
     }
 }

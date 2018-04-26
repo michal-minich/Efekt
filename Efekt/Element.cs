@@ -316,7 +316,7 @@ namespace Efekt
         }
 
         public Ident Ident { get; }
-        public Exp Exp => null;
+        public Exp Exp => Void.Instance;
         public List<Ident> UsedBy { get; }
     }
 

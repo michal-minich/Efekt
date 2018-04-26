@@ -1,5 +1,4 @@
-structure: error: validate usage of break and continue outside loop
-structure: error: when loop does not have break or return statement inside (to prevent infinite loop)
+interpeter: evaluation order in interpreter (with consideration to throws and op associativity =, fn appply)
 structure: static validation where possible (instead of interpeter)
 structure: warn: when hiding variable in outer scope (file only?)
 structure: info: when return can be skipped
