@@ -26,8 +26,8 @@ namespace Efekt
     public sealed class Interpreter
     {
         [CanBeNull] private Value ret;
-        private bool isBreak; // todo requires stack bool since loops can be nested
-        private bool isContinue; // todo requires stack bool since loops can be nested
+        private bool isBreak;
+        private bool isContinue;
         private Prog prog;
         private bool isImportContext;
 

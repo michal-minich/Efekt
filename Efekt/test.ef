@@ -1,16 +1,8 @@
 ﻿
+var x = new { var b = 1 }
 
 let start = fn {
-
-    loop {
-        loop {
-            loop {
-                break
-            }
-            break
-        }
-        break
-    }
-
-    print(1)
+    import x
+    var b = 4
+    print(b + 2)
 }

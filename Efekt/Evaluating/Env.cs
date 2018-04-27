@@ -4,7 +4,7 @@ using JetBrains.Annotations;
 
 namespace Efekt
 {
-    public sealed class EnvValue<T> where T : class
+    public sealed class EnvValue<T> where T : class, Element
     {
         public readonly T Value;
         public readonly bool IsLet;
@@ -72,8 +72,10 @@ namespace Efekt
 
             var env = new Env<Declr>(prog);
             foreach (var b in new Builtins(prog).Values)
-                env.dict.Add(b.Name, new EnvValue<Declr>(new Let(new Ident(b.Name, TokenType.Ident), b), true));
-            // TODO toke type ident/op
+            {
+                var tt = b.Name.Any(ch => ch >= 'a' && ch <= 'z') ? TokenType.Ident : TokenType.Op;
+                env.dict.Add(b.Name, new EnvValue<Declr>(new Let(new Ident(b.Name, tt), b), true));
+            }
             return env;
         }
 
@@ -129,7 +131,7 @@ namespace Efekt
 
             var local = GetOrNull(ident);
             if (local != null)
-                candidates.Add(new Ident("local", TokenType.Ident), local);
+                candidates.Add(new Ident("(local)", TokenType.Ident), local);
 
             GetFromImports(ident, candidates);
 

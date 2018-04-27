@@ -392,12 +392,12 @@ namespace Efekt
 
         [Pure]
         // TODO move to structure validation eventually
-        public EfektException MoreVariableCandidates<T>(Dictionary<QualifiedIdent, T> candidates, Ident ident)
+        public EfektException MoreVariableCandidates<T>(Dictionary<QualifiedIdent, EnvValue<T>> candidates, Ident ident) where T : class, Element
         {
             return fail(ident, "Variable '" + ident.Name + "' can be found multiple times: " +
                                Environment.NewLine +
                                String.Join(Environment.NewLine, candidates.Select(
-                                   c => "    " + c.Key.ToDebugString() + " : " + c.Value.GetType())));
+                                   c => "    " + c.Key.ToDebugString() + "." + ident.Name + " : " + c.Value.Value.ToDebugString())));
         }
 
 
@@ -410,14 +410,14 @@ namespace Efekt
 
 
         [Pure]
-        // TODO move to structure validation eventually
+        // TODO move to after-typing validation eventually
         public EfektException ExtensionFuncHasNoParameters(Fn extFn, MemberAccess ma)
         {
             return fail(extFn, "Function must accept at least 1 parameter to be an extension function.");
         }
 
 
-        // TODO move to structure validation eventually
+        // TODO move to after-typing validation eventually
         public void ValueReturnedFromFunctionNotUsed(FnApply fna)
         {
             w(fna, "Value returned from function '" + fna.Fn.ToDebugString()

@@ -131,6 +131,7 @@
     <Compile Include="EfektException.cs" />
     <Compile Include="Evaluating\ElementExtensions.cs" />
     <Compile Include="Utils\C.cs" />
+    <Compile Include="Validation\Importer.cs" />
     <Compile Include="Validation\Specer.cs" />
     <Compile Include="Validation\RemarkList.cs" />
     <Compile Include="Validation\Namer.cs" />

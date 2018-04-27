@@ -2,34 +2,25 @@ interpeter: evaluation order in interpreter (with consideration to throws and op
 structure: static validation where possible (instead of interpeter)
 structure: warn: when hiding variable in outer scope (file only?)
 structure: info: when return can be skipped
-
-paser: fix: parse member access and fn apply with multi line comment after dot lie a./*\n*/b()
-
-i: fix: declaring var in loop now fails with already declared
-
+structure: info: operator used as a function like +(1, 2)
+general: fix: recursive function are not possible (variable not declared)
+importer: implement - extract from interpeter
+paser: fix: parse member access and fn apply with multi line comment after dot like a./*\n*/b()
+interpeter: fix: declaring var in loop now fails with already declared
 parser: nicer mesage on perser error "fn () { 5 }" should be "fn { 5 }"
-
 specer: tries to find common type with imported variable on usage of it, but cannot access env in lexical scope
 specer: should add Obj(fieldName:Type) to common type on member access?
 specer - add test after fn apply like fn a { var b = a() + 1 }
-
 general: fix: various crashes - (build on prelude/wrong paths?, not matching braces)
-
 tokenizer: error: make \0 in middle of file invalid token or fatal
-
-import: candidates - nicer output with location
 import: info: print when importing the same module in inner scope
 import: warn: warn on duplicate import in same scope
 info: when there is no need to create new fn and name is enough, like fn a { print(a) }
-
 namer: info: when var can be let
-
 tests: import
 tests: add ability unittest errors
-
 refactor: elements holds its tokens
 refactor: prog runtime writter output (for throw)
-
 lib: more and thought out builtins
 lib: interators
 
@@ -48,5 +39,4 @@ design: ? function overloading (introduces polymorphism and introspection)
 design: ? contracts: requires, ensures, assert, assume, invariant (scope, loop, fn body, object body)
 design: allow only typed functions to be called as extensions
 design: builtins as extension methods (when typing for builtins is done)
-
 future: convert to JS, D, C#
