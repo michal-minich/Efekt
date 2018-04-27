@@ -560,5 +560,12 @@ namespace Efekt
         {
             return fail(brk, "Statement 'break' can be present only inside loop.");
         }
+
+
+        [Pure]
+        public EfektException OnlyObjectsCanHaveMembers(MemberAccess ma)
+        {
+            return fail(ma.Exp, "Only objects can have members. Expression is of type " + ma.Exp.Spec.ToDebugString() + ".");
+        }
     }
 }

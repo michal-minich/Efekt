@@ -103,6 +103,7 @@ namespace Efekt
             if (checkTypes)
                 new Specer(prog).Spec();
             new StructureValidator(prog).Validate();
+            new Importer(prog).ResolveImports();
         }
 
 
@@ -110,6 +111,7 @@ namespace Efekt
         {
             var candidates = new List<List<string>>();
             findStart(modules, candidates, new List<string>());
+            // todo print candidates if multiple
             if (candidates.Count != 1)
                 throw remarkList.CannotFindStartFunction();
             var fn = candidates[0]

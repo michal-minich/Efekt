@@ -246,7 +246,9 @@ namespace Efekt
                         }
                     }
                     
-                    var objS2 = (ObjSpec)ma.Exp.Spec;
+                    var objS2 = ma.Exp.Spec as ObjSpec;
+                    if (objS2 == null)
+                        throw prog.RemarkList.OnlyObjectsCanHaveMembers(ma);
                     if (objS2.FromUsage)
                     {
                         var member = objS2.Members.FirstOrDefault(m => m.Ident.Name == ma.Ident.Name); // also use type and var/let?
