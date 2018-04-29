@@ -43,7 +43,7 @@ namespace Efekt
 
             prog = program;
             callStack = new Stack<StackItem>();
-            return eval(prog.RootElement, Env<Value>.CreateValueRoot(prog));
+            return eval(prog.RootElement, Env.CreateValueRoot(prog));
         }
 
 
@@ -81,9 +81,9 @@ namespace Efekt
                 case Ident i:
                     Value vv;
                     if (isImportContext)
-                        vv = env.Get(i);
+                        vv = env.GetWithoutImports(i).Value;
                     else
-                        vv = env.GetWithImport(i);
+                        vv = env.Get(i).Value;
                     if (vv == Void.Instance)
                         throw prog.RemarkList.AttemptToReadUninitializedVariable(i); // todo can be done in structure
                     return vv;
@@ -107,14 +107,14 @@ namespace Efekt
                         var exp2 = eval(extMemAcc.Exp, env);
                         if (exp2 is Obj o2)
                         {
-                            var v = o2.Env.GetDirectlyOrNull(extMemAcc.Ident);
+                            var v = o2.Env.GetFromThisEnvOnlyOrNull(extMemAcc.Ident);
                             if (v != null)
                             {
                                 fn = v.Value;
                                 goto noExtMethodApply;
                             }
                         }
-                        var envV = env.GetWithImportOrNull(extMemAcc.Ident);
+                        var envV = env.GetOrNull(extMemAcc.Ident);
                         if (envV != null)
                         {
                             var extFn = envV.Value.AsFn(fna, prog);
@@ -160,7 +160,7 @@ namespace Efekt
                     var fn2 = fn.AsFn(fna, prog);
                     if (fn2.Parameters.Count != fna.Arguments.Count)
                         throw prog.RemarkList.ParameterArgumentCountMismatch(fna, fn2.Parameters.Count);
-                    var paramsEnv = Env<Value>.Create(prog, fn2.Env);
+                    var paramsEnv = Env.Create(prog, fn2.Env);
                     var ix = 0;
 
                     foreach (var p in fn2.Parameters)
@@ -168,7 +168,7 @@ namespace Efekt
                         var eArg = (Value) eArgs[ix++];
                         paramsEnv.Declare(p.Ident, eArg, true);
                     }
-                    var fnEnv = Env<Value>.Create(prog, paramsEnv);
+                    var fnEnv = Env.Create(prog, paramsEnv);
                     callStack.Push(new StackItem(fn2));
                     if (fn2.Sequence.Count == 1)
                     {
@@ -217,17 +217,17 @@ namespace Efekt
                     if (w.Otherwise == null)
                     {
                         if (testB.Value)
-                            eval(w.Then, Env<Value>.Create(prog, env));
+                            eval(w.Then, Env.Create(prog, env));
                         return Void.Instance;
                     }
                     else
                     {
                         if (testB.Value)
-                            return eval(w.Then, Env<Value>.Create(prog, env));
-                        return eval(w.Otherwise, Env<Value>.Create(prog, env));
+                            return eval(w.Then, Env.Create(prog, env));
+                        return eval(w.Otherwise, Env.Create(prog, env));
                     }
                 case Loop l:
-                    var loopEnv = Env<Value>.Create(prog, env);
+                    var loopEnv = Env.Create(prog, env);
                     while (true)
                     {
                         continueLoop:
@@ -259,16 +259,17 @@ namespace Efekt
                 case MemberAccess ma:
                     var exp = eval(ma.Exp, env);
                     var o = exp.AsObj(ma, prog);
-                    return o.Env.Get(ma.Ident);
+                    return o.Env.GetFromThisEnvOnly(ma.Ident).Value;
                 case New n:
-                    var objEnv = Env<Value>.Create(prog, env);
+                    var objEnv = Env.Create(prog, env);
+                    // todo create 
                     foreach (var v in n.Body)
                         eval(v, objEnv);
                     return new Obj(n.Body, objEnv);
                 case Value ve:
                     return ve;
                 case Sequence seq:
-                    var scopeEnv = Env<Value>.Create(prog, env);
+                    var scopeEnv = Env.Create(prog, env);
                     if (seq.Count == 1)
                         return eval(seq.First(), scopeEnv);
                     foreach (var item in seq)
@@ -290,7 +291,7 @@ namespace Efekt
                     {
                         if (att.Grab != null)
                         {
-                            var grabEnv = Env<Value>.Create(prog, env);
+                            var grabEnv = Env.Create(prog, env);
                             grabEnv.Declare(new Ident("exception", TokenType.Ident), ex.Value, true);
                             eval(att.Grab, grabEnv);
                         }

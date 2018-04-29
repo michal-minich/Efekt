@@ -15,7 +15,7 @@ namespace Efekt
 
         public void Name()
         {
-            name(prog.RootElement, Env<Declr>.CreateDeclrRoot(prog));
+            name(prog.RootElement, Env.CreateDeclrRoot(prog));
         }
 
 
@@ -37,9 +37,9 @@ namespace Efekt
                 case Ident i:
                     Declr dBy;
                     if (isImportContext)
-                        dBy = env.Get(i);
+                        dBy = env.GetWithoutImports(i).Value;
                     else
-                        dBy = env.GetWithImport(i);
+                        dBy = env.Get(i).Value;
                     dBy.UsedBy.Add(i);
                     i.DeclareBy = dBy;
                     break;
@@ -52,10 +52,10 @@ namespace Efekt
                         name(a, env);
                     break;
                 case Fn f:
-                    var fnParamsEnv = Env<Declr>.Create(prog, env);
+                    var fnParamsEnv = Env.Create(prog, env);
                     foreach (var p in f.Parameters)
                         name(p, fnParamsEnv);
-                    var fnBodyEnv = Env<Declr>.Create(prog, fnParamsEnv);
+                    var fnBodyEnv = Env.Create(prog, fnParamsEnv);
                     name(f.Sequence, fnBodyEnv);
                     break;
                 case When w:
@@ -81,14 +81,14 @@ namespace Efekt
                     // TODO
                     break;
                 case New n:
-                    var objEnv = Env<Declr>.Create(prog, env);
+                    var objEnv = Env.Create(prog, env);
                     foreach (var v in n.Body)
                         name(v, objEnv);
                     break;
                 case Value _:
                     break;
                 case Sequence seq:
-                    var scopeEnv = Env<Declr>.Create(prog, env);
+                    var scopeEnv = Env.Create(prog, env);
                     foreach (var si in seq)
                         name(si, scopeEnv);
                     break;

@@ -707,42 +707,70 @@ namespace Efekt
 
     public sealed class UnknownSpec : ASpec, SimpleSpec
     {
+        private UnknownSpec()
+        {
+        }
+
         public static UnknownSpec Instance { get; } = new UnknownSpec();
     }
 
 
     public sealed class VoidSpec : ASpec, SimpleSpec
     {
+        private VoidSpec()
+        {
+        }
+
         public static VoidSpec Instance { get; } = new VoidSpec();
     }
 
 
     public sealed class AnySpec : ASpec, SimpleSpec
     {
+        private AnySpec()
+        {
+        }
+
         public static AnySpec Instance { get; } = new AnySpec();
     }
 
 
     public sealed class BoolSpec : ASpec, SimpleSpec
     {
+        private BoolSpec()
+        {
+        }
+
         public static BoolSpec Instance { get; } = new BoolSpec();
     }
 
 
     public sealed class IntSpec : ASpec, SimpleSpec
     {
+        private IntSpec()
+        {
+        }
+
         public static IntSpec Instance { get; } = new IntSpec();
     }
 
 
     public sealed class CharSpec : ASpec, SimpleSpec
     {
+        private CharSpec()
+        {
+        }
+
         public static CharSpec Instance { get; } = new CharSpec();
     }
 
 
     public sealed class TextSpec : ASpec, SimpleSpec
     {
+        private TextSpec()
+        {
+        }
+
         public static TextSpec Instance { get; } = new TextSpec();
     }
 

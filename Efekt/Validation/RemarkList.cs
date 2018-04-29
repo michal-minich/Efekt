@@ -392,7 +392,7 @@ namespace Efekt
 
         [Pure]
         // TODO move to structure validation eventually
-        public EfektException MoreVariableCandidates<T>(Dictionary<QualifiedIdent, EnvValue<T>> candidates, Ident ident) where T : class, Element
+        public EfektException MoreVariableCandidates<T>(Dictionary<QualifiedIdent, EvnItem<T>> candidates, Ident ident) where T : class, Element
         {
             return fail(ident, "Variable '" + ident.Name + "' can be found multiple times: " +
                                Environment.NewLine +

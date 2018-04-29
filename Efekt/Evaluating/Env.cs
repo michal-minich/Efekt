@@ -1,108 +1,127 @@
+using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using JetBrains.Annotations;
 
 namespace Efekt
 {
-    public sealed class EnvValue<T> where T : class, Element
+    public sealed class EvnItem<T> where T : class, Element
     {
-        public readonly T Value;
+        public T Value { get; set; }
         public readonly bool IsLet;
 
-        public EnvValue(T value, bool isLet)
+        public EvnItem(T value, bool isLet)
         {
+            C.Nn(value);
+
             Value = value;
             IsLet = isLet;
+        }
+
+        [ContractInvariantMethod]
+        private void ObjectInvariant()
+        {
+            Contract.Invariant(Value != null);
         }
     }
 
 
-    public sealed class Env<T> where T : class, Element
+    public abstract class Env
     {
-        private readonly Dictionary<string, EnvValue<T>> dict = new Dictionary<string, EnvValue<T>>();
-        private readonly Dictionary<QualifiedIdent, Env<T>> imports = new Dictionary<QualifiedIdent, Env<T>>();
-        [CanBeNull] private readonly Env<T> parent;
-        private readonly Prog prog;
-
-
-        private Env(Prog prog)
-        {
-            C.Nn(prog);
-            this.prog = prog;
-            parent = null;
-        }
-        
-
-        private Env(Prog prog, Env<T> parent)
-        {
-            C.Nn(prog, parent);
-            this.prog = prog;
-            this.parent = parent;
-        }
-
-
         public static Env<Value> CreateValueRoot(Prog prog)
         {
-            C.Nn(prog);
-            C.ReturnsNn();
-
-            var env = new Env<Value>(prog);
-            foreach (var b in new Builtins(prog).Values)
-                env.dict.Add(b.Name, new EnvValue<Value>(b, true));
-            return env;
+            return CreateRoot<Value>(prog, b => b);
         }
 
 
         public static Env<Spec> CreateSpecRoot(Prog prog)
         {
-            C.Nn(prog);
-            C.ReturnsNn();
-
-            var env = new Env<Spec>(prog);
-            foreach (var b in new Builtins(prog).Values)
-                env.dict.Add(b.Name, new EnvValue<Spec>(b.Spec, true));
-            return env;
+            return CreateRoot(prog, b => b.Spec);
         }
 
 
         public static Env<Declr> CreateDeclrRoot(Prog prog)
         {
-            C.Nn(prog);
-            C.ReturnsNn();
-
-            var env = new Env<Declr>(prog);
-            foreach (var b in new Builtins(prog).Values)
+            return CreateRoot<Declr>(prog, b =>
             {
                 var tt = b.Name.Any(ch => ch >= 'a' && ch <= 'z') ? TokenType.Ident : TokenType.Op;
-                env.dict.Add(b.Name, new EnvValue<Declr>(new Let(new Ident(b.Name, tt), b), true));
-            }
-            return env;
+                return new Let(new Ident(b.Name, tt), b);
+            });
         }
 
 
+        public static Env<TA> CreateRoot<TA>(Prog prog, Func<Builtin, TA> selector) where TA : class, Element
+        {
+            C.Nn(prog);
+            C.ReturnsNn();
 
-        public static Env<T> Create(Prog prog, Env<T> parent)
+            var dict = new Dictionary<string, EvnItem<TA>>();
+            foreach (var b in new Builtins(prog).Values)
+                dict.Add(b.Name, new EvnItem<TA>(selector(b), true));
+            return new Env<TA>(prog,dict);
+        }
+
+
+        public static Env<T> Create<T>(Prog prog, Env<T> parent) where T : class, Element
         {
             C.Nn(prog, parent);
             C.ReturnsNn();
 
             return new Env<T>(prog, parent);
         }
+    }
 
-        public T Get(Ident ident)
+
+    public sealed class Env<T> : Env where T : class, Element
+    {
+        private readonly Dictionary<string, EvnItem<T>> dict;
+        private readonly Dictionary<QualifiedIdent, Env<T>> imports = new Dictionary<QualifiedIdent, Env<T>>();
+        [CanBeNull] private readonly Env<T> parent;
+        private readonly Prog prog;
+
+
+        public Env(Prog program, Dictionary<string, EvnItem<T>> initialDictionary)
+        {
+            C.Nn(program, initialDictionary);
+            C.AllNotNull(initialDictionary);
+            prog = program;
+            dict = initialDictionary;
+            parent = null;
+        }
+
+
+        public Env(Prog prog, Env<T> parent)
+        {
+            C.Nn(prog, parent);
+            this.prog = prog;
+            this.parent = parent;
+            dict = new Dictionary<string, EvnItem<T>>();
+        }
+
+
+        public EvnItem<T> GetWithoutImports(Ident ident)
         {
             C.Nn(ident);
             C.ReturnsNn();
 
-            var v = GetOrNull(ident);
-            if (v != null)
-                return v.Value;
-            throw prog.RemarkList.VariableIsNotDeclared(ident);
+            var v = GetWithoutImportOrNull(ident);
+            return v ?? throw prog.RemarkList.VariableIsNotDeclared(ident);
+        }
+
+
+        public EvnItem<T> GetFromThisEnvOnly(Ident ident)
+        {
+            C.Nn(ident);
+            C.ReturnsNn();
+
+            var v = GetFromThisEnvOnlyOrNull(ident);
+            return v ?? throw prog.RemarkList.VariableIsNotDeclared(ident);
         }
 
 
         [CanBeNull]
-        public EnvValue<T> GetDirectlyOrNull(Ident ident)
+        public EvnItem<T> GetFromThisEnvOnlyOrNull(Ident ident)
         {
             C.Nn(ident);
             if (dict.TryGetValue(ident.Name, out var envValue))
@@ -112,28 +131,28 @@ namespace Efekt
 
 
         [CanBeNull]
-        public EnvValue<T> GetOrNull(Ident ident)
+        public EvnItem<T> GetWithoutImportOrNull(Ident ident)
         {
             C.Nn(ident);
             if (dict.TryGetValue(ident.Name, out var envValue))
                 return envValue;
             if (parent != null)
-                return parent.GetOrNull(ident);
+                return parent.GetWithoutImportOrNull(ident);
             return null;
         }
 
 
         [CanBeNull]
-        public EnvValue<T> GetWithImportOrNull(Ident ident)
+        public EvnItem<T> GetOrNull(Ident ident)
         {
             C.Nn(ident);
-            var candidates = new Dictionary<QualifiedIdent, EnvValue<T>>();
+            var candidates = new Dictionary<QualifiedIdent, EvnItem<T>>();
 
-            var local = GetOrNull(ident);
+            var local = GetWithoutImportOrNull(ident);
             if (local != null)
                 candidates.Add(new Ident("(local)", TokenType.Ident), local);
 
-            GetFromImports(ident, candidates);
+            loadFromImports(ident, candidates);
 
             if (candidates.Count == 1)
                 return candidates.First().Value;
@@ -142,30 +161,31 @@ namespace Efekt
             throw prog.RemarkList.MoreVariableCandidates(candidates, ident);
         }
 
-        private void GetFromImports(Ident ident, Dictionary<QualifiedIdent, EnvValue<T>> candidates)
+
+        private void loadFromImports(Ident ident, Dictionary<QualifiedIdent, EvnItem<T>> candidates)
         {
             C.Nn(ident);
 
             foreach (var i in imports)
             {
-                var x = i.Value.GetDirectlyOrNull(ident);
+                var x = i.Value.GetFromThisEnvOnlyOrNull(ident);
                 if (x != null && !candidates.Any(c => c.Key.ToDebugString() == i.Key.ToDebugString()))
                     candidates.Add(i.Key, x);
             }
             if (parent != null)
-                parent.GetFromImports(ident, candidates);
+                parent.loadFromImports(ident, candidates);
         }
 
 
-        public T GetWithImport(Ident ident)
+        public EvnItem<T> Get(Ident ident)
         {
             C.Nn(ident);
             C.ReturnsNn();
 
-            var v  = GetWithImportOrNull(ident);
+            var v  = GetOrNull(ident);
             if (v == null)
                 throw prog.RemarkList.VariableIsNotDeclared(ident);
-            return v.Value;
+            return v;
         }
 
 
@@ -175,40 +195,31 @@ namespace Efekt
 
             if (dict.ContainsKey(ident.Name))
                 throw prog.RemarkList.VariableIsAlreadyDeclared(ident);
-            dict.Add(ident.Name, new EnvValue<T>(value, isLet));
+            dict.Add(ident.Name, new EvnItem<T>(value, isLet));
         }
 
-
+        
         public void Set(Ident ident, T value)
         {
             C.Nn(ident, value);
 
-            var e = this;
-            do
+            var old = Get(ident);
+           
+            if (old.Value != Void.Instance && (
+                    old.Value.Spec != null &&
+                    old.Value.Spec != UnknownSpec.Instance &&
+                    old.Value.Spec != UnknownSpec.Instance &&
+                    old.Value.Spec != AnySpec.Instance) &&
+                old.Value.GetType() != value.GetType())
             {
-                if (e.dict.ContainsKey(ident.Name))
-                {
-                    var old = e.dict[ident.Name];
-                    if (old.Value != Void.Instance && (
-                            old.Value.Spec != null &&
-                            old.Value.Spec != UnknownSpec.Instance &&
-                            old.Value.Spec != UnknownSpec.Instance &&
-                            old.Value.Spec != AnySpec.Instance) &&
-                        old.Value.GetType() != value.GetType())
-                    {
-                        prog.RemarkList.AssigningDifferentType(ident, old.Value, value);
-                    }
+                prog.RemarkList.AssigningDifferentType(ident, old.Value, value);
+            }
 
-                    if (!(value is Spec) && old.IsLet)
-                        prog.RemarkList.ReasigingLet(ident);
-                    e.dict[ident.Name] = new EnvValue<T>(value, old.IsLet);
-                    return;
-                }
-                e = e.parent;
-            } while (e != null);
-            throw prog.RemarkList.VariableIsNotDeclared(ident);
+            if (!(value is Spec) && old.IsLet)
+                prog.RemarkList.ReasigingLet(ident);
+            old.Value = value;
         }
-
+        
 
         public void AddImport(QualifiedIdent qi, Env<T> module)
         {

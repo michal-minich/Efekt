@@ -21,7 +21,7 @@ namespace Efekt
 
         public void Spec()
         {
-            spec(prog.RootElement, Env<Declr>.CreateSpecRoot(prog));
+            spec(prog.RootElement, Env.CreateSpecRoot(prog));
         }
 
 
@@ -78,7 +78,7 @@ namespace Efekt
 
         private static void update(Ident ident, Spec spec, Env<Spec> env)
         {
-            var oldS = env.Get(ident);
+            var oldS = env.GetFromThisEnvOnly(ident).Value;
             C.Assume(/*ident.Spec == null ||*/ ReferenceEquals(ident.Spec, oldS));
             env.Set(ident, common(oldS, spec));
         }
@@ -139,12 +139,12 @@ namespace Efekt
                     read(i);
                     Spec s;
                     if (isImportContext)
-                        s = env.Get(i);
+                        s = env.GetWithoutImports(i).Value;
                     else
-                        s = env.GetWithImport(i);
+                        s = env.Get(i).Value;
                     var c = common(i.Spec, s);
                     if (!isImportContext)
-                    if (env.GetOrNull(i) != null)
+                    if (env.GetWithoutImportOrNull(i) != null)
                         env.Set(i, c);
                     if (i.Spec == null)
                         i.Spec = c;
@@ -174,14 +174,14 @@ namespace Efekt
                         fna.Spec = UnknownSpec.Instance;
                     return fna.Spec;
                 case Fn f:
-                    var paramsEnv = Env<Spec>.Create(prog, env);
+                    var paramsEnv = Env.Create(prog, env);
                     foreach (var p in f.Parameters)
                     {
                         p.Ident.Spec = UnknownSpec.Instance;
                         paramsEnv.Declare(p.Ident, p.Ident.Spec, true);
                     }
 
-                    var fnEnv = Env<Spec>.Create(prog, paramsEnv);
+                    var fnEnv = Env.Create(prog, paramsEnv);
                     if (f.Sequence.Count == 1)
                     {
                         var r = evalSequenceItem(f.Sequence[0], fnEnv);
@@ -190,7 +190,7 @@ namespace Efekt
                         var tmp = ret;
                         ret = null;
                         //callStack.Pop();
-                        f.Spec = new FnSpec(f.Parameters.Select(p => fnEnv.Get(p.Ident)).Append(tmp).ToList());
+                        f.Spec = new FnSpec(f.Parameters.Select(p => paramsEnv.GetFromThisEnvOnly(p.Ident).Value).Append(tmp).ToList());
                         return f.Spec;
                     }
                     foreach (var fnItem in f.Sequence)
@@ -198,12 +198,12 @@ namespace Efekt
                         evalSequenceItemFull(fnItem, fnEnv);
                     }
 
-                    f.Spec = new FnSpec(f.Parameters.Select(p => fnEnv.Get(p.Ident)).Append(ret ?? VoidSpec.Instance).ToList());
+                    f.Spec = new FnSpec(f.Parameters.Select(p => paramsEnv.GetFromThisEnvOnly(p.Ident).Value).Append(ret ?? VoidSpec.Instance).ToList());
                     return f.Spec;
                 case When w:
                     var test = spec(w.Test, env, BoolSpec.Instance);
                     //var _ = test.As<BoolSpec>(test, prog); // todo
-                    var specT = spec(w.Then, Env<Spec>.Create(prog, env));
+                    var specT = spec(w.Then, Env.Create(prog, env));
                     if (w.Otherwise == null)
                     {
                         w.Spec = VoidSpec.Instance;
@@ -211,12 +211,12 @@ namespace Efekt
                     }
                     else
                     {
-                        var specO = spec(w.Otherwise, Env<Spec>.Create(prog, env));
+                        var specO = spec(w.Otherwise, Env.Create(prog, env));
                         w.Spec = common(specT, specO);
                         return w.Spec;
                     }
                 case Loop l:
-                    var loopEnv = Env<Spec>.Create(prog, env);
+                    var loopEnv = Env.Create(prog, env);
                     foreach (var be in l.Body)
                     {
                         evalSequenceItemFull(be, loopEnv);
@@ -234,7 +234,7 @@ namespace Efekt
                     spec(ma.Exp, env);
                     if (ma.Exp.Spec is AnySpec)
                     {
-                        var objSEnv = Env<Spec>.Create(prog, env);
+                        var objSEnv = Env.Create(prog, env);
                         var objS = new ObjSpec(new List<ObjSpecMember>(), objSEnv, true);
                         objSEnv.Declare(ma.Ident, UnknownSpec.Instance, false);
                         spec(ma.Ident, objSEnv);
@@ -262,12 +262,12 @@ namespace Efekt
 
                     //var objSpec = exp.As<ObjSpec>(ma.Exp, prog); // todo
                     if (ma.Exp.Spec is ObjSpec o)
-                        ma.Spec = o.Env.Get(ma.Ident);
+                        ma.Spec = o.Env.GetFromThisEnvOnly(ma.Ident).Value;
                     else
                         ma.Spec = UnknownSpec.Instance;
                     return ma.Spec;
                 case New n:
-                    var objEnv = Env<Spec>.Create(prog, env);
+                    var objEnv = Env.Create(prog, env);
                     var members = new List<ObjSpecMember>();
                     foreach (var v in n.Body)
                     {
@@ -283,7 +283,7 @@ namespace Efekt
                 case Value v:
                     return v.Spec;
                 case Sequence seq:
-                    var scopeEnv = Env<Spec>.Create(prog, env);
+                    var scopeEnv = Env.Create(prog, env);
                     if (seq.Count == 1)
                         return spec(seq.First(), scopeEnv);
                     foreach (var item in seq)
@@ -298,7 +298,7 @@ namespace Efekt
                     spec(att.Body, env);
                     if (att.Grab != null)
                     {
-                        var grabEnv = Env<Spec>.Create(prog, env);
+                        var grabEnv = Env.Create(prog, env);
                         var exIdent = new Ident("exception", TokenType.Ident) {Spec = AnySpec.Instance};
                         grabEnv.Declare(exIdent, exIdent.Spec, true);
                         spec(att.Grab, grabEnv);
