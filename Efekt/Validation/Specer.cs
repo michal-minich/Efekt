@@ -96,7 +96,7 @@ namespace Efekt
         }
 
 
-        private void read(Element e)
+        private void read(Exp e)
         {
             if (wantsRead == null)
                 return;
@@ -120,16 +120,19 @@ namespace Efekt
         private Spec spec(Element e, Env<Spec> env)
         {
             C.Nn(e, env);
-            Contract.Requires(e.Spec == null || e.Spec is SimpleSpec);
-            C.EnsNn(e.Spec);
-            
+
+            if (e is Exp exp)
+            {
+                Contract.Assert(exp.Spec == null || exp.Spec is SimpleSpec);
+                //C.EnsNn(exp.Spec);
+            }
+
             switch (e)
             {
                 case Declr d:
                     spec(d.Exp, env);
                     d.Ident.Spec = d.Exp.Spec;
                     env.Declare(d, d.Ident.Spec);
-                    C.Assume(d.Spec == VoidSpec.Instance);
                     return VoidSpec.Instance;
                 case Assign a:
                     spec(a.Exp, env);
@@ -146,7 +149,7 @@ namespace Efekt
                         default:
                             throw new NotSupportedException();
                     }
-                    return a.Spec;
+                    return VoidSpec.Instance;
                 case Ident i:
                     read(i);
                     Spec s;
@@ -169,7 +172,7 @@ namespace Efekt
                 case Return r:
                     var retS = spec(r.Exp, env);
                     returns.Push(common(returns.Pop(), retS));
-                    return r.Spec;
+                    return VoidSpec.Instance;
                 case FnApply fna:
                     if (!(fna.Fn is Ident fnI) || fnI.Name != "typeof")
                         spec(fna.Fn, env);
@@ -203,14 +206,16 @@ namespace Efekt
                     if (f.Sequence.Count == 0)
                     {
                         returns.Pop();
-                        f.Spec = new FnSpec(f.Parameters.Select(p => paramsEnv.GetFromThisEnvOnly(p.Ident, null).Value).Append(VoidSpec.Instance).ToList());
+                        f.Spec = new FnSpec(f.Parameters.Select(p => paramsEnv.GetFromThisEnvOnly(p.Ident, null).Value)
+                            .Append(VoidSpec.Instance).ToList());
                         return f.Spec;
                     }
                     else if (f.Sequence.Count == 1 && f.Sequence[0] is Exp)
                     {
                         var ret = spec(f.Sequence[0], fnEnv);
                         returns.Pop();
-                        f.Spec = new FnSpec(f.Parameters.Select(p => paramsEnv.GetFromThisEnvOnly(p.Ident, null).Value).Append(ret).ToList());
+                        f.Spec = new FnSpec(f.Parameters.Select(p => paramsEnv.GetFromThisEnvOnly(p.Ident, null).Value)
+                            .Append(ret).ToList());
                         return f.Spec;
                     }
                     foreach (var fnItem in f.Sequence)
@@ -219,7 +224,8 @@ namespace Efekt
                     }
 
                     var ret2 = returns.Pop();
-                    f.Spec = new FnSpec(f.Parameters.Select(p => paramsEnv.GetFromThisEnvOnly(p.Ident, null).Value).Append(ret2 ?? VoidSpec.Instance).ToList());
+                    f.Spec = new FnSpec(f.Parameters.Select(p => paramsEnv.GetFromThisEnvOnly(p.Ident, null).Value)
+                        .Append(ret2 ?? VoidSpec.Instance).ToList());
                     return f.Spec;
                 case When w:
                     var test = spec(w.Test, env, BoolSpec.Instance);
@@ -244,9 +250,9 @@ namespace Efekt
                     }
                     return VoidSpec.Instance;
                 case Break br:
-                    return br.Spec;
+                    return VoidSpec.Instance;
                 case Continue ct:
-                    return ct.Spec;
+                    return VoidSpec.Instance;
                 case ArrConstructor ae:
                     var items = ae.Arguments.Select(a => spec(a, env)).ToArray();
                     ae.Spec = new ArrSpec(common(items));
@@ -296,8 +302,7 @@ namespace Efekt
                         spec(v, objEnv);
                         if (v is Declr d)
                         {
-                            var ss = d.Exp == null ? d.Spec : d.Exp.Spec;
-                            members.Add(new ObjSpecMember(d.Ident, ss, d is Let));
+                            members.Add(new ObjSpecMember(d.Ident, d.Exp.Spec, d is Let));
                         }
                     }
                     n.Spec = new ObjSpec(members, objEnv) { Parent = n.Parent };
@@ -315,7 +320,7 @@ namespace Efekt
                     return seq.Spec;
                 case Toss ts:
                     spec(ts.Exception, env);
-                    return ts.Spec;
+                    return VoidSpec.Instance;
                 case Attempt att:
                     spec(att.Body, env);
                     if (att.Grab != null)
@@ -327,14 +332,14 @@ namespace Efekt
                     }
                     if (att.AtLast != null)
                         spec(att.AtLast, env);
-                    return att.Spec;
+                    return VoidSpec.Instance;
                 case Import imp:
                     isImportContext = true;
                     var modImpEl = spec(imp.QualifiedIdent, env);
                     isImportContext = false;
                     var modImp = modImpEl.As<ObjSpec>(imp, prog);
                     env.AddImport(imp.QualifiedIdent, modImp.Env, (Declr)modImp.Parent);
-                    return imp.Spec;
+                    return VoidSpec.Instance;
                 default:
                     throw new NotSupportedException();
             }

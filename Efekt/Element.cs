@@ -16,7 +16,6 @@ namespace Efekt
         string FilePath { get; set; }
         Element Parent { get; set; }
         bool IsBraced { get; set; }
-        Spec Spec { get; set; }
         void ClearParent();
     }
 
@@ -32,10 +31,42 @@ namespace Efekt
 
     public abstract class AElement : Element
     {
-        private Spec _spec;
         private Element _parent;
 
         protected AElement()
+        {
+            LineIndex = -1;
+            FilePath = "runtime.ef";
+        }
+
+        public int LineIndex { get; set; }
+        public int ColumnIndex { get; set; }
+        public int LineIndexEnd { get; set; }
+        public int ColumnIndexEnd { get; set; }
+        public string FilePath { get; set; }
+        public Element Parent { get; set; }
+
+        public void ClearParent()
+        {
+            _parent = null;
+        }
+
+        public bool IsBraced { get; set; }
+
+
+        public override string ToString()
+        {
+            return GetType().Name + ": " + this.ToDebugString();
+        }
+    }
+
+
+    public abstract class AExp : Exp
+    {
+        private Element _parent;
+        private Spec _spec;
+
+        protected AExp()
         {
             LineIndex = -1;
             FilePath = "runtime.ef";
@@ -82,15 +113,16 @@ namespace Efekt
     }
 
 
+
     public interface Exp : SequenceItem
     {
+        Spec Spec { get; set; }
     }
 
 
     public interface Stm : Element
     {
     }
-
 
     public interface Value : Exp
     {
@@ -233,7 +265,7 @@ namespace Efekt
     }
 
 
-    public sealed class Builtin : AElement, Value
+    public sealed class Builtin : AExp, Value
     {
         [DebuggerStepThrough]
         public Builtin(string name, List<Spec> signature, Func<FnArguments, FnApply, Value> fn)
@@ -263,7 +295,7 @@ namespace Efekt
     }
 
 
-    public sealed class Ident : AElement, QualifiedIdent
+    public sealed class Ident : AExp, QualifiedIdent
     {
         [DebuggerStepThrough]
         public Ident(string name, TokenType tokenType)
@@ -298,8 +330,6 @@ namespace Efekt
             UsedBy = new List<Ident>();
             ReadBy = new List<Ident>();
             WrittenBy = new List<Ident>();
-
-            Spec = VoidSpec.Instance;
         }
 
         public Ident Ident { get; }
@@ -326,8 +356,6 @@ namespace Efekt
             UsedBy = new List<Ident>();
             ReadBy = new List<Ident>();
             WrittenBy = new List<Ident>();
-
-            Spec = VoidSpec.Instance;
         }
 
         public Ident Ident { get; }
@@ -351,8 +379,6 @@ namespace Efekt
             UsedBy = new List<Ident>();
             ReadBy = new List<Ident>();
             WrittenBy = new List<Ident>();
-
-            Spec = VoidSpec.Instance;
         }
 
         public Ident Ident { get; }
@@ -375,8 +401,6 @@ namespace Efekt
 
             to.Parent = this;
             exp.Parent = this;
-
-            Spec = VoidSpec.Instance;
         }
 
         public AssignTarget To { get; }
@@ -384,7 +408,7 @@ namespace Efekt
     }
 
 
-    public sealed class When : AElement, Exp
+    public sealed class When : AExp
     {
         [DebuggerStepThrough]
         public When(Exp test, Element then, [CanBeNull] Element otherwise)
@@ -418,8 +442,6 @@ namespace Efekt
             C.Nn(body);
             Body = body;
             body.Parent = this;
-
-            Spec = VoidSpec.Instance;
         }
 
         public Sequence Body { get; }
@@ -434,8 +456,6 @@ namespace Efekt
             C.Nn(exp);
             Exp = exp;
             exp.Parent = this;
-
-            Spec = VoidSpec.Instance;
         }
 
         public Exp Exp { get; }
@@ -447,7 +467,6 @@ namespace Efekt
         [DebuggerStepThrough]
         public Break()
         {
-            Spec = VoidSpec.Instance;
         }
     }
 
@@ -457,12 +476,11 @@ namespace Efekt
         [DebuggerStepThrough]
         public Continue()
         {
-            Spec = VoidSpec.Instance;
         }
     }
 
 
-    public sealed class Fn : AElement, Value
+    public sealed class Fn : AExp, Value
     {
         [DebuggerStepThrough]
         public Fn(FnParameters parameters, Sequence sequence)
@@ -489,7 +507,7 @@ namespace Efekt
     }
 
 
-    public sealed class Int : AElement, Value
+    public sealed class Int : AExp, Value
     {
         [DebuggerStepThrough]
         public Int(int value)
@@ -502,7 +520,7 @@ namespace Efekt
     }
 
 
-    public sealed class Char : AElement, Value
+    public sealed class Char : AExp, Value
     {
         [DebuggerStepThrough]
         public Char(char value)
@@ -529,7 +547,7 @@ namespace Efekt
     }
 
 
-    public sealed class Bool : AElement, Value
+    public sealed class Bool : AExp, Value
     {
         [DebuggerStepThrough]
         public Bool(bool value)
@@ -542,7 +560,7 @@ namespace Efekt
     }
 
 
-    public sealed class Void : AElement, Value
+    public sealed class Void : AExp, Value
     {
         [DebuggerStepThrough]
         private Void()
@@ -554,7 +572,7 @@ namespace Efekt
     }
 
 
-    public sealed class FnApply : AElement, Exp
+    public sealed class FnApply : AExp, Exp
     {
         [DebuggerStepThrough]
         public FnApply(Exp fn, FnArguments arguments)
@@ -572,7 +590,7 @@ namespace Efekt
     }
 
 
-    public sealed class ArrConstructor : AElement, Exp
+    public sealed class ArrConstructor : AExp, Exp
     {
         [DebuggerStepThrough]
         public ArrConstructor(FnArguments arguments)
@@ -585,7 +603,7 @@ namespace Efekt
     }
 
 
-    public class Arr : AElement, Value
+    public class Arr : AExp, Value
     {
         [DebuggerStepThrough]
         public Arr(Values values)
@@ -598,7 +616,7 @@ namespace Efekt
     }
 
 
-    public sealed class New : AElement, Exp
+    public sealed class New : AExp, Exp
     {
         public New(ClassBody body)
         {
@@ -614,7 +632,7 @@ namespace Efekt
     }
 
 
-    public sealed class Obj : AElement, Value
+    public sealed class Obj : AExp, Value
     {
         [DebuggerStepThrough]
         public Obj(ClassBody body, Env<Value> env)
@@ -633,7 +651,7 @@ namespace Efekt
     }
 
 
-    public sealed class MemberAccess : AElement, QualifiedIdent
+    public sealed class MemberAccess : AExp, QualifiedIdent
     {
         [DebuggerStepThrough]
         public MemberAccess(Exp exp, Ident ident)
@@ -661,8 +679,6 @@ namespace Efekt
             C.Nn(exception);
             Exception = exception;
             exception.Parent = this;
-
-            Spec = VoidSpec.Instance;
         }
 
         public Exp Exception { get; }
@@ -686,8 +702,6 @@ namespace Efekt
                 grab.Parent = this;
             if (atLast != null)
                 atLast.Parent = this;
-
-            Spec = VoidSpec.Instance;
         }
 
 
@@ -706,8 +720,6 @@ namespace Efekt
             QualifiedIdent = qualifiedIdent;
 
             QualifiedIdent.Parent = this;
-
-            Spec = VoidSpec.Instance;
         }
 
         public readonly QualifiedIdent QualifiedIdent;
@@ -728,7 +740,7 @@ namespace Efekt
     }
 
 
-    public interface Spec : Element
+    public interface Spec : Exp
     {
     }
 
@@ -738,7 +750,7 @@ namespace Efekt
     }
 
 
-    public abstract class ASpec : AElement, Spec
+    public abstract class ASpec : AExp, Spec
     {
         public override bool Equals(object obj)
         {

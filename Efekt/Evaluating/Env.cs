@@ -41,17 +41,7 @@ namespace Efekt
         }
 
 
-        public static Env<Declr> CreateDeclrRoot(Prog prog)
-        {
-            return CreateRoot<Declr>(prog, b =>
-            {
-                var tt = b.Name.Any(ch => ch >= 'a' && ch <= 'z') ? TokenType.Ident : TokenType.Op;
-                return new Let(new Ident(b.Name, tt), b);
-            });
-        }
-
-
-        public static Env<TA> CreateRoot<TA>(Prog prog, Func<Builtin, TA> selector, bool buildUsages = false) where TA : class, Element
+        public static Env<TA> CreateRoot<TA>(Prog prog, Func<Builtin, TA> selector, bool buildUsages = false) where TA : class, Exp
         {
             C.Nn(prog);
             C.ReturnsNn();
@@ -67,7 +57,7 @@ namespace Efekt
         }
 
 
-        public static Env<T> Create<T>(Prog prog, Env<T> parent) where T : class, Element
+        public static Env<T> Create<T>(Prog prog, Env<T> parent) where T : class, Exp
         {
             C.Nn(prog, parent);
             C.ReturnsNn();
@@ -77,7 +67,7 @@ namespace Efekt
     }
 
 
-    public sealed class Env<T> : Env where T : class, Element
+    public sealed class Env<T> : Env where T : class, Exp
     {
         private readonly Dictionary<Declr, EvnItem<T>> dict;
         private readonly bool buildUsages;

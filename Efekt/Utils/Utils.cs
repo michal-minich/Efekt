@@ -111,7 +111,7 @@ namespace Efekt
         }
 
 
-        public static T CopInfoFrom<T>(this T @new, T old, bool skipParent = false) where T: Element
+        public static T CopInfoFrom<T>(this T @new, T old, bool skipParent = false) where T: Exp
         {
             @new.LineIndex = old.LineIndex;
             @new.ColumnIndex = old.ColumnIndex;
