@@ -16,4 +16,5 @@ let start = fn {
     //printLine((z.y).b)
     //printLine((z.x).b)
     printLine(x.b)
+    typeof(arrayIterator)
 }

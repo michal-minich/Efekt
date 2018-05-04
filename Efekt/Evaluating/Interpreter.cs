@@ -30,8 +30,8 @@ namespace Efekt
         private bool isContinue;
         private Prog prog;
         private bool isImportContext;
-
         private Stack<StackItem> callStack { get; set; }
+
 
         public IReadOnlyList<StackItem> CallStack => callStack?.ToList();
 
@@ -58,7 +58,7 @@ namespace Efekt
                     var val = eval(d.Exp, env);
                     if (d.Exp != Void.Instance && val == Void.Instance)
                         throw prog.RemarkList.AttemptToAssignVoid(d.Exp);
-                    env.Declare(d.Ident, val, d is Let);
+                    env.Declare(d, val);
                     return Void.Instance;
                 case Assign a:
                     var newValue = eval(a.Exp, env);
@@ -107,7 +107,7 @@ namespace Efekt
                         var exp2 = eval(extMemAcc.Exp, env);
                         if (exp2 is Obj o2)
                         {
-                            var v = o2.Env.GetFromThisEnvOnlyOrNull(extMemAcc.Ident);
+                            var v = o2.Env.GetFromThisEnvOnlyOrNull(extMemAcc.Ident, false);
                             if (v != null)
                             {
                                 fn = v.Value;
@@ -166,7 +166,7 @@ namespace Efekt
                     foreach (var p in fn2.Parameters)
                     {
                         var eArg = (Value) eArgs[ix++];
-                        paramsEnv.Declare(p.Ident, eArg, true);
+                        paramsEnv.Declare(p, eArg);
                     }
                     var fnEnv = Env.Create(prog, paramsEnv);
                     callStack.Push(new StackItem(fn2));
@@ -200,17 +200,7 @@ namespace Efekt
                     callStack.Pop();
                     return Void.Instance;
                 case Fn f:
-                    var fn3 = new Fn(f.Parameters, f.Sequence, env)
-                    {
-                        Parent = f.Parent,
-                        LineIndex = f.LineIndex,
-                        ColumnIndex = f.ColumnIndex,
-                        LineIndexEnd = f.LineIndexEnd,
-                        ColumnIndexEnd = f.ColumnIndexEnd,
-                        FilePath = f.FilePath,
-                        IsBraced = f.IsBraced
-                    };
-                    return fn3;
+                    return new Fn(f.Parameters, f.Sequence, env).CopInfoFrom(f);
                 case When w:
                     var test = eval(w.Test, env);
                     var testB = test.AsBool(w.Test, prog);
@@ -259,13 +249,13 @@ namespace Efekt
                 case MemberAccess ma:
                     var exp = eval(ma.Exp, env);
                     var o = exp.AsObj(ma, prog);
-                    return o.Env.GetFromThisEnvOnly(ma.Ident).Value;
+                    return o.Env.GetFromThisEnvOnly(ma.Ident, false).Value;
                 case New n:
                     var objEnv = Env.Create(prog, env);
                     // todo create 
                     foreach (var v in n.Body)
                         eval(v, objEnv);
-                    return new Obj(n.Body, objEnv);
+                    return new Obj(n.Body, objEnv) { Parent = n.Parent };
                 case Value ve:
                     return ve;
                 case Sequence seq:
@@ -292,7 +282,7 @@ namespace Efekt
                         if (att.Grab != null)
                         {
                             var grabEnv = Env.Create(prog, env);
-                            grabEnv.Declare(new Ident("exception", TokenType.Ident), ex.Value, true);
+                            grabEnv.Declare(new Let(new Ident("exception", TokenType.Ident), Void.Instance), ex.Value);
                             eval(att.Grab, grabEnv);
                         }
                         return Void.Instance;
@@ -307,7 +297,7 @@ namespace Efekt
                     var modImpEl = eval(imp.QualifiedIdent, env);
                     isImportContext = false;
                     var modImp = modImpEl.AsObj(imp, prog);
-                    env.AddImport(imp.QualifiedIdent, modImp.Env);
+                    env.AddImport(imp.QualifiedIdent, modImp.Env, (Declr)modImp.Parent);
                     return Void.Instance;
                 default:
                     throw new NotSupportedException();

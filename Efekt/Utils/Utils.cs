@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using JetBrains.Annotations;
 
 namespace Efekt
 {
@@ -50,7 +51,7 @@ namespace Efekt
         }
 
 
-        [JetBrains.Annotations.Pure]
+        [Pure]
         public static IEnumerable<TSouce> Prepend<TSouce>(this IEnumerable<TSouce> source, TSouce element)
         {
             C.ReturnsNn();
@@ -59,7 +60,7 @@ namespace Efekt
         }
 
 
-        [JetBrains.Annotations.Pure]
+        [Pure]
         public static IEnumerable<TSouce> Append<TSouce>(this IEnumerable<TSouce> source, TSouce element)
         {
             C.ReturnsNn();
@@ -100,6 +101,29 @@ namespace Efekt
                 if (buffer.Count == count + 1)
                     yield return buffer.Dequeue();
             }
+        }
+
+
+        public static void AddUnique<T>(this IList<T> list, T item)
+        {
+            if (!list.Contains(item))
+                list.Add(item);
+        }
+
+
+        public static T CopInfoFrom<T>(this T @new, T old, bool skipParent = false) where T: Element
+        {
+            @new.LineIndex = old.LineIndex;
+            @new.ColumnIndex = old.ColumnIndex;
+            @new.LineIndexEnd = old.LineIndexEnd;
+            @new.ColumnIndexEnd = old.ColumnIndexEnd;
+            @new.FilePath = old.FilePath;
+            @new.IsBraced = old.IsBraced;
+            if (!skipParent && old.Parent != null)
+                @new.Parent = old.Parent;
+            if (old.Spec != null)
+                @new.Spec = old.Spec;
+            return @new;
         }
     }
 }

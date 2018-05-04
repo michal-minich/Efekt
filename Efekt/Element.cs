@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Diagnostics.Contracts;
 using System.Linq;
 using JetBrains.Annotations;
 
@@ -18,19 +17,23 @@ namespace Efekt
         Element Parent { get; set; }
         bool IsBraced { get; set; }
         Spec Spec { get; set; }
+        void ClearParent();
     }
 
     public interface Declr : Stm
     {
         Ident Ident { get; }
-        [CanBeNull] Exp Exp { get; }
+        Exp Exp { get; }
         List<Ident> UsedBy { get; }
+        List<Ident> ReadBy { get; }
+        List<Ident> WrittenBy { get; }
     }
 
 
     public abstract class AElement : Element
     {
         private Spec _spec;
+        private Element _parent;
 
         protected AElement()
         {
@@ -43,7 +46,23 @@ namespace Efekt
         public int LineIndexEnd { get; set; }
         public int ColumnIndexEnd { get; set; }
         public string FilePath { get; set; }
-        public Element Parent { get; set; }
+
+        public Element Parent
+        {
+            get => _parent;
+            set
+            {
+                if (this != Void.Instance)
+                    C.Assert(_parent == null);
+                _parent = value;
+            }
+        }
+
+        public void ClearParent()
+        {
+            _parent = null;
+        }
+
         public bool IsBraced { get; set; }
 
         public Spec Spec
@@ -51,7 +70,7 @@ namespace Efekt
             get => _spec;
             set
             {
-                C.Assert(Spec == null || Spec == AnySpec.Instance);
+                C.Assert(_spec == null || _spec == AnySpec.Instance);
                 _spec = value;
             }
         }
@@ -150,9 +169,9 @@ namespace Efekt
         public bool IsBraced { get; set; }
         public Spec Spec { get; set; }
 
-        public void InsertImport(Import i)
+        public void ClearParent()
         {
-            items.Insert(0, i);
+            throw new NotImplementedException();
         }
     }
 
@@ -162,6 +181,11 @@ namespace Efekt
         [DebuggerStepThrough]
         public ClassBody(List<ClassItem> items) : base(items)
         {
+        }
+
+        public void InsertImport(Import i)
+        {
+            items.Insert(0, i);
         }
     }
 
@@ -252,7 +276,7 @@ namespace Efekt
         }
 
         public string Name { get; }
-        
+
         public TokenType TokenType { get; }
         public Declr DeclareBy { get; set; }
     }
@@ -267,10 +291,13 @@ namespace Efekt
 
             Ident = ident;
             Exp = exp;
-            UsedBy = new List<Ident>();
 
             ident.Parent = this;
             exp.Parent = this;
+
+            UsedBy = new List<Ident>();
+            ReadBy = new List<Ident>();
+            WrittenBy = new List<Ident>();
 
             Spec = VoidSpec.Instance;
         }
@@ -278,6 +305,8 @@ namespace Efekt
         public Ident Ident { get; }
         public Exp Exp { get; }
         public List<Ident> UsedBy { get; }
+        public List<Ident> ReadBy { get; }
+        public List<Ident> WrittenBy { get; }
     }
 
 
@@ -290,10 +319,13 @@ namespace Efekt
 
             Ident = ident;
             Exp = exp;
-            UsedBy = new List<Ident>();
 
             ident.Parent = this;
             exp.Parent = this;
+
+            UsedBy = new List<Ident>();
+            ReadBy = new List<Ident>();
+            WrittenBy = new List<Ident>();
 
             Spec = VoidSpec.Instance;
         }
@@ -301,6 +333,8 @@ namespace Efekt
         public Ident Ident { get; }
         public Exp Exp { get; }
         public List<Ident> UsedBy { get; }
+        public List<Ident> ReadBy { get; }
+        public List<Ident> WrittenBy { get; }
     }
     
 
@@ -310,14 +344,22 @@ namespace Efekt
         public Param(Ident ident)
         {
             C.Nn(ident);
+
             Ident = ident;
             ident.Parent = this;
+
             UsedBy = new List<Ident>();
+            ReadBy = new List<Ident>();
+            WrittenBy = new List<Ident>();
+
+            Spec = VoidSpec.Instance;
         }
 
         public Ident Ident { get; }
         public Exp Exp => Void.Instance;
         public List<Ident> UsedBy { get; }
+        public List<Ident> ReadBy { get; }
+        public List<Ident> WrittenBy { get; }
     }
 
 
@@ -562,6 +604,9 @@ namespace Efekt
         {
             C.Nn(body);
             Body = body;
+
+            foreach (var item in body)
+                item.Parent = this;
         }
 
         public ClassBody Body { get; }
@@ -659,6 +704,8 @@ namespace Efekt
         {
             C.Nn(qualifiedIdent);
             QualifiedIdent = qualifiedIdent;
+
+            QualifiedIdent.Parent = this;
 
             Spec = VoidSpec.Instance;
         }
@@ -765,16 +812,6 @@ namespace Efekt
     }
 
 
-    public sealed class TextSpec : ASpec, SimpleSpec
-    {
-        private TextSpec()
-        {
-        }
-
-        public static TextSpec Instance { get; } = new TextSpec();
-    }
-
-
     public sealed class AnyOfSpec : ASpec
     {
         public List<Spec> Possible { get; }
@@ -787,7 +824,7 @@ namespace Efekt
     }
 
 
-    public sealed class ArrSpec : ASpec
+    public class ArrSpec : ASpec
     {
         public ArrSpec(Spec itemSpec)
         {
@@ -796,6 +833,17 @@ namespace Efekt
 
         public Spec ItemSpec { get; }
     }
+
+
+    public sealed class TextSpec : ArrSpec, SimpleSpec // todo  really SimpleSpec?
+    {
+        private TextSpec() : base(CharSpec.Instance)
+        {
+        }
+
+        public static TextSpec Instance { get; } = new TextSpec();
+    }
+
 
 
     public sealed class FnSpec : ASpec

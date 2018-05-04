@@ -204,6 +204,9 @@ namespace Efekt
                         case AnySpec @as:
                             w.Type("Any");
                             break;
+                        case TextSpec ts:
+                            w.Type("Text");
+                            break;
                         case ArrSpec ars:
                             w.Type("Arr").Markup("(");
                             Write(ars.ItemSpec).Markup(")");
@@ -242,9 +245,6 @@ namespace Efekt
                             }
 
                             w.Markup(")");
-                            break;
-                        case TextSpec ts:
-                            w.Type("Text");
                             break;
                         case UnknownSpec unks:
                             w.Type("Unknown");

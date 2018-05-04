@@ -37,7 +37,7 @@ namespace Efekt
 
         public static Env<Spec> CreateSpecRoot(Prog prog)
         {
-            return CreateRoot(prog, b => b.Spec);
+            return CreateRoot(prog, b => b.Spec, true);
         }
 
 
@@ -51,15 +51,19 @@ namespace Efekt
         }
 
 
-        public static Env<TA> CreateRoot<TA>(Prog prog, Func<Builtin, TA> selector) where TA : class, Element
+        public static Env<TA> CreateRoot<TA>(Prog prog, Func<Builtin, TA> selector, bool buildUsages = false) where TA : class, Element
         {
             C.Nn(prog);
             C.ReturnsNn();
 
-            var dict = new Dictionary<string, EvnItem<TA>>();
+            var dict = new Dictionary<Declr, EvnItem<TA>>();
             foreach (var b in new Builtins(prog).Values)
-                dict.Add(b.Name, new EvnItem<TA>(selector(b), true));
-            return new Env<TA>(prog,dict);
+            {
+                var tt = b.Name.Any(ch => ch >= 'a' && ch <= 'z') ? TokenType.Ident : TokenType.Op;
+                dict.Add(new Let(new Ident(b.Name, tt), Void.Instance), new EvnItem<TA>(selector(b), true));
+            }
+
+            return new Env<TA>(prog, dict, buildUsages);
         }
 
 
@@ -75,18 +79,20 @@ namespace Efekt
 
     public sealed class Env<T> : Env where T : class, Element
     {
-        private readonly Dictionary<string, EvnItem<T>> dict;
+        private readonly Dictionary<Declr, EvnItem<T>> dict;
+        private readonly bool buildUsages;
         private readonly Dictionary<QualifiedIdent, Env<T>> imports = new Dictionary<QualifiedIdent, Env<T>>();
         [CanBeNull] private readonly Env<T> parent;
         private readonly Prog prog;
 
 
-        public Env(Prog program, Dictionary<string, EvnItem<T>> initialDictionary)
+        public Env(Prog program, Dictionary<Declr, EvnItem<T>> initialDictionary, bool buildUsages)
         {
             C.Nn(program, initialDictionary);
             C.AllNotNull(initialDictionary);
             prog = program;
             dict = initialDictionary;
+            this.buildUsages = buildUsages;
             parent = null;
         }
 
@@ -96,7 +102,7 @@ namespace Efekt
             C.Nn(prog, parent);
             this.prog = prog;
             this.parent = parent;
-            dict = new Dictionary<string, EvnItem<T>>();
+            dict = new Dictionary<Declr, EvnItem<T>>();
         }
 
 
@@ -110,49 +116,70 @@ namespace Efekt
         }
 
 
-        public EvnItem<T> GetFromThisEnvOnly(Ident ident)
+        public EvnItem<T> GetFromThisEnvOnly(Ident ident, bool? forWrite)
         {
             C.Nn(ident);
             C.ReturnsNn();
 
-            var v = GetFromThisEnvOnlyOrNull(ident);
+            var v = GetFromThisEnvOnlyOrNull(ident, forWrite);
             return v ?? throw prog.RemarkList.VariableIsNotDeclared(ident);
         }
 
 
         [CanBeNull]
-        public EvnItem<T> GetFromThisEnvOnlyOrNull(Ident ident)
+        public EvnItem<T> GetFromThisEnvOnlyOrNull(Ident ident, bool? forWrite)
         {
             C.Nn(ident);
-            if (dict.TryGetValue(ident.Name, out var envValue))
-                return envValue;
-            return null;
+            var kvp = dict.FirstOrDefault(kv => kv.Key.Ident.Name == ident.Name);
+            if (kvp.Key == null)
+                return null;
+            addUsage(kvp.Key, ident, forWrite);
+            return kvp.Value;
         }
 
 
         [CanBeNull]
-        public EvnItem<T> GetWithoutImportOrNull(Ident ident)
+        public EvnItem<T> GetWithoutImportOrNull(Ident ident, bool forWrite = false)
         {
             C.Nn(ident);
-            if (dict.TryGetValue(ident.Name, out var envValue))
-                return envValue;
+            var kvp = dict.FirstOrDefault(kv => kv.Key.Ident.Name == ident.Name);
+
+            if (kvp.Key != null)
+            {
+                addUsage(kvp.Key, ident, forWrite);
+                return kvp.Value;
+            }
+
             if (parent != null)
                 return parent.GetWithoutImportOrNull(ident);
             return null;
         }
 
 
+        private void addUsage(Declr declr, Ident ident, bool? forWrite)
+        {
+            if (buildUsages && forWrite != null)
+            {
+                ident.DeclareBy = declr;
+                if (forWrite == true)
+                    declr.WrittenBy.Add(ident);
+                else
+                    declr.ReadBy.Add(ident);
+            }
+        }
+
+
         [CanBeNull]
-        public EvnItem<T> GetOrNull(Ident ident)
+        public EvnItem<T> GetOrNull(Ident ident, bool forWrite = false)
         {
             C.Nn(ident);
             var candidates = new Dictionary<QualifiedIdent, EvnItem<T>>();
 
-            var local = GetWithoutImportOrNull(ident);
+            var local = GetWithoutImportOrNull(ident, forWrite);
             if (local != null)
                 candidates.Add(new Ident("(local)", TokenType.Ident), local);
 
-            loadFromImports(ident, candidates);
+            loadFromImports(ident, candidates, forWrite);
 
             if (candidates.Count == 1)
                 return candidates.First().Value;
@@ -162,48 +189,48 @@ namespace Efekt
         }
 
 
-        private void loadFromImports(Ident ident, Dictionary<QualifiedIdent, EvnItem<T>> candidates)
+        private void loadFromImports(Ident ident, Dictionary<QualifiedIdent, EvnItem<T>> candidates, bool forWrite)
         {
             C.Nn(ident);
 
             foreach (var i in imports)
             {
-                var x = i.Value.GetFromThisEnvOnlyOrNull(ident);
+                var x = i.Value.GetFromThisEnvOnlyOrNull(ident, forWrite);
                 if (x != null && !candidates.Any(c => c.Key.ToDebugString() == i.Key.ToDebugString()))
                     candidates.Add(i.Key, x);
             }
             if (parent != null)
-                parent.loadFromImports(ident, candidates);
+                parent.loadFromImports(ident, candidates, forWrite);
         }
 
 
-        public EvnItem<T> Get(Ident ident)
+        public EvnItem<T> Get(Ident ident, bool forWrite = false)
         {
             C.Nn(ident);
             C.ReturnsNn();
 
-            var v  = GetOrNull(ident);
+            var v  = GetOrNull(ident, forWrite);
             if (v == null)
                 throw prog.RemarkList.VariableIsNotDeclared(ident);
             return v;
         }
 
 
-        public void Declare(Ident ident, T value, bool isLet)
+        public void Declare(Declr declr, T value)
         {
-            C.Nn(ident, value);
+            C.Nn(declr, value);
 
-            if (dict.ContainsKey(ident.Name))
-                throw prog.RemarkList.VariableIsAlreadyDeclared(ident);
-            dict.Add(ident.Name, new EvnItem<T>(value, isLet));
+            if (dict.Any(kvp => kvp.Key.Ident.Name == declr.Ident.Name))
+                throw prog.RemarkList.VariableIsAlreadyDeclared(declr.Ident);
+            dict.Add(declr, new EvnItem<T>(value, !(declr is Var)));
         }
 
-        
+
         public void Set(Ident ident, T value)
         {
             C.Nn(ident, value);
 
-            var old = Get(ident);
+            var old = Get(ident, true);
            
             if (old.Value != Void.Instance && (
                     old.Value.Spec != null &&
@@ -219,11 +246,11 @@ namespace Efekt
                 prog.RemarkList.ReasigingLet(ident);
             old.Value = value;
         }
-        
 
-        public void AddImport(QualifiedIdent qi, Env<T> module)
+
+        public void AddImport(QualifiedIdent qi, Env<T> module, Declr declr)
         {
-            C.Nn(qi, module);
+            C.Nn(qi, module, declr);
 
             imports.Add(qi, module);
         }

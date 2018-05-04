@@ -1,6 +1,7 @@
 interpeter: evaluation order in interpreter (with consideration to throws and op associativity =, fn appply)
 structure: static validation where possible (instead of interpeter)
 structure: warn: when hiding variable in outer scope (file only?)
+structure: warn: unread variable or parameter
 structure: info: when return can be skipped
 structure: info: operator used as a function like +(1, 2)
 general: fix: recursive function are not possible (variable not declared)

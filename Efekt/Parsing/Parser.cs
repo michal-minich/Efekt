@@ -220,7 +220,8 @@ namespace Efekt
             return post(new Fn(p, s));
         }
 
-        public Element Parse(string filePath, IEnumerable<Token> tokens)
+
+        public List<Element> Parse(string filePath, IEnumerable<Token> tokens)
         {
             ti = new TokenIterator(filePath, tokens, remarkList);
             var list = new List<Element>();
@@ -230,10 +231,7 @@ namespace Efekt
                 var e = ParseOne();
                 list.AddValue(e);
             }
-            var first = list.FirstOrDefault();
-            return list.Count == 1 && first is Exp 
-                ? first 
-                : new Sequence(list.AsSequenceItems(remarkList));
+            return list;
         }
 
 
@@ -287,7 +285,12 @@ namespace Efekt
             if (e is Assign aa)
             {
                 if (e2 is Exp ee)
+                {
+                    aa.To.ClearParent();
+                    ee.ClearParent();
                     return ParseWithOp(new Assign(aa.To, ee));
+                }
+
                 throw remarkList.OnlyExpressionCanBeAssigned(e2);
             }
             
@@ -555,7 +558,12 @@ namespace Efekt
             if (se is Assign a)
             {
                 if (a.To is Ident i)
+                {
+                    i.ClearParent();
+                    a.Exp.ClearParent();
                     return post(isVar ? (Element) new Var(i, a.Exp) : new Let(i, a.Exp));
+                }
+
                 throw remarkList.OnlyIdentifierCanBeDeclared(a.To);
             }
             throw remarkList.InvalidElementAfterVar(se);

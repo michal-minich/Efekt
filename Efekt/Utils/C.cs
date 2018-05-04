@@ -57,6 +57,18 @@ namespace Efekt
         [DebuggerStepThrough]
         [Conditional("DEBUG")]
         [Conditional("CONTRACTS_FULL")]
+        //[ContractAnnotation("null => halt", true)]
+        [ContractAbbreviator]
+        // ReSharper disable once ParameterOnlyUsedForPreconditionCheck.Global
+        public static void EnsNn([CanBeNull] object value)
+        {
+            Contract.Ensures(value != null);
+        }
+
+
+        [DebuggerStepThrough]
+        [Conditional("DEBUG")]
+        [Conditional("CONTRACTS_FULL")]
         [ContractAnnotation("null => halt", true)]
         [ContractAbbreviator]
         // ReSharper disable once ParameterOnlyUsedForPreconditionCheck.Global

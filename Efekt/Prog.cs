@@ -42,13 +42,13 @@ namespace Efekt
             var prog = new Prog(outputWriter, errorWriter, checkTypes);
             var ts = new Tokenizer().Tokenize(codeText);
             var e = new Parser(prog.RemarkList).Parse(asIfFilePath, ts);
-            prog.RootElement = transform(e);
+            prog.RootElement = tranformToEvaluable(e, prog);
             postProcess(prog, checkTypes);
             return prog;
         }
 
 
-        private static Element parseFile(Prog prog, string filePath)
+        private static List<Element> parseFile(Prog prog, string filePath)
         {
             var codeText = File.ReadAllText(filePath);
             var ts = new Tokenizer().Tokenize(codeText);
@@ -77,12 +77,8 @@ namespace Efekt
                     var startIndex = "C:\\".Length;
                     var f = cfp.Substring(startIndex, cfp.Length - ".ef".Length - startIndex);
                     var sections = f.Split('\\').Skip(numSeparators).ToList();
-                    var e = parseFile(prog, cfp);
-                    Sequence moduleBody;
-                    if (e is Sequence seq)
-                        moduleBody = seq;
-                    else
-                        moduleBody = new Sequence(new[] {e}.AsSequenceItems(prog.RemarkList));
+                    var es = parseFile(prog, cfp);
+                    var moduleBody = new ClassBody(es.AsClassItems(prog.RemarkList));
                     addMod(sections, moduleBody, modules, prog);
                 }
             }
@@ -103,7 +99,6 @@ namespace Efekt
             if (checkTypes)
                 new Specer(prog).Spec();
             new StructureValidator(prog).Validate();
-            new Importer(prog).ResolveImports();
         }
 
 
@@ -140,7 +135,7 @@ namespace Efekt
         }
 
 
-        private static void addMod(IReadOnlyList<string> sections, Sequence moduleBody, List<ClassItem> modules, Prog prog)
+        private static void addMod(IReadOnlyList<string> sections, ClassBody moduleBody, List<ClassItem> modules, Prog prog)
         {
             C.Nn(modules);
 
@@ -175,7 +170,7 @@ namespace Efekt
         }
 
 
-        private static Let getNewModule(string name, Sequence moduleBody, Prog prog)
+        private static Let getNewModule(string name, ClassBody moduleBody, Prog prog)
         {
             var preludeImport = new Import(new Ident("prelude", TokenType.Ident));
             if (name != "prelude")
@@ -216,17 +211,14 @@ namespace Efekt
         }
 
 
-        private static Element transform(Element e)
+        private static Element tranformToEvaluable(List<Element> es, Prog prog)
         {
-            if (e is Exp exp)
+            if (es.Count == 1 &&  es[0] is Exp exp)
                 return exp;
-            if (e is SequenceItem si)
-                e = new Sequence(new List<SequenceItem> {si});
-            if (e is Sequence body2)
-                return new FnApply(
-                    new Fn(new FnParameters(), body2),
-                    new FnArguments());
-            throw new NotSupportedException();
+
+            return new FnApply(
+                new Fn(new FnParameters(), new Sequence(es.AsSequenceItems(prog.RemarkList))),
+                new FnArguments());
         }
     }
 }
