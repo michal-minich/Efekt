@@ -111,6 +111,13 @@ namespace Efekt
         }
 
 
+        public static void UpdateTop<T>(this Stack<T> stack, T item)
+        {
+            stack.Pop();
+            stack.Push(item);
+        }
+
+
         public static T CopInfoFrom<T>(this T @new, T old, bool skipParent = false) where T: Exp
         {
             @new.LineIndex = old.LineIndex;
@@ -121,8 +128,6 @@ namespace Efekt
             @new.IsBraced = old.IsBraced;
             if (!skipParent && old.Parent != null)
                 @new.Parent = old.Parent;
-            if (old.Spec != null)
-                @new.Spec = old.Spec;
             return @new;
         }
     }

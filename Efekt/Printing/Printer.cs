@@ -189,18 +189,6 @@ namespace Efekt
                 {
                     switch (spec)
                     {
-                        case AnyOfSpec aofs:
-                            w.Type("AnyOf").Markup("(");
-                            counter = 0;
-                            foreach (var p in aofs.Possible)
-                            {
-                                Write(p);
-                                if (++counter != aofs.Possible.Count)
-                                    w.Markup(",").Space();
-                            }
-
-                            w.Markup(")");
-                            break;
                         case AnySpec @as:
                             w.Type("Any");
                             break;
@@ -238,7 +226,7 @@ namespace Efekt
                             counter = 0;
                             foreach (var m in os.Members)
                             {
-                                Write(m.Ident).Space().Op(":").Space();
+                                Write(m.Declr.Ident).Space().Op(":").Space();
                                 Write(m.Spec);
                                 if (++counter != os.Members.Count)
                                     w.Markup(",").Space();

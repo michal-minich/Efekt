@@ -563,9 +563,31 @@ namespace Efekt
 
 
         [Pure]
-        public EfektException OnlyObjectsCanHaveMembers(MemberAccess ma)
+        public EfektException OnlyObjectsCanHaveMembers(MemberAccess ma, Spec spec)
         {
-            return fail(ma.Exp, "Only objects can have members. Expression is of type " + ma.Exp.Spec.ToDebugString() + ".");
+            return fail(ma.Exp, "Only objects can have members. Expression is of type " + spec.ToDebugString() + ".");
+        }
+
+
+        public Exception TypeError()
+        {
+            return fail(Void.Instance, "Type error");
+        }
+
+
+        public void CannotConvertArgumentToParameter(Exp argument, Spec argumentSpec, Spec parameterSpec)
+        {
+            w(argument, "Cannot convert argument of type "
+                        + argumentSpec.ToDebugString()
+                        + " to parameter type " + parameterSpec.ToDebugString());
+        }
+
+
+        public void CannotConvertType(Spec s1, Spec s2, Exp exp)
+        {
+            w(exp, "Cannot convert type "
+                             + s1.ToDebugString()
+                             + " to type " + s2.ToDebugString());
         }
     }
 }

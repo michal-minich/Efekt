@@ -64,7 +64,6 @@ namespace Efekt
     public abstract class AExp : Exp
     {
         private Element _parent;
-        private Spec _spec;
 
         protected AExp()
         {
@@ -96,16 +95,6 @@ namespace Efekt
 
         public bool IsBraced { get; set; }
 
-        public Spec Spec
-        {
-            get => _spec;
-            set
-            {
-                C.Assert(_spec == null || _spec == AnySpec.Instance);
-                _spec = value;
-            }
-        }
-
         public override string ToString()
         {
             return GetType().Name + ": " + this.ToDebugString();
@@ -116,13 +105,13 @@ namespace Efekt
 
     public interface Exp : SequenceItem
     {
-        Spec Spec { get; set; }
     }
 
 
     public interface Stm : Element
     {
     }
+
 
     public interface Value : Exp
     {
@@ -188,8 +177,6 @@ namespace Efekt
             FilePath = "runtime.ef";
             foreach (var i in items)
                 i.Parent = this;
-
-            Spec = VoidSpec.Instance;
         }
 
         public int LineIndex { get; set; }
@@ -199,7 +186,6 @@ namespace Efekt
         public string FilePath { get; set; }
         public Element Parent { get; set; }
         public bool IsBraced { get; set; }
-        public Spec Spec { get; set; }
 
         public void ClearParent()
         {
@@ -276,11 +262,12 @@ namespace Efekt
             C.Nn(fn);
 
             Name = name;
-            Spec = new FnSpec(signature);
+            FixedSpec = new FnSpec(signature);
             Fn = fn;
         }
 
         public string Name { get; }
+        public Spec FixedSpec { get; }
         public Func<FnArguments, FnApply, Value> Fn { get; }
     }
 
@@ -364,7 +351,7 @@ namespace Efekt
         public List<Ident> ReadBy { get; }
         public List<Ident> WrittenBy { get; }
     }
-    
+
 
     public sealed class Param : AElement, Declr
     {
@@ -386,6 +373,8 @@ namespace Efekt
         public List<Ident> UsedBy { get; }
         public List<Ident> ReadBy { get; }
         public List<Ident> WrittenBy { get; }
+
+
     }
 
 
@@ -513,7 +502,6 @@ namespace Efekt
         public Int(int value)
         {
             Value = value;
-            Spec = IntSpec.Instance;
         }
 
         public int Value { get; }
@@ -526,7 +514,6 @@ namespace Efekt
         public Char(char value)
         {
             Value = value;
-            Spec = CharSpec.Instance;
         }
 
         public char Value { get; }
@@ -540,7 +527,6 @@ namespace Efekt
             : base(new Values(value.Select(v => new Char(v) as Value).ToList()))
         {
             Value = value;
-            Spec = TextSpec.Instance;
         }
 
         public string Value { get; }
@@ -553,7 +539,6 @@ namespace Efekt
         public Bool(bool value)
         {
             Value = value;
-            Spec = BoolSpec.Instance;
         }
 
         public bool Value { get; }
@@ -565,7 +550,6 @@ namespace Efekt
         [DebuggerStepThrough]
         private Void()
         {
-            Spec = VoidSpec.Instance;
         }
 
         public static Void Instance { get; } = new Void();
@@ -742,6 +726,7 @@ namespace Efekt
 
     public interface Spec : Exp
     {
+        bool FromUsage { get; set; }
     }
 
 
@@ -750,17 +735,14 @@ namespace Efekt
     }
 
 
+    public interface ComplexSpec : Spec
+    {
+    }
+
+
     public abstract class ASpec : AExp, Spec
     {
-        public override bool Equals(object obj)
-        {
-            return ToString().Equals(obj.ToString());
-        }
-
-        public override int GetHashCode()
-        {
-            return ToString().GetHashCode();
-        }
+        public bool FromUsage { get; set; }
     }
 
 
@@ -824,19 +806,7 @@ namespace Efekt
     }
 
 
-    public sealed class AnyOfSpec : ASpec
-    {
-        public List<Spec> Possible { get; }
-
-        public AnyOfSpec(List<Spec> possible)
-        {
-            C.AllNotNull(possible);
-            Possible = possible;
-        }
-    }
-
-
-    public class ArrSpec : ASpec
+    public class ArrSpec : ASpec, ComplexSpec
     {
         public ArrSpec(Spec itemSpec)
         {
@@ -858,7 +828,7 @@ namespace Efekt
 
 
 
-    public sealed class FnSpec : ASpec
+    public sealed class FnSpec : ASpec, ComplexSpec
     {
         public FnSpec(List<Spec> signature)
         {
@@ -880,43 +850,37 @@ namespace Efekt
     }
 
 
-    public sealed class ObjSpec : ASpec
+    public sealed class ObjSpec : ASpec, ComplexSpec
     {
-        private readonly bool fromUsage;
-
         public ObjSpec()
         {
             Members = new List<ObjSpecMember>();
         }
 
-        public ObjSpec(List<ObjSpecMember> members, Env<Spec> env, bool fromUsage = false)
+        public ObjSpec(List<ObjSpecMember> members, Env<Spec> env)
         {
             C.AllNotNull(members);
             C.Nn(env);
             Members = members;
             Env = env;
-            FromUsage = fromUsage;
         }
 
         public List<ObjSpecMember> Members { get; }
 
         public Env<Spec> Env { get; }
-
-        public bool FromUsage { get; }
     }
 
 
     public sealed class ObjSpecMember
     {
-        public ObjSpecMember(Ident ident, Spec spec, bool isLet)
+        public ObjSpecMember(Declr declr, Spec spec)
         {
-            Ident = ident;
+            C.Nn(declr, spec);
+            Declr = declr;
             Spec = spec;
-            IsLet = isLet;
         }
 
-        public Ident Ident { get; set; }
+        public Declr Declr { get; set; }
         public Spec Spec { get; set; }
-        public bool IsLet { get; set; }
     }
 }

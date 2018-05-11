@@ -5,13 +5,14 @@ using JetBrains.Annotations;
 
 namespace Efekt
 {
+    // ReSharper disable ParameterOnlyUsedForPreconditionCheck.Global
     public static class C
     {
         [DebuggerStepThrough]
         [Conditional("DEBUG")]
         [ContractAnnotation("false => halt", true)]
+        [AssertionMethod]
         //[ContractAbbreviator]
-        // ReSharper disable once ParameterOnlyUsedForPreconditionCheck.Global
         public static void Assert(bool condition)
         {
             Contract.Assert(condition);
@@ -22,8 +23,8 @@ namespace Efekt
         [Conditional("DEBUG")]
         [Conditional("CONTRACTS_FULL")]
         [ContractAnnotation("false => halt", true)]
+        [AssertionMethod]
         //[ContractAbbreviator]
-        // ReSharper disable once ParameterOnlyUsedForPreconditionCheck.Global
         public static void Assume(bool condition)
         {
             Contract.Assume(condition);
@@ -34,8 +35,8 @@ namespace Efekt
         [Conditional("DEBUG")]
         [Conditional("CONTRACTS_FULL")]
         [ContractAnnotation("false => halt", true)]
+        [AssertionMethod]
         [ContractAbbreviator]
-        // ReSharper disable once ParameterOnlyUsedForPreconditionCheck.Global
         public static void Req(bool condition)
         {
             Contract.Requires(condition);
@@ -46,8 +47,8 @@ namespace Efekt
         [Conditional("DEBUG")]
         [Conditional("CONTRACTS_FULL")]
         [ContractAnnotation("false => halt", true)]
+        [AssertionMethod]
         [ContractAbbreviator]
-        // ReSharper disable once ParameterOnlyUsedForPreconditionCheck.Global
         public static void Ens(bool condition)
         {
             Contract.Ensures(condition);
@@ -58,8 +59,8 @@ namespace Efekt
         [Conditional("DEBUG")]
         [Conditional("CONTRACTS_FULL")]
         //[ContractAnnotation("null => halt", true)]
+        [AssertionMethod]
         [ContractAbbreviator]
-        // ReSharper disable once ParameterOnlyUsedForPreconditionCheck.Global
         public static void EnsNn([CanBeNull] object value)
         {
             Contract.Ensures(value != null);
@@ -70,8 +71,8 @@ namespace Efekt
         [Conditional("DEBUG")]
         [Conditional("CONTRACTS_FULL")]
         [ContractAnnotation("null => halt", true)]
+        [AssertionMethod]
         [ContractAbbreviator]
-        // ReSharper disable once ParameterOnlyUsedForPreconditionCheck.Global
         public static void Nn([CanBeNull] object value)
         {
             Contract.Requires(value != null);
@@ -83,8 +84,8 @@ namespace Efekt
         [Conditional("CONTRACTS_FULL")]
         [ContractAnnotation("value1:null => halt", true)]
         [ContractAnnotation("value2:null => halt", true)]
+        [AssertionMethod]
         [ContractAbbreviator]
-        // ReSharper disable once ParameterOnlyUsedForPreconditionCheck.Global
         public static void Nn([CanBeNull] object value1, [CanBeNull] object value2)
         {
             Contract.Requires(value1 != null);
@@ -98,8 +99,8 @@ namespace Efekt
         [ContractAnnotation("value1:null => halt", true)]
         [ContractAnnotation("value2:null => halt", true)]
         [ContractAnnotation("value3:null => halt", true)]
+        [AssertionMethod]
         [ContractAbbreviator]
-        // ReSharper disable once ParameterOnlyUsedForPreconditionCheck.Global
         public static void Nn([CanBeNull] object value1, [CanBeNull] object value2, [CanBeNull] object value3)
         {
             Contract.Requires(value1 != null);
@@ -115,8 +116,8 @@ namespace Efekt
         [ContractAnnotation("value2:null => halt", true)]
         [ContractAnnotation("value3:null => halt", true)]
         [ContractAnnotation("value4:null => halt", true)]
+        [AssertionMethod]
         [ContractAbbreviator]
-        // ReSharper disable once ParameterOnlyUsedForPreconditionCheck.Global
         public static void Nn([CanBeNull] object value1, [CanBeNull] object value2, [CanBeNull] object value3, [CanBeNull] object value4)
         {
             Contract.Requires(value1 != null);
@@ -129,8 +130,8 @@ namespace Efekt
         [DebuggerStepThrough]
         [Conditional("DEBUG")]
         [Conditional("CONTRACTS_FULL")]
+        [AssertionMethod]
         [ContractAbbreviator]
-        // ReSharper disable once ParameterOnlyUsedForPreconditionCheck.Global
         public static void ReturnsNn()
         {
             Contract.Ensures(Contract.Result<object>() != null);
@@ -141,12 +142,13 @@ namespace Efekt
         [Conditional("DEBUG")]
         [Conditional("CONTRACTS_FULL")]
         [ContractAnnotation("null => halt")]
+        [AssertionMethod]
         [ContractAbbreviator]
-        // ReSharper disable once ParameterOnlyUsedForPreconditionCheck.Global
         public static void AllNotNull<T>([CanBeNull] IEnumerable<T> items)
         {
             Contract.Requires(items != null);
             Contract.Requires(Contract.ForAll(items, i => i != null));
         }
     }
+    // ReSharper restore ParameterOnlyUsedForPreconditionCheck.Global
 }

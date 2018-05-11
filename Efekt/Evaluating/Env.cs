@@ -37,7 +37,7 @@ namespace Efekt
 
         public static Env<Spec> CreateSpecRoot(Prog prog)
         {
-            return CreateRoot(prog, b => b.Spec, true);
+            return CreateRoot(prog, b => b.FixedSpec, true);
         }
 
 
@@ -222,7 +222,8 @@ namespace Efekt
 
             var old = Get(ident, true);
            
-            if (old.Value != Void.Instance && (
+            // todo move to specer
+            /*if (old.Value != Void.Instance && (
                     old.Value.Spec != null &&
                     old.Value.Spec != UnknownSpec.Instance &&
                     old.Value.Spec != UnknownSpec.Instance &&
@@ -230,7 +231,7 @@ namespace Efekt
                 old.Value.GetType() != value.GetType())
             {
                 prog.RemarkList.AssigningDifferentType(ident, old.Value, value);
-            }
+            }*/
 
             if (!(value is Spec) && old.IsLet)
                 prog.RemarkList.ReasigingLet(ident);

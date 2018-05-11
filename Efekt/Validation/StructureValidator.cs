@@ -128,6 +128,10 @@ namespace Efekt
                 case Import imp:
                     validate(imp.QualifiedIdent);
                     break;
+
+                case Spec spec:
+                    break;
+
                 default:
                     throw new NotSupportedException();
             }

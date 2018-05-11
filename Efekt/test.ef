@@ -1,20 +1,21 @@
 ﻿
-var x = new { var b = 1 }
-var y = new { var b = x.b + 5 }
-
-//let f = fn {
-var f = new {
-    //var zz = new { var b = z }
-    var z = new { var b = 3 var x = new { var y = 4 } }
-}
-
 let start = fn {
-    import f
-    //import x
-    //import y
-    //var b = []
-    //printLine((z.y).b)
-    //printLine((z.x).b)
-    printLine(x.b)
-    typeof(whereIterator)
+
+    let a = fn b { b() }
+    typeof(a)
+
+    let aa = fn b { b() return 1 }
+    typeof(aa)
+
+    //let b = fn b { }
+    //typeof(b)
+
+    //let c = fn b { var x = 1 x = x + 1 }
+    //typeof(c)
+
+    let d = fn d { d.x + 1 }
+    typeof(d)
+
+    let e = fn a { if a() then 1 else 2 }
+    typeof(e)
 }
