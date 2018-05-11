@@ -583,11 +583,11 @@ namespace Efekt
         }
 
 
-        public void CannotConvertType(Spec s1, Spec s2, Exp exp)
+        public void CannotConvertType(Spec s, Spec slot, Exp exp)
         {
             w(exp, "Cannot convert type "
-                             + s1.ToDebugString()
-                             + " to type " + s2.ToDebugString());
+                             + s.ToDebugString()
+                             + " to type " + slot.ToDebugString());
         }
     }
 }

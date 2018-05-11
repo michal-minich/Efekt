@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using JetBrains.Annotations;
 
 namespace Efekt
 {
@@ -20,74 +19,97 @@ namespace Efekt
 
         public void Spec()
         {
-            var _ = spec(prog.RootElement, Env.CreateSpecRoot(prog));
+            // ReSharper disable ReturnValueOfPureMethodIsNotUsed
+            var env = Env.CreateSpecRoot(prog);
+            if (prog.RootElement is Exp e)
+                spec(e, env, AnySpec.Instance);
+            else
+                specStm(prog.RootElement, env);
+            // ReSharper restore ReturnValueOfPureMethodIsNotUsed
         }
+
 
         
-
         [System.Diagnostics.Contracts.Pure]
-        private Spec moreSpecific([CanBeNull] Spec s1, [NotNull] Spec s2, [NotNull] Exp exp)
+        private Spec spec(Exp exp, Env<Spec> env, Spec slot)
         {
-            C.ReturnsNn();
+            C.Nn(exp, env, slot);
+            C.Req(slot != UnknownSpec.Instance);
 
-            if (s1 == null)
-                return s2;
-
-            if (s1.ToDebugString() == s2.ToDebugString())
-                return s1;
-
-            var arr = new List<Spec> {s1, s2};
-
-            arr.Remove(VoidSpec.Instance);
-            arr.Remove(AnySpec.Instance);
-            arr.Remove(UnknownSpec.Instance);
-
-            if (arr.Count == 0)
-                return AnySpec.Instance;
-            if (arr.Count == 1)
-                return arr[0];
-
-            prog.RemarkList.CannotConvertType(s1, s2, exp);
-
-            return arr[1];
+            var s = spec3(exp, env, slot);
+            if (!isAssignable(s, slot))
+                prog.RemarkList.CannotConvertType(s, slot, exp);
+            return s;
         }
 
 
-        private void setFromTop(Ident ident, Spec spec, Env<Spec> env)
+        private void specStm(Element e, Env<Spec> env)
         {
-            C.Nn(ident, spec, env);
-            var oldS = env.Get(ident).Value;
-            if (oldS != UnknownSpec.Instance 
-                && oldS != VoidSpec.Instance 
-                && oldS != AnySpec.Instance
-                && oldS.ToDebugString() != moreSpecific(oldS, spec, ident).ToDebugString())
+            var s = spec3(e, env, VoidSpec.Instance);
+            if (s != VoidSpec.Instance)
                 throw new Exception();
-            env.Set(ident, spec);
         }
 
-        
-        private void setFromUsage(Exp exp, Spec s, Env<Spec> env)
+
+        private bool isAssignable(Spec s, Spec slot)
         {
-            C.Nn(exp, s, env);
+            C.Nn(s, slot);
+            C.Req(slot != UnknownSpec.Instance);
 
-            switch (exp)
-            {
-                case Ident i:
-                    var oldS = env.Get(i).Value;
-                    var newS = moreSpecific(oldS, s, exp);
-                    env.Set(i, newS);
-                    break;
-                case MemberAccess ma:
-                    setFromUsage(ma.Ident, s, spec(ma.Exp, env).As<ObjSpec>(ma.Exp, prog).Env);
-                    break;
-                default:
-                    return;
-            }
+            if (slot == AnySpec.Instance)
+                return true;
+            else if (slot == VoidSpec.Instance)
+                return true;
+            else if (slot is FnSpec fnSlot)
+                return s is FnSpec fnS
+                       && areAssignable(fnS.ParameterSpec, fnSlot.ParameterSpec)
+                       && isAssignable(fnS.ReturnSpec, fnSlot.ReturnSpec);
+            else if (slot is ObjSpec objSlot)
+                return s is ObjSpec objS && isObjAssignable(objS, objSlot);
+            else if (slot is IntSpec)
+                return s is IntSpec;
+            else if (slot is CharSpec)
+                return s is CharSpec;
+            else if (slot is BoolSpec)
+                return s is BoolSpec;
+            else if (slot is TextSpec)
+                return s is TextSpec;
+            else if (slot is ArrSpec arrSlot)
+                return s is ArrSpec arrS && arrS.ItemSpec.ToDebugString() == arrSlot.ItemSpec.ToDebugString();
+            else
+                return false;
         }
 
+
+        private bool isObjAssignable(ObjSpec objS, ObjSpec objSlot)
+        {
+            foreach (var oM in objS.Members)
+            {
+                var slotM = objSlot.Members.FirstOrDefault(m => m.Declr.Ident.Name == oM.Declr.Ident.Name);
+                if (slotM == null)
+                    return false;
+                if (!isAssignable(oM.Spec, slotM.Spec))
+                    return false;
+            }
+
+            return true;
+        }
+
+
+        private bool areAssignable(IEnumerable<Spec> ss, IReadOnlyList<Spec> slots)
+        {
+            var n = 0;
+            foreach (var s in ss)
+            {
+                if (!isAssignable(s, slots[n++]))
+                    return false;
+            }
+
+            return true;
+        }
 
         [System.Diagnostics.Contracts.Pure]
-        private Spec spec(Element e, Env<Spec> env)
+        private Spec spec3(Element e, Env<Spec> env, Spec slot)
         {
             C.Nn(e, env);
             C.ReturnsNn();
@@ -96,21 +118,28 @@ namespace Efekt
             switch (e)
             {
                 case Declr d:
-                    ss = spec(d.Exp, env);
+                    ss = spec(d.Exp, env, AnySpec.Instance);
                     env.Declare(d, ss);
                     return VoidSpec.Instance;
 
                 case Assign a:
-                    ss = spec(a.Exp, env);
                     switch (a.To)
                     {
                         case Ident ident:
-                            setFromTop(ident, ss, env);
+                            var slotS = env.Get(ident).Value;
+                            ss = spec(a.Exp, env, slotS);
+                            env.Set(ident, ss);
                             break;
                         case MemberAccess ma:
-                            var maExpS = spec(ma.Exp, env);
+                            var maExpS = spec(ma.Exp, env, new ObjSpec(new List<ObjSpecMember>
+                            {
+                                new ObjSpecMember(new Param(
+                                    new Ident(ma.Ident.Name, ma.Ident.TokenType).CopInfoFrom(ma.Ident, true)), AnySpec.Instance)
+                            }, env));
                             var objS = maExpS.As<ObjSpec>(ma.Exp, prog);
-                            setFromTop(ma.Ident, ss, objS.Env);
+                            var maSlotS = objS.Env.Get(ma.Ident).Value;
+                            ss = spec(a.Exp, env, maSlotS);
+                            objS.Env.Set(ma.Ident, ss);
                             break;
                         default:
                             throw new NotSupportedException();
@@ -121,17 +150,19 @@ namespace Efekt
                     ss = isImportContext
                         ? env.GetWithoutImports(i).Value
                         : env.Get(i).Value;
+                    if (!isImportContext && isAssignable(slot, ss))
+                        env.Set(i, slot);
                     return ss;
 
                 case Return r:
-                    var retS = spec(r.Exp, env);
-                    returns.Push(moreSpecific(returns.Pop(), retS, r.Exp));
+                    var retS = spec(r.Exp, env, returns.Peek());
+                    returns.Push(retS);
                     return VoidSpec.Instance;
 
                 case FnApply fna:
                     var fnI = fna.Fn as Ident;
                     if (fnI == null || fnI.Name != "typeof")
-                        ss = spec(fna.Fn, env);
+                        ss = spec(fna.Fn, env, slot);
                     else
                         ss = null;
                     var fnS = ss as FnSpec;
@@ -140,14 +171,15 @@ namespace Efekt
                         var argsS = new List<Spec>();
                         foreach (var aa in fna.Arguments)
                         {
-                            var aS = spec(aa, env);
-                            setFromUsage(aa, aS, env);
+                            var aS = spec(aa, env, AnySpec.Instance);
                             argsS.Add(aS);
                         }
-                        argsS.Add(UnknownSpec.Instance);
+                        argsS.Add(slot);
                         var newFnSpec = new FnSpec(argsS);
                         if (fnI != null && fnI.Name != "typeof")
-                            setFromUsage(fnI, newFnSpec, env);
+                        {
+                            env.Set(fnI, newFnSpec);
+                        }
                         fnS = newFnSpec;
                     }
                     else
@@ -158,16 +190,8 @@ namespace Efekt
                         var ix = 0;
                         foreach (var aa in fna.Arguments)
                         {
-                            var aS = spec(aa, env);
-                            var pS = fnS.ParameterSpec[ix++];
-                            var bestArgS = moreSpecific(aS, pS, aa);
-                            var debugString = bestArgS.ToDebugString();
-                            if (pS != AnySpec.Instance && debugString != pS.ToDebugString())
-                            {
-                                prog.RemarkList.CannotConvertArgumentToParameter(aa, aS, pS);
-                            }
-
-                            setFromUsage(aa, pS, env);
+                            // ReSharper disable once ReturnValueOfPureMethodIsNotUsed
+                            spec(aa, env, fnS.ParameterSpec[ix++]);
                         }
                     }
 
@@ -179,7 +203,6 @@ namespace Efekt
                     return fnS.ReturnSpec;
 
                 case Fn f:
-                    returns.Push(null);
                     var paramsEnv = Env.Create(prog, env);
                     foreach (var p in f.Parameters)
                     {
@@ -190,36 +213,35 @@ namespace Efekt
                     var fnEnv = Env.Create(prog, paramsEnv);
                     if (f.Sequence.Count == 0)
                     {
-                        returns.Pop();
                         ss = new FnSpec(f.Parameters.Select(p => paramsEnv.GetFromThisEnvOnly(p.Ident, null).Value)
                             .Append(VoidSpec.Instance).ToList());
                         return ss;
                     }
-                    else if (f.Sequence.Count == 1 && f.Sequence[0] is Exp)
+                    else if (f.Sequence.Count == 1 && f.Sequence[0] is Exp exp1)
                     {
-                        var ret = spec(f.Sequence[0], fnEnv);
+                        returns.Push(VoidSpec.Instance);
+                        var ret = spec(exp1, fnEnv, AnySpec.Instance);
                         returns.Pop();
                         ss = new FnSpec(f.Parameters.Select(p => paramsEnv.GetFromThisEnvOnly(p.Ident, null).Value)
                             .Append(ret).ToList());
                         return ss;
                     }
 
+                    returns.Push(VoidSpec.Instance);
                     foreach (var fnItem in f.Sequence)
                     {
-                        var _ = spec(fnItem, fnEnv);
+                        var _ = spec3(fnItem, fnEnv, AnySpec.Instance);
                     }
-
                     var ret2 = returns.Pop();
+
                     ss = new FnSpec(f.Parameters.Select(p => paramsEnv.GetFromThisEnvOnly(p.Ident, null).Value)
-                        .Append(ret2 ?? VoidSpec.Instance).ToList());
+                        .Append(ret2).ToList());
                     return ss;
 
                 case When w:
-                    setFromUsage(w.Test, BoolSpec.Instance, env);
-                    var testS = spec(w.Test, env);
-                    if (testS != BoolSpec.Instance)
-                        prog.RemarkList.CannotConvertType(testS, BoolSpec.Instance, w.Test);
-                    var thenS = spec(w.Then, Env.Create(prog, env));
+                    // ReSharper disable once ReturnValueOfPureMethodIsNotUsed
+                    spec(w.Test, env, BoolSpec.Instance);
+                    var thenS = spec3(w.Then, Env.Create(prog, env), slot);
                     if (w.Otherwise == null)
                     {
                         ss = VoidSpec.Instance;
@@ -228,7 +250,7 @@ namespace Efekt
                     else
                     {
                         // ReSharper disable once AssignNullToNotNullAttribute
-                        var otherwiseS = spec(w.Otherwise, Env.Create(prog, env));
+                        var otherwiseS = spec3(w.Otherwise, Env.Create(prog, env), slot);
                         if (thenS.ToDebugString() != otherwiseS.ToDebugString())
                             throw prog.RemarkList.TypeError();
                         ss = thenS;// moreSpecific(thenS, otherwiseS);
@@ -237,7 +259,7 @@ namespace Efekt
 
                 case Loop l:
                     // ReSharper disable once ReturnValueOfPureMethodIsNotUsed
-                    spec(l.Body, env);
+                    specStm(l.Body, env);
                     return VoidSpec.Instance;
 
                 case Break _:
@@ -247,25 +269,29 @@ namespace Efekt
                     return VoidSpec.Instance;
 
                 case ArrConstructor ae:
-                    var items = ae.Arguments.Select(a => spec(a, env)).ToArray();
-                    ss = new ArrSpec(items.Aggregate((s1, s2) => moreSpecific(s1, s2, ae)));
-                    return ss;
+                    Spec prevS = AnySpec.Instance;
+                    foreach (var a in ae.Arguments)
+                    {
+                        ss = spec(a, env, prevS);
+                        prevS = ss;
+                    }
+                    return new ArrSpec(prevS);
 
                 case MemberAccess ma:
-                    ss = spec(ma.Exp, env);
+                    ss = spec(ma.Exp, env, AnySpec.Instance);
                     var mai = ma.Ident;
                     if (ss is AnySpec)
                     {
                         var objSEnv = Env.Create(prog, env);
                         var objS = new ObjSpec(new List<ObjSpecMember>(), objSEnv) {FromUsage = true};
                         var declr = new Var(new Ident(mai.Name, mai.TokenType).CopInfoFrom(mai, true), Void.Instance);
-                        objSEnv.Declare(declr, UnknownSpec.Instance);
-                        var maiS = spec(mai, objSEnv);
+                        objSEnv.Declare(declr, slot);
+                        var maiS = spec(mai, objSEnv, slot);
                         objS.Members.Add(new ObjSpecMember(declr, maiS));
                         ss = objS;
                         if (ma.Exp is Ident i)
                         {
-                            setFromUsage(i, ss, env);
+                            env.Set(i, ss);
                         }
                     }
 
@@ -278,8 +304,8 @@ namespace Efekt
                         if (member == null)
                         {
                             var declr = new Var(new Ident(mai.Name, mai.TokenType).CopInfoFrom(mai, true), Void.Instance);
-                            objS2.Env.Declare(declr, UnknownSpec.Instance);
-                            var maiS = spec(mai, objS2.Env);
+                            objS2.Env.Declare(declr, slot);
+                            var maiS = spec(mai, objS2.Env, slot);
                             objS2.Members.Add(new ObjSpecMember(declr, maiS));
                         }
                     }
@@ -293,7 +319,7 @@ namespace Efekt
                     var members = new List<ObjSpecMember>();
                     foreach (var classItem in n.Body)
                     {
-                        var _ = spec(classItem, objEnv);
+                        var _ = spec3(classItem, objEnv, AnySpec.Instance);
                         if (classItem is Declr d)
                             members.Add(new ObjSpecMember(d, objEnv.Get(d.Ident).Value));
                     }
@@ -321,26 +347,32 @@ namespace Efekt
 
                 case Sequence seq:
                     var scopeEnv = Env.Create(prog, env);
-                    ss = null;
-                    foreach (var item in seq)
-                        ss = spec(item, scopeEnv);
-                    if (seq.Count == 1 && seq[0] is Exp)
+                    if (seq.Count == 1 && seq[0] is Exp exp)
                     {
-                        // ReSharper disable once AssignNullToNotNullAttribute
+                        ss = spec(exp, scopeEnv, AnySpec.Instance); // todo use FN spec return type instead of any
                         returns.UpdateTop(ss);
                         return ss;
                     }
-                    return VoidSpec.Instance;
+                    else
+                    {
+                        foreach (var item in seq)
+                        {
+                            // ReSharper disable once ReturnValueOfPureMethodIsNotUsed
+                            specStm(item, scopeEnv);
+                        }
+
+                        return VoidSpec.Instance;
+                    }
 
                case Toss ts:
                     // ReSharper disable once ReturnValueOfPureMethodIsNotUsed
-                    spec(ts.Exception, env);
+                    spec(ts.Exception, env, AnySpec.Instance);
                     // TODO requires exp to be of some type?
                     return VoidSpec.Instance;
 
                 case Attempt att:
                     // ReSharper disable once ReturnValueOfPureMethodIsNotUsed
-                    spec(att.Body, env);
+                    specStm(att.Body, env);
                     if (att.Grab != null)
                     {
                         var grabEnv = Env.Create(prog, env);
@@ -348,18 +380,18 @@ namespace Efekt
                         grabEnv.Declare(exDeclr, AnySpec.Instance);
                         // ReSharper disable once AssignNullToNotNullAttribute
                         // ReSharper disable once ReturnValueOfPureMethodIsNotUsed
-                        spec(att.Grab, grabEnv);
+                        specStm(att.Grab, grabEnv);
                     }
 
                     if (att.AtLast != null)
                         // ReSharper disable once AssignNullToNotNullAttribute
                         // ReSharper disable once ReturnValueOfPureMethodIsNotUsed
-                        spec(att.AtLast, env);
+                        specStm(att.AtLast, env);
                     return VoidSpec.Instance;
 
                 case Import imp:
                     isImportContext = true;
-                    var modImpEl = spec(imp.QualifiedIdent, env);
+                    var modImpEl = spec(imp.QualifiedIdent, env, AnySpec.Instance); // should be some obj, but it is checked below
                     isImportContext = false;
                     var modImp = modImpEl.As<ObjSpec>(imp, prog);
                     env.AddImport(imp.QualifiedIdent, modImp.Env, (Declr) modImp.Parent);

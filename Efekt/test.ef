@@ -7,11 +7,11 @@ let start = fn {
     let aa = fn b { b() return 1 }
     typeof(aa)
 
-    //let b = fn b { }
-    //typeof(b)
+    let b = fn b { }
+    typeof(b)
 
-    //let c = fn b { var x = 1 x = x + 1 }
-    //typeof(c)
+    let c = fn b { var x = 1 x = x + 1 }
+    typeof(c)
 
     let d = fn d { d.x + 1 }
     typeof(d)
