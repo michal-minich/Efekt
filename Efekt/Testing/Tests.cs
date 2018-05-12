@@ -163,7 +163,7 @@ namespace Efekt.Tests
             test("var a = new { var a = 1 } a.a = a.a + 2 return a.a", "3");
             test("var a = new { var a = 1 var b = 3} return a.a + a.b", "4");
             test("var a = new { var a = 1 } var b = new { var b = 3 } a.a = a.a + b.b return a.a", "4");
-            test("var mk = fn (v) { new { var a = v } } var a = mk(1) var b = mk(3) a.a = 4 return a.a + b.a", "7");
+            test("var mk = fn v { new { var a = v } } var a = mk(1) var b = mk(3) a.a = 4 return a.a + b.a", "7");
 
             // import
 

@@ -4,6 +4,7 @@ structure: warn: when hiding variable in outer scope (file only?)
 structure: warn: unread variable or parameter
 structure: info: when return can be skipped
 structure: info: operator used as a function like +(1, 2)
+structure: info: when fn param is braced
 general: fix: recursive function are not possible (variable not declared)
 importer: implement - extract from interpeter
 paser: fix: parse member access and fn apply with multi line comment after dot like a./*\n*/b()
