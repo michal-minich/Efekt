@@ -235,6 +235,17 @@ namespace Efekt.Tests
             //type("fn a { a.b = 1 var x = a.b return x.b }", "Fn(Obj(b : Int)) -> Int");
             //type("fn a { var b = a b = b + 1 return a }", "Fn(Int) -> Int");
             //type("fn a { return a.b + 1 }", "Fn(obj(b : Int)) -> Int");
+
+            type("fn b { var a1 a1 = b() return a1 }", "Fn(Fn() -> Void) -> Void");
+            type("fn b { b() }", "Fn(Fn() -> Any) -> Any");
+            type("fn b { b() return 1 }", "Fn(Fn() -> Void) -> Int");
+            type("fn b { var x = b() return 1 }", "Fn(Fn() -> Any) -> Int");
+            type("fn b { }", "Fn(Any) -> Void");
+            type("fn b { var x = 1 x = x + 1 }", "Fn(Any) -> Void");
+            type(" fn d { d.x + 1 }", "Fn(Obj(x : Int)) -> Int");
+            type("fn a { if a() then 1 else 2 }", "Fn(Fn() -> Bool) -> Int");
+            type("fn x { at(x, 0) + 1 return x }", "Fn(Arr(Any)) -> Arr(Any)");
+            type("fn { return 'a' return fn { return 1 } }", "Fn() -> Fn() -> Int");
         }
 
 

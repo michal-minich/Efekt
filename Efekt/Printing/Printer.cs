@@ -226,7 +226,7 @@ namespace Efekt
                             counter = 0;
                             foreach (var m in os.Members)
                             {
-                                Write(m.Declr.Ident).Space().Op(":").Space();
+                                w.Ident(m.Name).Space().Op(":").Space();
                                 Write(m.Spec);
                                 if (++counter != os.Members.Count)
                                     w.Markup(",").Space();

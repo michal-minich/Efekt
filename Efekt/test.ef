@@ -1,29 +1,4 @@
 ﻿
 let start = fn {
 
-    let a = fn b { b() }
-    typeof(a)
-
-    let aa = fn b { b() return 1 }
-    typeof(aa)
-
-    let aqa = fn b { var x = b() return 1 }
-    typeof(aqa)
-
-    let b = fn b { }
-    typeof(b)
-
-    let c = fn b { var x = 1 x = x + 1 }
-    typeof(c)
-
-    let d = fn d { d.x + 1 }
-    typeof(d)
-
-    let e = fn a { if a() then 1 else 2 }
-    typeof(e)
-
-    typeof(arrayIterator)
-    typeof(whereIterator)
-
-    typeof(fn x { at(x, 0) + 1 return x })
 }

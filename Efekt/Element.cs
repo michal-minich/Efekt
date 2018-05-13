@@ -873,14 +873,15 @@ namespace Efekt
 
     public sealed class ObjSpecMember
     {
-        public ObjSpecMember(Declr declr, Spec spec)
+        public ObjSpecMember(string name, Spec spec, bool isLet = false)
         {
-            C.Nn(declr, spec);
-            Declr = declr;
+            C.Nn(name, spec);
+            Name = name;
             Spec = spec;
         }
 
-        public Declr Declr { get; set; }
-        public Spec Spec { get; set; }
+        public string Name { get; }
+        public Spec Spec { get; }
+        public bool IsLet { get; }
     }
 }
