@@ -63,8 +63,8 @@ namespace Efekt
                     return true;
                 case FnSpec fnSlot:
                     return s is FnSpec fnS
-                           && areAssignable(fnS.ParameterSpec, fnSlot.ParameterSpec)
-                           && isAssignable(fnSlot.ReturnSpec, fnS.ReturnSpec);
+                           && areAssignable(fnSlot.ParameterSpec, fnS.ParameterSpec)
+                           && isAssignable(fnS.ReturnSpec, fnSlot.ReturnSpec);
                 case ObjSpec objSlot:
                     return s is ObjSpec objS && isObjAssignable(objS, objSlot);
                 case IntSpec _:
@@ -96,8 +96,11 @@ namespace Efekt
         }
 
 
-        private bool areAssignable(IEnumerable<Spec> ss, IReadOnlyList<Spec> slots)
+        private bool areAssignable(IReadOnlyList<Spec> ss, IReadOnlyList<Spec> slots)
         {
+            if (ss.Count != slots.Count)
+                return false;
+
             var n = 0;
             foreach (var s in ss)
             {

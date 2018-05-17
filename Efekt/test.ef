@@ -1,4 +1,8 @@
 ﻿
 let start = fn {
 
+    var i = fn a { 1 }
+    i = fn a { a + 1 }
+    var ii = i(2)
+    print(ii)
 }

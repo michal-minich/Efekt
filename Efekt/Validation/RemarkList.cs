@@ -585,9 +585,9 @@ namespace Efekt
 
         public void CannotConvertType(Spec s, Spec slot, Exp exp)
         {
-            w(exp, "Cannot convert type "
+            w(exp, "Cannot assign value of type "
                              + s.ToDebugString()
-                             + " to type " + slot.ToDebugString());
+                             + " to value of type " + slot.ToDebugString());
         }
     }
 }
