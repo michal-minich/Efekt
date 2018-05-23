@@ -209,10 +209,11 @@ namespace Efekt.Tests
             type2("var id = fn a { a } typeof([id(1)])", "Arr(Any)");
 
             // object literal
+            type("new { }", "Obj()");
             type2("var i = 1 typeof(new { var f = i })", "Obj(f : Int)");
 
             // change type from void
-            type2("var void\n typeof(void)", "Void");
+            //type2("var void\n typeof(void)", "Void");
             type2("var b\n b = true typeof(b)", "Bool");
 
             // based on usage in 'if'
@@ -228,7 +229,7 @@ namespace Efekt.Tests
             type2("var i = 1 typeof(i + 2)", "Int");
 
             // member access
-            //type2("fn a { a.b = 1 typeof(a) }", "Obj(b : Int)");
+            type2("fn a { a.b = 1 \n typeof(a) }(new { var b = 2 })", "Obj(b : Int)");
 
             // back transitive type 
             //type("fn a { var x = a return x.b }", "Fn(Obj(b : Any)) -> Any");
@@ -242,7 +243,7 @@ namespace Efekt.Tests
             type("fn b { var x = b() return 1 }", "Fn(Fn() -> Any) -> Int");
             type("fn b { }", "Fn(Any) -> Void");
             type("fn b { var x = 1 x = x + 1 }", "Fn(Any) -> Void");
-            type(" fn d { d.x + 1 }", "Fn(Obj(x : Int)) -> Int");
+            type("fn d { d.x + 1 }", "Fn(Obj(x : Int)) -> Int");
             type("fn a { if a() then 1 else 2 }", "Fn(Fn() -> Bool) -> Int");
             type("fn x { at(x, 0) + 1 return x }", "Fn(Arr(Any)) -> Arr(Any)");
             type("fn { return 'a' return fn { return 1 } }", "Fn() -> Fn() -> Int");
@@ -299,8 +300,8 @@ namespace Efekt.Tests
             var val = res.ToDebugString();
             if (val != expectedResult)
                 throw new Exception();
-            var acutalOutput = outputWriter.GetAndReset();
-            if (acutalOutput != expectedOutput)
+            var actualOutput = outputWriter.GetAndReset();
+            if (actualOutput != expectedOutput)
                 throw new Exception();
         }
     }

@@ -1,3 +1,5 @@
+using System;
+
 namespace Efekt
 {
     public sealed class Printer
@@ -240,7 +242,10 @@ namespace Efekt
                         case VoidSpec vs:
                             w.Type("Void");
                             break;
-                    }
+
+                        default:
+                            throw new Exception();
+                        }
 
                     break;
                 }

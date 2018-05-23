@@ -553,7 +553,7 @@ namespace Efekt
             var se = ParseOne();
             if (se is Ident i2)
             {
-                return post(isVar ? (Element)new Var(i2, Void.Instance) : new Let(i2, Void.Instance));
+                return post(isVar ? (Element)new Var(i2, null) : new Let(i2, null));
             }
             if (se is Assign a)
             {
@@ -660,7 +660,20 @@ namespace Efekt
             {
                 otherwise = null;
             }
-            return post(new When(testExp, then, otherwise));
+
+            if (then is SequenceItem thenSi)
+            {
+                if (otherwise == null)
+                    return post(new When(testExp, thenSi, null));
+                else if (otherwise is SequenceItem otherwiseSi)
+                    return post(new When(testExp, thenSi, otherwiseSi));
+                else
+                    throw remarkList.ExpectedSequenceElement(then);
+            }
+            else
+            {
+                throw remarkList.ExpectedSequenceElement(then);
+            }
         }
     }
 }

@@ -37,7 +37,8 @@ namespace Efekt
             {
                 case Declr d:
                     validate(d.Ident);
-                    validate(d.Exp);
+                    if (d.Exp != null)
+                        validate(d.Exp);
                     break;
                 case Assign a:
                     validate(a.Exp);
@@ -121,8 +122,8 @@ namespace Efekt
                     if (att.Grab == null && att.AtLast == null)
                         throw prog.RemarkList.AttemptMustHaveGrabOrAtLastOrBoth(att);
                     if (att.Grab != null)
-                        validate(att.AtLast);
-                    if (att.Grab != null)
+                        validate(att.Grab);
+                    if (att.AtLast != null)
                         validate(att.AtLast);
                     break;
                 case Import imp:

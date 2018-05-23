@@ -22,6 +22,7 @@ namespace Efekt
     public interface Declr : Stm
     {
         Ident Ident { get; }
+        [CanBeNull]
         Exp Exp { get; }
         List<Ident> UsedBy { get; }
         List<Ident> ReadBy { get; }
@@ -304,15 +305,16 @@ namespace Efekt
     public sealed class Var : AElement, Declr, SequenceItem, ClassItem
     {
         [DebuggerStepThrough]
-        public Var(Ident ident, Exp exp)
+        public Var(Ident ident, [CanBeNull] Exp exp)
         {
-            C.Nn(ident, exp);
+            C.Nn(ident);
 
             Ident = ident;
             Exp = exp;
 
             ident.Parent = this;
-            exp.Parent = this;
+            if (exp != null)
+                exp.Parent = this;
 
             UsedBy = new List<Ident>();
             ReadBy = new List<Ident>();
@@ -320,6 +322,7 @@ namespace Efekt
         }
 
         public Ident Ident { get; }
+        [CanBeNull]
         public Exp Exp { get; }
         public List<Ident> UsedBy { get; }
         public List<Ident> ReadBy { get; }
@@ -330,7 +333,7 @@ namespace Efekt
     public sealed class Let : AElement, Declr, SequenceItem, ClassItem
     {
         [DebuggerStepThrough]
-        public Let(Ident ident, Exp exp)
+        public Let(Ident ident, [CanBeNull] Exp exp)
         {
             C.Nn(ident, exp);
 
@@ -346,6 +349,7 @@ namespace Efekt
         }
 
         public Ident Ident { get; }
+        [CanBeNull]
         public Exp Exp { get; }
         public List<Ident> UsedBy { get; }
         public List<Ident> ReadBy { get; }
@@ -369,7 +373,8 @@ namespace Efekt
         }
 
         public Ident Ident { get; }
-        public Exp Exp => Void.Instance;
+        [CanBeNull]
+        public Exp Exp => null;
         public List<Ident> UsedBy { get; }
         public List<Ident> ReadBy { get; }
         public List<Ident> WrittenBy { get; }
@@ -400,7 +405,7 @@ namespace Efekt
     public sealed class When : AExp
     {
         [DebuggerStepThrough]
-        public When(Exp test, Element then, [CanBeNull] Element otherwise)
+        public When(Exp test, SequenceItem then, [CanBeNull] SequenceItem otherwise)
         {
             C.Nn(test, then);
 
@@ -416,10 +421,10 @@ namespace Efekt
 
 
         public Exp Test { get; }
-        public Element Then { get; }
+        public SequenceItem Then { get; }
 
         [CanBeNull]
-        public Element Otherwise { get; }
+        public SequenceItem Otherwise { get; }
     }
 
 
@@ -881,7 +886,7 @@ namespace Efekt
         }
 
         public string Name { get; }
-        public Spec Spec { get; }
+        public Spec Spec { get; set; }
         public bool IsLet { get; }
     }
 }

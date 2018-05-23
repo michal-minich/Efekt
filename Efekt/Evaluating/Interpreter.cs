@@ -55,11 +55,19 @@ namespace Efekt
             switch (se)
             {
                 case Declr d:
-                    var val = eval(d.Exp, env);
-                    if (d.Exp != Void.Instance && val == Void.Instance)
-                        throw prog.RemarkList.AttemptToAssignVoid(d.Exp);
-                    env.Declare(d, val);
+                    if (d.Exp == null)
+                    {
+                        env.Declare(d, Void.Instance);
+                    }
+                    else
+                    {
+                        var val = eval(d.Exp, env);
+                        if (d.Exp != Void.Instance && val == Void.Instance)
+                            throw prog.RemarkList.AttemptToAssignVoid(d.Exp);
+                        env.Declare(d, val);
+                    }
                     return Void.Instance;
+
                 case Assign a:
                     var newValue = eval(a.Exp, env);
                     if (newValue == Void.Instance)
@@ -78,6 +86,7 @@ namespace Efekt
                             throw new NotSupportedException();
                     }
                     return Void.Instance;
+
                 case Ident i:
                     Value vv;
                     if (isImportContext)
@@ -87,11 +96,13 @@ namespace Efekt
                     if (vv == Void.Instance)
                         throw prog.RemarkList.AttemptToReadUninitializedVariable(i); // todo can be done in structure
                     return vv;
+
                 case Return r:
                     ret = eval(r.Exp, env);
                     if (r.Exp != Void.Instance && ret == Void.Instance)
                         throw prog.RemarkList.AttemptToReturnVoid(r);
                     return Void.Instance;
+
                 case FnApply fna:
                     if (fna.Fn is Ident fnI && fnI.Name == "typeof")
                     {
@@ -199,8 +210,10 @@ namespace Efekt
                     }
                     callStack.Pop();
                     return Void.Instance;
+
                 case Fn f:
                     return new Fn(f.Parameters, f.Sequence, env).CopInfoFrom(f);
+
                 case When w:
                     var test = eval(w.Test, env);
                     var testB = test.AsBool(w.Test, prog);
@@ -216,6 +229,7 @@ namespace Efekt
                             return eval(w.Then, Env.Create(prog, env));
                         return eval(w.Otherwise, Env.Create(prog, env));
                     }
+
                 case Loop l:
                     var loopEnv = Env.Create(prog, env);
                     while (true)
@@ -238,26 +252,33 @@ namespace Efekt
                                 return Void.Instance;
                         }
                     }
+
                 case Continue _:
                     isContinue = true;
                     return Void.Instance;
+
                 case Break _:
                     isBreak = true;
                     return Void.Instance;
+
                 case ArrConstructor ae:
                     return new Arr(new Values(ae.Arguments.Select(e => eval(e, env)).ToList()));
+
                 case MemberAccess ma:
                     var exp = eval(ma.Exp, env);
                     var o = exp.AsObj(ma, prog);
                     return o.Env.GetFromThisEnvOnly(ma.Ident, false).Value;
+
                 case New n:
                     var objEnv = Env.Create(prog, env);
                     // todo create 
                     foreach (var v in n.Body)
                         eval(v, objEnv);
                     return new Obj(n.Body, objEnv) { Parent = n.Parent };
+
                 case Value ve:
                     return ve;
+
                 case Sequence seq:
                     var scopeEnv = Env.Create(prog, env);
                     if (seq.Count == 1)
@@ -269,9 +290,11 @@ namespace Efekt
                             return Void.Instance;
                     }
                     return Void.Instance;
+
                 case Toss ts:
                     var exVal = eval(ts.Exception, env);
                     throw prog.RemarkList.ProgramException(exVal, ts, callStack.ToList());
+
                 case Attempt att:
                     try
                     {
@@ -292,6 +315,7 @@ namespace Efekt
                         if (att.AtLast != null)
                             eval(att.AtLast, env);
                     }
+
                 case Import imp:
                     isImportContext = true;
                     var modImpEl = eval(imp.QualifiedIdent, env);
@@ -299,6 +323,7 @@ namespace Efekt
                     var modImp = modImpEl.AsObj(imp, prog);
                     env.AddImport(imp.QualifiedIdent, modImp.Env, (Declr)modImp.Parent);
                     return Void.Instance;
+
                 default:
                     throw new NotSupportedException();
             }

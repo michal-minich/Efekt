@@ -493,6 +493,12 @@ namespace Efekt
         }
 
 
+        public void AttemptToReadUninitializedVariableWarn(Ident ident)
+        {
+            w(ident, "Variable is not yet initialized and cannot be read");
+        }
+
+
         [Pure]
         public EfektException VariableMightNotYetBeInitialized(Ident ident)
         {
@@ -583,11 +589,23 @@ namespace Efekt
         }
 
 
-        public void CannotConvertType(Spec s, Spec slot, Exp exp)
+        public void CannotConvertType(Spec s, Spec slot, Element e)
         {
-            w(exp, "Cannot assign value of type "
+            w(e, "Cannot assign expression of type "
                              + s.ToDebugString()
-                             + " to value of type " + slot.ToDebugString());
+                             + " to variable of type " + slot.ToDebugString());
+        }
+
+
+        public void UnusedParameter(Declr d)
+        {
+            w(d, "Unused parameter");
+        }
+
+
+        public void UnusedVariable(Declr d)
+        {
+            w(d, "Unused variable");
         }
     }
 }

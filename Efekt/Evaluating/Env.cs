@@ -69,7 +69,7 @@ namespace Efekt
 
     public sealed class Env<T> : Env where T : class, Exp
     {
-        private readonly Dictionary<Declr, EvnItem<T>> dict;
+        public readonly Dictionary<Declr, EvnItem<T>> Items;
         private readonly bool buildUsages;
         private readonly Dictionary<QualifiedIdent, Env<T>> imports = new Dictionary<QualifiedIdent, Env<T>>();
         [CanBeNull] private readonly Env<T> parent;
@@ -81,7 +81,7 @@ namespace Efekt
             C.Nn(program, initialDictionary);
             C.AllNotNull(initialDictionary);
             prog = program;
-            dict = initialDictionary;
+            Items = initialDictionary;
             this.buildUsages = buildUsages;
             parent = null;
         }
@@ -92,7 +92,7 @@ namespace Efekt
             C.Nn(prog, parent);
             this.prog = prog;
             this.parent = parent;
-            dict = new Dictionary<Declr, EvnItem<T>>();
+            Items = new Dictionary<Declr, EvnItem<T>>();
         }
 
 
@@ -120,7 +120,7 @@ namespace Efekt
         public EvnItem<T> GetFromThisEnvOnlyOrNull(Ident ident, bool? forWrite)
         {
             C.Nn(ident);
-            var kvp = dict.FirstOrDefault(kv => kv.Key.Ident.Name == ident.Name);
+            var kvp = Items.FirstOrDefault(kv => kv.Key.Ident.Name == ident.Name);
             if (kvp.Key == null)
                 return null;
             addUsage(kvp.Key, ident, forWrite);
@@ -132,7 +132,7 @@ namespace Efekt
         public EvnItem<T> GetWithoutImportOrNull(Ident ident, bool forWrite = false)
         {
             C.Nn(ident);
-            var kvp = dict.FirstOrDefault(kv => kv.Key.Ident.Name == ident.Name);
+            var kvp = Items.FirstOrDefault(kv => kv.Key.Ident.Name == ident.Name);
 
             if (kvp.Key != null)
             {
@@ -210,9 +210,9 @@ namespace Efekt
         {
             C.Nn(declr, value);
 
-            if (dict.Any(kvp => kvp.Key.Ident.Name == declr.Ident.Name))
+            if (Items.Any(kvp => kvp.Key.Ident.Name == declr.Ident.Name))
                 throw prog.RemarkList.VariableIsAlreadyDeclared(declr.Ident);
-            dict.Add(declr, new EvnItem<T>(value, !(declr is Var)));
+            Items.Add(declr, new EvnItem<T>(value, !(declr is Var)));
         }
 
 
