@@ -65,19 +65,20 @@ namespace Efekt
         
         private bool isObjAssignable(ObjSpec objS, ObjSpec objSlot)
         {
-            foreach (var objSlotM in objSlot.Members)
+            foreach (var objSlotM in objSlot.Env.Items)
             {
-                var oM = objS.Members.FirstOrDefault(m => m.Name == objSlotM.Name);
+                //var oM = objS.Members.FirstOrDefault(m => m.Name == objSlotM.Key.Ident.Name);
+                var oM = objS.Env.GetFromThisEnvOnlyOrNull(objSlotM.Key.Ident, null);
                 if (oM == null)
                     return false;
-                if (objSlotM.IsLet)
+                if (objSlotM.Value.IsLet)
                 {
-                    if (!isAssignable(oM.Spec, objSlotM.Spec))
+                    if (!isAssignable(oM.Value, objSlotM.Value.Value))
                         return false;
                 }
                 else
                 {
-                    if (!areSame(oM.Spec, objSlotM.Spec))
+                    if (!areSame(oM.Value, objSlotM.Value.Value))
                         return false;
                 }
             }
@@ -239,11 +240,10 @@ namespace Efekt
                     if (ss is UnknownSpec)
                     {
                         var objSEnv = Env.Create(prog, env);
-                        var objS = new ObjSpec(new List<ObjSpecMember>(), objSEnv) { FromUsage = true };
+                        var objS = new ObjSpec(objSEnv) { FromUsage = true };
                         var declr = new Var(new Ident(mai.Name, mai.TokenType).CopInfoFrom(mai, true), Void.Instance);
                         objSEnv.Declare(declr, slot);
-                        var maiS = specExp(mai, objSEnv, slot);
-                        objS.Members.Add(new ObjSpecMember(mai.Name, maiS));
+                        var __ = specExp(mai, objSEnv, slot);
                         ss = objS;
                         if (ma.Exp is Ident i)
                         {
@@ -256,13 +256,12 @@ namespace Efekt
                         throw prog.RemarkList.OnlyObjectsCanHaveMembers(ma, ss);
                     if (objS2.FromUsage)
                     {
-                        var member = objS2.Members.FirstOrDefault(m => m.Name == mai.Name); // also use type and var/let?
+                        var member = objS2.Env.GetFromThisEnvOnlyOrNull(mai, null);// also use type and var/let?
                         if (member == null)
                         {
                             var declr = new Var(new Ident(mai.Name, mai.TokenType).CopInfoFrom(mai, true), Void.Instance);
                             objS2.Env.Declare(declr, slot);
-                            var maiS = specExp(mai, objS2.Env, slot);
-                            objS2.Members.Add(new ObjSpecMember(mai.Name, maiS));
+                            var __ = specExp(mai, objS2.Env, slot);
                         }
                     }
 
@@ -272,14 +271,11 @@ namespace Efekt
 
                 case New n:
                     var objEnv = Env.Create(prog, env);
-                    var members = new List<ObjSpecMember>();
                     foreach (var classItem in n.Body)
                     {
                         specElement(classItem, objEnv, AnySpec.Instance);
-                        if (classItem is Declr d)
-                            members.Add(new ObjSpecMember(d.Ident.Name, objEnv.Get(d.Ident).Value));
                     }
-                    return new ObjSpec(members, objEnv) { Parent = n.Parent };
+                    return new ObjSpec(objEnv) { Parent = n.Parent };
 
                 case Text _:
                     return TextSpec.Instance;
@@ -304,6 +300,7 @@ namespace Efekt
             }
         }
 
+
         private void validateUnusedParams(Env<Spec> paramsEnv)
         {
             foreach (var item in paramsEnv.Items)
@@ -315,6 +312,7 @@ namespace Efekt
                 }
             }
         }
+
 
         private void validateUnusedVariables(Env<Spec> fnEnv)
         {
@@ -360,8 +358,7 @@ namespace Efekt
                     throw new NotSupportedException();
             }
         }
-
-
+        
 
         private void specStm(Stm e, Env<Spec> env)
         {
@@ -398,9 +395,7 @@ namespace Efekt
                             var minObjEnv = Env.Create(prog, env);
                             var declr = new Var(new Ident(ma.Ident.Name, ma.Ident.TokenType).CopInfoFrom(ma.Ident, true), Void.Instance);
                             minObjEnv.Declare(declr, AnySpec.Instance);
-                            var minObj = new ObjSpec(
-                                new List<ObjSpecMember> {new ObjSpecMember(ma.Ident.Name, AnySpec.Instance) },
-                                minObjEnv);
+                            var minObj = new ObjSpec(minObjEnv);
                             var maExpS = specExp(ma.Exp, env, minObj);
                             if (maExpS is ObjSpec objS)
                             {
@@ -408,7 +403,7 @@ namespace Efekt
                                 var s = specExp(a.Exp, env, orig);
                                 if (orig == AnySpec.Instance)
                                 {
-                                    objS.Members.First(m => m.Name == ma.Ident.Name).Spec = s;
+                                    //objS.Members.First(m => m.Name == ma.Ident.Name).Spec = s;
                                     objS.Env.Set(ma.Ident, s);
                                 }
                             }
@@ -458,7 +453,7 @@ namespace Efekt
 
                 case Import imp:
                     isImportContext = true;
-                    var objSpecWithNoMembers = new ObjSpec(new List<ObjSpecMember>(), Env.Create(prog, env));
+                    var objSpecWithNoMembers = new ObjSpec(Env.Create(prog, env));
                     var modImpEl = specExp(imp.QualifiedIdent, env, objSpecWithNoMembers);
                     isImportContext = false;
                     if (modImpEl is ObjSpec modImp)

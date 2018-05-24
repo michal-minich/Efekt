@@ -561,7 +561,7 @@ namespace Efekt
     }
 
 
-    public sealed class FnApply : AExp, Exp
+    public sealed class FnApply : AExp
     {
         [DebuggerStepThrough]
         public FnApply(Exp fn, FnArguments arguments)
@@ -579,7 +579,7 @@ namespace Efekt
     }
 
 
-    public sealed class ArrConstructor : AExp, Exp
+    public sealed class ArrConstructor : AExp
     {
         [DebuggerStepThrough]
         public ArrConstructor(FnArguments arguments)
@@ -605,7 +605,7 @@ namespace Efekt
     }
 
 
-    public sealed class New : AExp, Exp
+    public sealed class New : AExp
     {
         public New(ClassBody body)
         {
@@ -617,7 +617,6 @@ namespace Efekt
         }
 
         public ClassBody Body { get; }
-        public string FullStaticName { get; }
     }
 
 
@@ -715,23 +714,8 @@ namespace Efekt
     }
 
 
-    public sealed class SpecComparer : IEqualityComparer<Spec>
-    {   
-        public bool Equals(Spec x, Spec y)
-        {
-            return object.Equals(x, y);
-        }
-
-        public int GetHashCode(Spec obj)
-        {
-            return obj.GetHashCode();
-        }
-    }
-
-
     public interface Spec : Exp
     {
-        bool FromUsage { get; set; }
     }
 
 
@@ -843,50 +827,20 @@ namespace Efekt
 
         public List<Spec> Signature { get; }
 
-        public List<Spec> ParameterSpec
-        {
-            get { return Signature.SkipLast().ToList(); }
-        }
+        public List<Spec> ParameterSpec => Signature.SkipLast().ToList();
 
-        public Spec ReturnSpec
-        {
-            get { return Signature.Last(); }
-        }
+        public Spec ReturnSpec => Signature.Last();
     }
 
 
     public sealed class ObjSpec : ASpec, ComplexSpec
     {
-        public ObjSpec()
+        public ObjSpec(Env<Spec> env)
         {
-            Members = new List<ObjSpecMember>();
-        }
-
-        public ObjSpec(List<ObjSpecMember> members, Env<Spec> env)
-        {
-            C.AllNotNull(members);
             C.Nn(env);
-            Members = members;
             Env = env;
         }
-
-        public List<ObjSpecMember> Members { get; }
-
+        
         public Env<Spec> Env { get; }
-    }
-
-
-    public sealed class ObjSpecMember
-    {
-        public ObjSpecMember(string name, Spec spec, bool isLet = false)
-        {
-            C.Nn(name, spec);
-            Name = name;
-            Spec = spec;
-        }
-
-        public string Name { get; }
-        public Spec Spec { get; set; }
-        public bool IsLet { get; }
     }
 }

@@ -226,11 +226,11 @@ namespace Efekt
                         case ObjSpec os:
                             w.Type("Obj").Markup("(");
                             counter = 0;
-                            foreach (var m in os.Members)
+                            foreach (var m in os.Env.Items)
                             {
-                                w.Ident(m.Name).Space().Op(":").Space();
-                                Write(m.Spec);
-                                if (++counter != os.Members.Count)
+                                w.Ident(m.Key.Ident.Name).Space().Op(":").Space();
+                                Write(m.Value.Value);
+                                if (++counter != os.Env.Items.Count)
                                     w.Markup(",").Space();
                             }
 
