@@ -24,7 +24,7 @@ namespace Efekt
         Ident Ident { get; }
         [CanBeNull]
         Exp Exp { get; }
-        List<Ident> UsedBy { get; }
+        List<Ident> AssingedFrom { get; }
         List<Ident> ReadBy { get; }
         List<Ident> WrittenBy { get; }
     }
@@ -316,7 +316,7 @@ namespace Efekt
             if (exp != null)
                 exp.Parent = this;
 
-            UsedBy = new List<Ident>();
+            AssingedFrom = new List<Ident>();
             ReadBy = new List<Ident>();
             WrittenBy = new List<Ident>();
         }
@@ -324,7 +324,7 @@ namespace Efekt
         public Ident Ident { get; }
         [CanBeNull]
         public Exp Exp { get; }
-        public List<Ident> UsedBy { get; }
+        public List<Ident> AssingedFrom { get; }
         public List<Ident> ReadBy { get; }
         public List<Ident> WrittenBy { get; }
     }
@@ -343,7 +343,7 @@ namespace Efekt
             ident.Parent = this;
             exp.Parent = this;
 
-            UsedBy = new List<Ident>();
+            AssingedFrom = new List<Ident>();
             ReadBy = new List<Ident>();
             WrittenBy = new List<Ident>();
         }
@@ -351,7 +351,7 @@ namespace Efekt
         public Ident Ident { get; }
         [CanBeNull]
         public Exp Exp { get; }
-        public List<Ident> UsedBy { get; }
+        public List<Ident> AssingedFrom { get; }
         public List<Ident> ReadBy { get; }
         public List<Ident> WrittenBy { get; }
     }
@@ -367,7 +367,7 @@ namespace Efekt
             Ident = ident;
             ident.Parent = this;
 
-            UsedBy = new List<Ident>();
+            AssingedFrom = new List<Ident>();
             ReadBy = new List<Ident>();
             WrittenBy = new List<Ident>();
         }
@@ -375,7 +375,7 @@ namespace Efekt
         public Ident Ident { get; }
         [CanBeNull]
         public Exp Exp => null;
-        public List<Ident> UsedBy { get; }
+        public List<Ident> AssingedFrom { get; }
         public List<Ident> ReadBy { get; }
         public List<Ident> WrittenBy { get; }
 
@@ -395,10 +395,12 @@ namespace Efekt
 
             to.Parent = this;
             exp.Parent = this;
+            AssingedFrom = new List<Ident>();
         }
 
         public AssignTarget To { get; }
         public Exp Exp { get; }
+        public List<Ident> AssingedFrom { get; }
     }
 
 

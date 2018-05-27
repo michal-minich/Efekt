@@ -1,12 +1,4 @@
 ﻿
 let start = fn {
 
-    var x
-    print(x)
-
-    var f = fn a { a() }
-    typeof(f)
-
-    var f2 = fn a { a.x() }
-    typeof(f2)
 }

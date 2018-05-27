@@ -67,7 +67,6 @@ namespace Efekt
         {
             foreach (var objSlotM in objSlot.Env.Items)
             {
-                //var oM = objS.Members.FirstOrDefault(m => m.Name == objSlotM.Key.Ident.Name);
                 var oM = objS.Env.GetFromThisEnvOnlyOrNull(objSlotM.Key.Ident, null);
                 if (oM == null)
                     return false;
@@ -127,10 +126,13 @@ namespace Efekt
                     else
                     {
                         var orig = env.Get(i).Value;
-                        if (orig == UnknownSpec.Instance)
+                        
+                        if (orig == UnknownSpec.Instance || orig == AnySpec.Instance)
                         {
                             //prog.RemarkList.AttemptToReadUninitializedVariableWarn(i);
                             env.Set(i, slot);
+                            foreach (var from in i.DeclareBy.AssingedFrom)
+                                env.Set(from, slot);
                             return slot;
                         }
                         if (!isAssignable(orig, slot))
@@ -182,11 +184,11 @@ namespace Efekt
                 }
 
                 case Fn f:
-                    var paramsEnv = Env.Create(prog, env);
+                    var paramsEnv = env.Create();
                     foreach (var p in f.Parameters)
                         paramsEnv.Declare(p, UnknownSpec.Instance);
 
-                    var fnEnv = Env.Create(prog, paramsEnv);
+                    var fnEnv = paramsEnv.Create();
                     FnSpec ret;
                     if (f.Sequence.Count == 0)
                     {
@@ -237,9 +239,9 @@ namespace Efekt
                 case MemberAccess ma:
                     ss = specExp(ma.Exp, env, UnknownSpec.Instance);
                     var mai = ma.Ident;
-                    if (ss is UnknownSpec)
+                    if (ss is UnknownSpec || ss is AnySpec)
                     {
-                        var objSEnv = Env.Create(prog, env);
+                        var objSEnv = env.Create();
                         var objS = new ObjSpec(objSEnv) { FromUsage = true };
                         var declr = new Var(new Ident(mai.Name, mai.TokenType).CopInfoFrom(mai, true), Void.Instance);
                         objSEnv.Declare(declr, slot);
@@ -248,6 +250,8 @@ namespace Efekt
                         if (ma.Exp is Ident i)
                         {
                             env.Set(i, objS);
+                            foreach (var from in i.DeclareBy.AssingedFrom)
+                                env.Set(from, objS);
                         }
                     }
 
@@ -270,7 +274,7 @@ namespace Efekt
                     return ss;
 
                 case New n:
-                    var objEnv = Env.Create(prog, env);
+                    var objEnv = env.Create();
                     foreach (var classItem in n.Body)
                     {
                         specElement(classItem, objEnv, AnySpec.Instance);
@@ -374,6 +378,8 @@ namespace Efekt
                     else
                     {
                         env.Declare(d, specExp(d.Exp, env, AnySpec.Instance));
+                        if (d.Exp is Ident fromIdent)
+                            d.AssingedFrom.Add(fromIdent);
                     }
 
                     break;
@@ -384,30 +390,34 @@ namespace Efekt
                         case Ident ident:
                         {
                             var orig = env.Get(ident, true).Value;
-                            var s = specExp(a.Exp, env, orig);
+                            var slot3 = orig == UnknownSpec.Instance ? AnySpec.Instance : orig;
+                            var s = specExp(a.Exp, env, slot3);
                             if (orig == UnknownSpec.Instance)
                                 env.Set(ident, s);
+                            if (a.Exp is Ident fromIdent)
+                                a.AssingedFrom.Add(fromIdent);
+
                             break;
                         }
 
                         case MemberAccess ma:
                         {
-                            var minObjEnv = Env.Create(prog, env);
-                            var declr = new Var(new Ident(ma.Ident.Name, ma.Ident.TokenType).CopInfoFrom(ma.Ident, true), Void.Instance);
+                            var minObjEnv = env.Create();
+                            var declr = new Let(new Ident(ma.Ident.Name, ma.Ident.TokenType).CopInfoFrom(ma.Ident, true), Void.Instance);
                             minObjEnv.Declare(declr, AnySpec.Instance);
                             var minObj = new ObjSpec(minObjEnv);
                             var maExpS = specExp(ma.Exp, env, minObj);
                             if (maExpS is ObjSpec objS)
                             {
                                 var orig = objS.Env.Get(ma.Ident, true).Value;
-                                var s = specExp(a.Exp, env, orig);
+                                var slot3 = orig == UnknownSpec.Instance ? AnySpec.Instance : orig;
+                                var s = specExp(a.Exp, env, slot3);
                                 if (orig == AnySpec.Instance)
                                 {
-                                    //objS.Members.First(m => m.Name == ma.Ident.Name).Spec = s;
                                     objS.Env.Set(ma.Ident, s);
+                                    a.AssingedFrom.Add(ma.Ident);
                                 }
                             }
-
                             break;
                         }
 
@@ -418,7 +428,8 @@ namespace Efekt
                     break;
 
                 case Return r:
-                    var retS = specExp(r.Exp, env, returns.Peek());
+                    var slot2 = returns.Peek();
+                    var retS = specExp(r.Exp, env, slot2 == UnknownSpec.Instance ? AnySpec.Instance : slot2);
                     returns.UpdateTop(retS);
                     break;
 
@@ -441,7 +452,7 @@ namespace Efekt
                     specSequence(att.Body, env);
                     if (att.Grab != null)
                     {
-                        var grabEnv = Env.Create(prog, env);
+                        var grabEnv = env.Create();
                         var exDeclr = new Param(new Ident("exception", TokenType.Ident));
                         grabEnv.Declare(exDeclr, AnySpec.Instance);
                         specSequence(att.Grab, grabEnv);
@@ -453,7 +464,7 @@ namespace Efekt
 
                 case Import imp:
                     isImportContext = true;
-                    var objSpecWithNoMembers = new ObjSpec(Env.Create(prog, env));
+                    var objSpecWithNoMembers = new ObjSpec(env.Create());
                     var modImpEl = specExp(imp.QualifiedIdent, env, objSpecWithNoMembers);
                     isImportContext = false;
                     if (modImpEl is ObjSpec modImp)
@@ -475,7 +486,7 @@ namespace Efekt
             switch (si)
             {
                 case Sequence sequence:
-                    var scopeEnv = Env.Create(prog, env);
+                    var scopeEnv = env.Create();
 
                     if (sequence.Count == 1 && sequence[0] is Exp exp)
                         return specExp(exp, scopeEnv, slot);
@@ -502,7 +513,7 @@ namespace Efekt
 
         private void specSequence(Sequence sequence, Env<Spec> env)
         {
-            var scopeEnv = Env.Create(prog, env);
+            var scopeEnv = env.Create();
 
             foreach (var item in sequence)
             {

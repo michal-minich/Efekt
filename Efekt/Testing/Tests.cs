@@ -199,6 +199,7 @@ namespace Efekt.Tests
             // fn application
             type2("var id = fn a { a } var int1 = 1 typeof(id(int1))", "Any");
             type2("var a = fn a { a + 1 } typeof(a(1))", "Int");
+            type("fn a { var b = a() + 1 }", "Fn(Fn() -> Int) -> Void");
 
             // array literal
             type("[1 + 1]", "Arr(Int)");
@@ -230,17 +231,22 @@ namespace Efekt.Tests
 
             // member access
             type2("fn a { a.b = 1 \n typeof(a) }(new { var b = 2 })", "Obj(b : Int)");
+            type("fn a { return a.b + 1 }", "Fn(Obj(b : Int)) -> Int");
+            type("fn a { a.b = 1 var x = a return x.b }", "Fn(Obj(b : Int)) -> Int");
+            type("fn a { a.b = 1 var x = a.b return x }", "Fn(Obj(b : Int)) -> Int");
 
-            // back transitive type 
-            //type("fn a { var x = a return x.b }", "Fn(Obj(b : Any)) -> Any");
-            //type("fn a { a.b = 1 var x = a.b return x.b }", "Fn(Obj(b : Int)) -> Int");
-            //type("fn a { var b = a b = b + 1 return a }", "Fn(Int) -> Int");
-            //type("fn a { return a.b + 1 }", "Fn(obj(b : Int)) -> Int");
+            // cross variable assign without operation
+            type("fn a { var x = a return x.b }", "Fn(Obj(b : Any)) -> Any");
+            type("fn a { var x = a return x.b + 1 }", "Fn(Obj(b : Int)) -> Int");
+            type("fn a { var b = a b = b + 1 return a }", "Fn(Int) -> Int");
 
-            type("fn b { var a1 a1 = b() return a1 }", "Fn(Fn() -> Void) -> Void");
-            type("fn b { b() }", "Fn(Fn() -> Any) -> Any");
+            // unsorted
+            type("fn b { var a a = b() return a }", "Fn(Fn() -> Any) -> Any");
+            type("fn b { var a = b() return a }", "Fn(Fn() -> Any) -> Any");
+            type("fn b { var a = 1 a = b() return a }", "Fn(Fn() -> Int) -> Int");
             type("fn b { b() return 1 }", "Fn(Fn() -> Void) -> Int");
-            type("fn b { var x = b() return 1 }", "Fn(Fn() -> Any) -> Int");
+            type("fn b { b() }", "Fn(Fn() -> Any) -> Any");
+            type("fn b { return b() }", "Fn(Fn() -> Any) -> Any");
             type("fn b { }", "Fn(Any) -> Void");
             type("fn b { var x = 1 x = x + 1 }", "Fn(Any) -> Void");
             type("fn d { d.x + 1 }", "Fn(Obj(x : Int)) -> Int");

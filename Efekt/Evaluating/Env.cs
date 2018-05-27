@@ -55,15 +55,6 @@ namespace Efekt
 
             return new Env<TA>(prog, dict, buildUsages);
         }
-
-
-        public static Env<T> Create<T>(Prog prog, Env<T> parent) where T : class, Exp
-        {
-            C.Nn(prog, parent);
-            C.ReturnsNn();
-
-            return new Env<T>(prog, parent);
-        }
     }
 
 
@@ -87,12 +78,21 @@ namespace Efekt
         }
 
 
-        public Env(Prog prog, Env<T> parent)
+        public Env(Prog prog, [CanBeNull] Env<T> parent, bool buildUsages)
         {
-            C.Nn(prog, parent);
+            C.Nn(prog);
             this.prog = prog;
             this.parent = parent;
+            this.buildUsages = buildUsages;
             Items = new Dictionary<Declr, EvnItem<T>>();
+        }
+
+
+        public Env<T> Create()
+        {
+            C.ReturnsNn();
+
+            return new Env<T>(prog, this, buildUsages);
         }
 
 
@@ -141,7 +141,7 @@ namespace Efekt
             }
 
             if (parent != null)
-                return parent.GetWithoutImportOrNull(ident);
+                return parent.GetWithoutImportOrNull(ident, forWrite);
             return null;
         }
 

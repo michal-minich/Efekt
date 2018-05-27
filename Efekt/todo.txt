@@ -6,13 +6,9 @@ structure: info: when return can be skipped
 structure: info: operator used as a function like +(1, 2)
 structure: info: when fn param is braced
 general: fix: recursive function are not possible (variable not declared)
-importer: implement - extract from interpeter
 paser: fix: parse member access and fn apply with multi line comment after dot like a./*\n*/b()
 interpeter: fix: declaring var in loop now fails with already declared
 parser: nicer mesage on perser error "fn () { 5 }" should be "fn { 5 }"
-specer: tries to find common type with imported variable on usage of it, but cannot access env in lexical scope
-specer: should add Obj(fieldName:Type) to common type on member access?
-specer - add test after fn apply like fn a { var b = a() + 1 }
 general: fix: various crashes - (build on prelude/wrong paths?, not matching braces)
 tokenizer: error: make \0 in middle of file invalid token or fatal
 import: info: print when importing the same module in inner scope
