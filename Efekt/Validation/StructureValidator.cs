@@ -75,7 +75,7 @@ namespace Efekt
                     LoopStack.Push(loopInfo);
                     validate(l.Body);
                     if (!(loopInfo.HasBreak || loopInfo.HasReturn))
-                        throw prog.RemarkList.ConinueOrReturnRequiredInLoop(l);
+                        throw prog.RemarkList.ContinueOrReturnRequiredInLoop(l);
                     LoopStack.Pop();
                     break;
                 case Continue cont:

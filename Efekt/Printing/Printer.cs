@@ -236,8 +236,8 @@ namespace Efekt
 
                             w.Markup(")");
                             break;
-                        case UnknownSpec unks:
-                            w.Type("Unknown");
+                        case NotSetSpec nss:
+                            w.Type("NotSet");
                             break;
                         case VoidSpec vs:
                             w.Type("Void");

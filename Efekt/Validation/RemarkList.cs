@@ -466,7 +466,7 @@ namespace Efekt
 
 
         [Pure]
-        public EfektException OlnyEfFilesAreSupported(string filePath)
+        public EfektException OnlyEfFilesAreSupported(string filePath)
         {
             return fail("Only .ef files are supported " + filePath, filePath);
         }
@@ -541,7 +541,7 @@ namespace Efekt
 
 
         [Pure]
-        public EfektException ConinueOrReturnRequiredInLoop(Loop l)
+        public EfektException ContinueOrReturnRequiredInLoop(Loop l)
         {
             return fail(l, "Loop needs to have at least one break or return statement, otherwise it will never terminate.");
         }
@@ -599,13 +599,13 @@ namespace Efekt
 
         public void UnusedParameter(Declr d)
         {
-            w(d, "Unused parameter");
+            w(d.Ident, "Unused parameter");
         }
 
 
         public void UnusedVariable(Declr d)
         {
-            w(d, "Unused variable");
+            w(d.Ident, "Unused variable");
         }
     }
 }

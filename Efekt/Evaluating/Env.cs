@@ -41,7 +41,7 @@ namespace Efekt
         }
 
 
-        public static Env<TA> CreateRoot<TA>(Prog prog, Func<Builtin, TA> selector, bool buildUsages = false) where TA : class, Exp
+        public static Env<TA> CreateRoot<TA>(Prog prog, Func<Builtin, TA> selector, bool buildUsages = false) where TA : class, Element
         {
             C.Nn(prog);
             C.ReturnsNn();
@@ -58,7 +58,7 @@ namespace Efekt
     }
 
 
-    public sealed class Env<T> : Env where T : class, Exp
+    public sealed class Env<T> : Env where T : class, Element
     {
         public readonly Dictionary<Declr, EvnItem<T>> Items;
         private readonly bool buildUsages;

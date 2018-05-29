@@ -19,7 +19,7 @@ namespace Efekt
         public Printer ErrorPrinter { get; }
 
 
-        public Element RootElement { get; private set; }
+        public SequenceItem RootElement { get; private set; }
 
         
         internal Prog(TextWriter outputWriter, TextWriter errorWriter, bool checkTypes)
@@ -42,7 +42,7 @@ namespace Efekt
             var prog = new Prog(outputWriter, errorWriter, checkTypes);
             var ts = new Tokenizer().Tokenize(codeText);
             var e = new Parser(prog.RemarkList).Parse(asIfFilePath, ts);
-            prog.RootElement = tranformToEvaluable(e, prog);
+            prog.RootElement = transformToEvaluable(e, prog);
             postProcess(prog, checkTypes);
             return prog;
         }
@@ -50,6 +50,8 @@ namespace Efekt
 
         private static List<Element> parseFile(Prog prog, string filePath)
         {
+            C.ReturnsNn();
+
             var codeText = File.ReadAllText(filePath);
             var ts = new Tokenizer().Tokenize(codeText);
             return new Parser(prog.RemarkList).Parse(filePath, ts);
@@ -97,7 +99,7 @@ namespace Efekt
         {
             //new Namer(prog).Name();
             if (checkTypes)
-                new Specer(prog).Spec();
+                new Specer().Spec(prog);
             new StructureValidator(prog).Validate();
         }
 
@@ -119,6 +121,8 @@ namespace Efekt
 
         private static void findStart(IEnumerable<ClassItem> classBody, List<List<string>> candidates, List<string> path)
         {
+            C.Nn(classBody, candidates, path);
+
             foreach (var ci in classBody)
             {
                 if (ci is Declr d)
@@ -137,7 +141,7 @@ namespace Efekt
 
         private static void addMod(IReadOnlyList<string> sections, ClassBody moduleBody, List<ClassItem> modules, Prog prog)
         {
-            C.Nn(modules);
+            C.Nn(sections, moduleBody, modules, prog);
 
             foreach (var s in sections.Skip(1))
             {
@@ -191,7 +195,7 @@ namespace Efekt
             {
                 if (!rootPath.EndsWith(".ef"))
                 {
-                    throw remarkList.OlnyEfFilesAreSupported(rootPath);
+                    throw remarkList.OnlyEfFilesAreSupported(rootPath);
                 }
                 files.AddValue(rootPath);
             }
@@ -211,7 +215,7 @@ namespace Efekt
         }
 
 
-        private static Element tranformToEvaluable(List<Element> es, Prog prog)
+        private static SequenceItem transformToEvaluable(List<Element> es, Prog prog)
         {
             if (es.Count == 1 &&  es[0] is Exp exp)
                 return exp;

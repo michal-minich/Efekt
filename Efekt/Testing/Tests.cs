@@ -191,11 +191,12 @@ namespace Efekt.Tests
             type("fn { 1 }", "Fn() -> Int");
             type("fn { return 1 }", "Fn() -> Int");
             type("fn a { }", "Fn(Any) -> Void");
+            type("fn a { a }", "Fn(Any) -> Any");
             type("fn a { a + 1 }", "Fn(Int) -> Int");
             type("fn a { return a + 1 }", "Fn(Int) -> Int");
             type2("var id = fn a { a } typeof(id)", "Fn(Any) -> Any");
             type2("var id = fn a { a } typeof(id(1))", "Any");
-
+            
             // fn application
             type2("var id = fn a { a } var int1 = 1 typeof(id(int1))", "Any");
             type2("var a = fn a { a + 1 } typeof(a(1))", "Int");
@@ -208,6 +209,8 @@ namespace Efekt.Tests
             type2("var i = 1 typeof([i + 1])", "Arr(Int)");
             type("[fn a { return a + 1 }]", "Arr(Fn(Int) -> Int)");
             type2("var id = fn a { a } typeof([id(1)])", "Arr(Any)");
+            type("fn a { [a, 1] }", "Fn(Int) -> Arr(Int)");
+            type("fn a { [1, a] }", "Fn(Int) -> Arr(Int)");
 
             // object literal
             type("new { }", "Obj()");
@@ -239,6 +242,7 @@ namespace Efekt.Tests
             type("fn a { var x = a return x.b }", "Fn(Obj(b : Any)) -> Any");
             type("fn a { var x = a return x.b + 1 }", "Fn(Obj(b : Int)) -> Int");
             type("fn a { var b = a b = b + 1 return a }", "Fn(Int) -> Int");
+            type("fn a { var b = a return [b, 1] }", "Fn(Int) -> Arr(Int)");
 
             // unsorted
             type("fn b { var a a = b() return a }", "Fn(Fn() -> Any) -> Any");

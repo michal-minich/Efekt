@@ -212,7 +212,7 @@ namespace Efekt
                     return Void.Instance;
 
                 case Fn f:
-                    return new Fn(f.Parameters, f.Sequence, env).CopInfoFrom(f);
+                    return new Fn(f.Parameters, f.Sequence, env).CopyInfoFrom(f);
 
                 case When w:
                     var test = eval(w.Test, env);
@@ -307,7 +307,7 @@ namespace Efekt
                             var grabEnv = env.Create();
                             grabEnv.Declare(new Let(new Ident("exception", TokenType.Ident), Void.Instance), ex.Value);
                             eval(att.Grab, grabEnv);
-                        }
+                        } // todo else rethrow?
                         return Void.Instance;
                     }
                     finally

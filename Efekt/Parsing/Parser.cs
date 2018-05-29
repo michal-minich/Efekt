@@ -137,7 +137,7 @@ namespace Efekt
 
         private FnParameters ParseFnParameters()
         {
-            return new FnParameters(ParseList<Ident>('{', true).Select(i => new Param(i)).ToList());
+            return new FnParameters(ParseList<Ident>('{', true).Select(i => new Param(i).CopyInfoFrom(i)).ToList());
         }
 
         private bool crossedLine;
@@ -223,6 +223,8 @@ namespace Efekt
 
         public List<Element> Parse(string filePath, IEnumerable<Token> tokens)
         {
+            C.ReturnsNn();
+
             ti = new TokenIterator(filePath, tokens, remarkList);
             var list = new List<Element>();
             next();
@@ -553,7 +555,7 @@ namespace Efekt
             var se = ParseOne();
             if (se is Ident i2)
             {
-                return post(isVar ? (Element)new Var(i2, null) : new Let(i2, null));
+                return post(isVar ? (Element)new Var(i2) : new Let(i2));
             }
             if (se is Assign a)
             {

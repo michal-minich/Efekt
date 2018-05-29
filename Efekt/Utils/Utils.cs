@@ -61,7 +61,7 @@ namespace Efekt
 
 
         [Pure]
-        public static IEnumerable<TSouce> Append<TSouce>(this IEnumerable<TSouce> source, TSouce element)
+        public static IEnumerable<TSource> Append<TSource>(this IEnumerable<TSource> source, TSource element)
         {
             C.ReturnsNn();
 
@@ -118,7 +118,9 @@ namespace Efekt
         }
 
 
-        public static T CopInfoFrom<T>(this T @new, T old, bool skipParent = false) where T: Exp
+        public static T CopyInfoFrom<T, O>(this T @new, O old, bool skipParent = false)
+            where T: Element
+            where O: Element
         {
             @new.LineIndex = old.LineIndex;
             @new.ColumnIndex = old.ColumnIndex;

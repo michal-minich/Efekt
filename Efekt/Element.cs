@@ -24,7 +24,7 @@ namespace Efekt
         Ident Ident { get; }
         [CanBeNull]
         Exp Exp { get; }
-        List<Ident> AssingedFrom { get; }
+        List<Ident> AssignedFrom { get; }
         List<Ident> ReadBy { get; }
         List<Ident> WrittenBy { get; }
     }
@@ -32,7 +32,7 @@ namespace Efekt
 
     public abstract class AElement : Element
     {
-        private Element _parent;
+        private Element parent;
 
         protected AElement()
         {
@@ -49,7 +49,7 @@ namespace Efekt
 
         public void ClearParent()
         {
-            _parent = null;
+            parent = null;
         }
 
         public bool IsBraced { get; set; }
@@ -64,7 +64,7 @@ namespace Efekt
 
     public abstract class AExp : Exp
     {
-        private Element _parent;
+        private Element parent;
 
         protected AExp()
         {
@@ -80,18 +80,18 @@ namespace Efekt
 
         public Element Parent
         {
-            get => _parent;
+            get => parent;
             set
             {
                 if (this != Void.Instance)
-                    C.Assert(_parent == null);
-                _parent = value;
+                    C.Assert(parent == null);
+                parent = value;
             }
         }
 
         public void ClearParent()
         {
-            _parent = null;
+            parent = null;
         }
 
         public bool IsBraced { get; set; }
@@ -305,7 +305,7 @@ namespace Efekt
     public sealed class Var : AElement, Declr, SequenceItem, ClassItem
     {
         [DebuggerStepThrough]
-        public Var(Ident ident, [CanBeNull] Exp exp)
+        public Var(Ident ident, [CanBeNull] Exp exp = null)
         {
             C.Nn(ident);
 
@@ -316,7 +316,7 @@ namespace Efekt
             if (exp != null)
                 exp.Parent = this;
 
-            AssingedFrom = new List<Ident>();
+            AssignedFrom = new List<Ident>();
             ReadBy = new List<Ident>();
             WrittenBy = new List<Ident>();
         }
@@ -324,7 +324,7 @@ namespace Efekt
         public Ident Ident { get; }
         [CanBeNull]
         public Exp Exp { get; }
-        public List<Ident> AssingedFrom { get; }
+        public List<Ident> AssignedFrom { get; }
         public List<Ident> ReadBy { get; }
         public List<Ident> WrittenBy { get; }
     }
@@ -333,17 +333,18 @@ namespace Efekt
     public sealed class Let : AElement, Declr, SequenceItem, ClassItem
     {
         [DebuggerStepThrough]
-        public Let(Ident ident, [CanBeNull] Exp exp)
+        public Let(Ident ident, [CanBeNull] Exp exp = null)
         {
-            C.Nn(ident, exp);
+            C.Nn(ident);
 
             Ident = ident;
             Exp = exp;
 
             ident.Parent = this;
-            exp.Parent = this;
+            if (exp != null)
+                exp.Parent = this;
 
-            AssingedFrom = new List<Ident>();
+            AssignedFrom = new List<Ident>();
             ReadBy = new List<Ident>();
             WrittenBy = new List<Ident>();
         }
@@ -351,7 +352,7 @@ namespace Efekt
         public Ident Ident { get; }
         [CanBeNull]
         public Exp Exp { get; }
-        public List<Ident> AssingedFrom { get; }
+        public List<Ident> AssignedFrom { get; }
         public List<Ident> ReadBy { get; }
         public List<Ident> WrittenBy { get; }
     }
@@ -367,7 +368,7 @@ namespace Efekt
             Ident = ident;
             ident.Parent = this;
 
-            AssingedFrom = new List<Ident>();
+            AssignedFrom = new List<Ident>();
             ReadBy = new List<Ident>();
             WrittenBy = new List<Ident>();
         }
@@ -375,7 +376,7 @@ namespace Efekt
         public Ident Ident { get; }
         [CanBeNull]
         public Exp Exp => null;
-        public List<Ident> AssingedFrom { get; }
+        public List<Ident> AssignedFrom { get; }
         public List<Ident> ReadBy { get; }
         public List<Ident> WrittenBy { get; }
 
@@ -395,12 +396,12 @@ namespace Efekt
 
             to.Parent = this;
             exp.Parent = this;
-            AssingedFrom = new List<Ident>();
+            AssignedFrom = new List<Ident>();
         }
 
         public AssignTarget To { get; }
         public Exp Exp { get; }
-        public List<Ident> AssingedFrom { get; }
+        public List<Ident> AssignedFrom { get; }
     }
 
 
@@ -737,18 +738,20 @@ namespace Efekt
     }
 
 
-    public sealed class UnknownSpec : ASpec, SimpleSpec
+    public sealed class NotSetSpec : ASpec, SimpleSpec
     {
-        private UnknownSpec()
+        [DebuggerStepThrough]
+        private NotSetSpec()
         {
         }
 
-        public static UnknownSpec Instance { get; } = new UnknownSpec();
+        public static NotSetSpec Instance { get; } = new NotSetSpec();
     }
 
 
     public sealed class VoidSpec : ASpec, SimpleSpec
     {
+        [DebuggerStepThrough]
         private VoidSpec()
         {
         }
@@ -759,6 +762,7 @@ namespace Efekt
 
     public sealed class AnySpec : ASpec, SimpleSpec
     {
+        [DebuggerStepThrough]
         private AnySpec()
         {
         }
@@ -769,6 +773,7 @@ namespace Efekt
 
     public sealed class BoolSpec : ASpec, SimpleSpec
     {
+        [DebuggerStepThrough]
         private BoolSpec()
         {
         }
@@ -779,6 +784,7 @@ namespace Efekt
 
     public sealed class IntSpec : ASpec, SimpleSpec
     {
+        [DebuggerStepThrough]
         private IntSpec()
         {
         }
@@ -789,6 +795,7 @@ namespace Efekt
 
     public sealed class CharSpec : ASpec, SimpleSpec
     {
+        [DebuggerStepThrough]
         private CharSpec()
         {
         }
@@ -799,8 +806,10 @@ namespace Efekt
 
     public class ArrSpec : ASpec, ComplexSpec
     {
+        [DebuggerStepThrough]
         public ArrSpec(Spec itemSpec)
         {
+            C.Nn(itemSpec);
             ItemSpec = itemSpec;
         }
 
@@ -810,6 +819,7 @@ namespace Efekt
 
     public sealed class TextSpec : ArrSpec, SimpleSpec // todo  really SimpleSpec?
     {
+        [DebuggerStepThrough]
         private TextSpec() : base(CharSpec.Instance)
         {
         }
@@ -821,6 +831,7 @@ namespace Efekt
 
     public sealed class FnSpec : ASpec, ComplexSpec
     {
+        [DebuggerStepThrough]
         public FnSpec(List<Spec> signature)
         {
             C.AllNotNull(signature);
@@ -837,6 +848,7 @@ namespace Efekt
 
     public sealed class ObjSpec : ASpec, ComplexSpec
     {
+        [DebuggerStepThrough]
         public ObjSpec(Env<Spec> env)
         {
             C.Nn(env);
