@@ -7,7 +7,7 @@ let > = fn a, b { not(a < b) and not(a == b) }
 let printLine = fn a { print(a) print('\n') }
 let id = fn a { a }
 
-let arrayIterator = fn a {
+let from = fn a {
     return new {
         var arr = a
         var position = 0 - 1
@@ -16,13 +16,10 @@ let arrayIterator = fn a {
             position = position + 1
             return position < count(arr)
         }
-        /*var getForwardIterator = fn {
-            return arr.arrayIterator()
-        }*/
     }
 }
 
-let whereIterator = fn i, p {
+let where = fn i, p {
     return new {
         var iterator = i
         var predicate = p
@@ -41,16 +38,11 @@ let whereIterator = fn i, p {
 }
 
 let forEach = fn i, f {
-    /*var i = iterable.getForwardIterator()*/
     loop {
         if not(i.moveForward()) then
             return
         f(i.current())
     }
-}
-
-let where = fn i, p {
-    return whereIterator(i, p)
 }
 
 let assert = fn condition {

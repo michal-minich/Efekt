@@ -263,7 +263,7 @@ namespace Efekt
             C.Nn(fn);
 
             Name = name;
-            FixedSpec = new FnSpec(signature);
+            FixedSpec = new FnSpec(signature, null);
             Fn = fn;
         }
 
@@ -498,8 +498,17 @@ namespace Efekt
             Env = env;
         }
 
+        [DebuggerStepThrough]
+        public Fn(FnParameters parameters, Sequence sequence, Env<Spec> specEnv)
+            : this(parameters, sequence)
+        {
+            C.Nn(specEnv);
+            SpecEnv = specEnv;
+        }
+
         public FnParameters Parameters { get; }
         public Sequence Sequence { get; }
+        public Env<Spec> SpecEnv { get; set; }
         public Env<Value> Env { get; }
     }
 
@@ -832,10 +841,11 @@ namespace Efekt
     public sealed class FnSpec : ASpec, ComplexSpec
     {
         [DebuggerStepThrough]
-        public FnSpec(List<Spec> signature)
+        public FnSpec(List<Spec> signature, [CanBeNull] Fn fn)
         {
             C.AllNotNull(signature);
             Signature = signature;
+            Fn = fn;
         }
 
         public List<Spec> Signature { get; }
@@ -843,6 +853,8 @@ namespace Efekt
         public List<Spec> ParameterSpec => Signature.SkipLast().ToList();
 
         public Spec ReturnSpec => Signature.Last();
+
+        [CanBeNull] public Fn Fn; // null for builtins or when body is not yet assigned (params)
     }
 
 

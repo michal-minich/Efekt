@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 using System.Linq;
+using JetBrains.Annotations;
 
 
 namespace Efekt
@@ -87,7 +87,7 @@ namespace Efekt
         }
 
 
-        [Pure]
+        [System.Diagnostics.Contracts.Pure]
         private static bool areSame(Spec a, Spec b)
         {
             C.Nn(a, b);
@@ -95,8 +95,8 @@ namespace Efekt
         }
 
 
-        [Pure]
-        private Spec commonType(FnArguments exps, Env<Spec> env)
+        [System.Diagnostics.Contracts.Pure]
+        private Spec commonType(IEnumerable<Exp> exps, Env<Spec> env)
         {
             C.Nn(exps, env);
             C.ReturnsNn();
@@ -128,7 +128,7 @@ namespace Efekt
         }
 
 
-        private void specSequence(Sequence sequence, Env<Spec> env)
+        private Env<Spec> specSequence(Sequence sequence, Env<Spec> env)
         {
             C.Nn(sequence, env);
 
@@ -136,6 +136,7 @@ namespace Efekt
             foreach (var item in sequence)
                 specElement(item, scopeEnv, VoidSpec.Instance);
             validateUnusedVariables(scopeEnv);
+            return scopeEnv;
         }
 
 
@@ -159,7 +160,7 @@ namespace Efekt
         }
 
 
-        [Pure]
+        [System.Diagnostics.Contracts.Pure]
         private Spec specExp(Exp exp, Env<Spec> env, Spec slot)
         {
             C.Nn(exp, env, slot);
@@ -172,7 +173,7 @@ namespace Efekt
         }
 
 
-        [Pure]
+        [System.Diagnostics.Contracts.Pure]
         private Spec specExp2(Exp exp, Env<Spec> env, Spec slot)
         {
             C.Nn(exp, env, slot);
@@ -206,7 +207,8 @@ namespace Efekt
                 {
                     if (fna.Fn is Ident fnI && fnI.Name == "typeof")
                     {
-                        fna.Arguments = new FnArguments(new List<Exp> {specExp(fna.Arguments[0], env, AnySpec.Instance)});
+                        if (!(fna.Arguments[0] is Spec))
+                            fna.Arguments = new FnArguments(new List<Exp> {specExp(fna.Arguments[0], env, AnySpec.Instance)});
                         return VoidSpec.Instance;
                     }
 
@@ -217,11 +219,21 @@ namespace Efekt
                         if (fnS.ParameterSpec.Count != fna.Arguments.Count)
                             throw prog.RemarkList.ParameterArgumentCountMismatch(fna, fnS.ParameterSpec.Count);
 
+                        var argumentSpecs = new List<Spec>();
                         var ix = 0;
                         foreach (var aa in fna.Arguments)
                         {
-                            // ReSharper disable once ReturnValueOfPureMethodIsNotUsed
-                            specExp(aa, env, fnS.ParameterSpec[ix++]);
+                            var pS = fnS.ParameterSpec[ix];
+                            var aS = specExp(aa, env, pS);
+                            argumentSpecs.Add(isAssignable(aS, pS) ? aS : pS);
+                            ++ix;
+                        }
+
+                        if (fna.Arguments.Count != 0 && fnS.Fn?.SpecEnv != null)
+                        {
+                            var newFn = new Fn(fnS.Fn.Parameters, fnS.Fn.Sequence, fnS.Fn.SpecEnv).CopyInfoFrom(fnS.Fn);
+                            var newFnS = specFn(newFn, null, argumentSpecs);
+                            fnS = newFnS;
                         }
 
                         if (!isAssignable(fnS.ReturnSpec, slot))
@@ -239,7 +251,7 @@ namespace Efekt
 
                     sigS.Add(slot == NotSetSpec.Instance ? AnySpec.Instance : slot);
 
-                    var newFnSpec = new FnSpec(sigS);
+                    var newFnSpec = new FnSpec(sigS, null);
                     if (fna.Fn is Ident fnI2)
                         env.Set(fnI2, newFnSpec);
 
@@ -247,31 +259,7 @@ namespace Efekt
                 }
 
                 case Fn f:
-                    var paramsEnv = env.Create();
-                    foreach (var p in f.Parameters)
-                        paramsEnv.Declare(p, NotSetSpec.Instance);
-
-                    if (f.Sequence.Count == 0)
-                    {
-                        validateUnusedVariables(paramsEnv);
-                        return makeFnSpec(f, paramsEnv, VoidSpec.Instance);
-                    }
-                    else if (f.Sequence.Count == 1 && f.Sequence[0] is Exp exp1)
-                    {
-                        var fnEnv = paramsEnv.Create();
-                        ss = specExp(exp1, fnEnv, AnySpec.Instance);
-                        validateUnusedVariables(paramsEnv);
-                        validateUnusedVariables(fnEnv);
-                        return makeFnSpec(f, paramsEnv, ss == NotSetSpec.Instance ? AnySpec.Instance : ss);
-                    }
-                    else
-                    {
-                        returns.Push(NotSetSpec.Instance);
-                        specSequence(f.Sequence, paramsEnv);
-                        ss = returns.Pop();
-                        validateUnusedVariables(paramsEnv);
-                        return makeFnSpec(f, paramsEnv, ss == NotSetSpec.Instance ? VoidSpec.Instance : ss);
-                    }
+                    return specFn(f, env);
 
                 case When w:
                     var _ = specExp(w.Test, env, BoolSpec.Instance);
@@ -361,6 +349,49 @@ namespace Efekt
 
                 default:
                     throw new NotSupportedException();
+            }
+        }
+
+
+        private FnSpec specFn(Fn fn, [CanBeNull] Env<Spec> env, IReadOnlyList<Spec> argumentSpecs = null)
+        {
+            var e = env ?? fn.SpecEnv;
+            C.Assert(e != null);
+            var paramsEnv = e.Create();
+            if (argumentSpecs == null)
+            {
+                foreach (var p in fn.Parameters)
+                    paramsEnv.Declare(p, NotSetSpec.Instance);
+            }
+            else
+            {
+                C.Assert(argumentSpecs.Count == fn.Parameters.Count);
+                var ix = 0;
+                foreach (var p in fn.Parameters)
+                    paramsEnv.Declare(p, argumentSpecs[ix++]);
+            }
+
+            if (fn.Sequence.Count == 0)
+            {
+                fn.SpecEnv = paramsEnv;
+                validateUnusedVariables(paramsEnv);
+                return makeFnSpec(fn, paramsEnv, VoidSpec.Instance);
+            }
+            else if (fn.Sequence.Count == 1 && fn.Sequence[0] is Exp exp1)
+            {
+                fn.SpecEnv = paramsEnv.Create();
+                var retS = specExp(exp1, fn.SpecEnv, AnySpec.Instance);
+                validateUnusedVariables(paramsEnv);
+                validateUnusedVariables(fn.SpecEnv);
+                return makeFnSpec(fn, paramsEnv, retS == NotSetSpec.Instance ? AnySpec.Instance : retS);
+            }
+            else
+            {
+                returns.Push(NotSetSpec.Instance);
+                fn.SpecEnv = specSequence(fn.Sequence, paramsEnv);
+                var retS = returns.Pop();
+                validateUnusedVariables(paramsEnv);
+                return makeFnSpec(fn, paramsEnv, retS == NotSetSpec.Instance ? VoidSpec.Instance : retS);
             }
         }
 
@@ -499,7 +530,8 @@ namespace Efekt
                 fn.Parameters
                     .Select(p => paramsEnv.GetFromThisEnvOnly(p.Ident, null).Value)
                     .Append(retSpec)
-                    .ToList());
+                    .ToList(),
+                fn);
         }
 
 

@@ -1,3 +1,6 @@
+specer: type variance
+specer: generics for builtins
+specer: extension methods
 interpeter: evaluation order in interpreter (with consideration to throws and op associativity =, fn appply)
 structure: static validation where possible (instead of interpeter)
 structure: warn: when hiding variable in outer scope (file only?)

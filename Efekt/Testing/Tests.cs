@@ -195,10 +195,10 @@ namespace Efekt.Tests
             type("fn a { a + 1 }", "Fn(Int) -> Int");
             type("fn a { return a + 1 }", "Fn(Int) -> Int");
             type2("var id = fn a { a } typeof(id)", "Fn(Any) -> Any");
-            type2("var id = fn a { a } typeof(id(1))", "Any");
+            type2("var id = fn a { a } typeof(id(1))", "Int");
             
             // fn application
-            type2("var id = fn a { a } var int1 = 1 typeof(id(int1))", "Any");
+            type2("var id = fn a { a } var int1 = 1 typeof(id(int1))", "Int");
             type2("var a = fn a { a + 1 } typeof(a(1))", "Int");
             type("fn a { var b = a() + 1 }", "Fn(Fn() -> Int) -> Void");
 
@@ -208,7 +208,7 @@ namespace Efekt.Tests
             type2("var i = 1 typeof([i])", "Arr(Int)");
             type2("var i = 1 typeof([i + 1])", "Arr(Int)");
             type("[fn a { return a + 1 }]", "Arr(Fn(Int) -> Int)");
-            type2("var id = fn a { a } typeof([id(1)])", "Arr(Any)");
+            type2("var id = fn a { a } typeof([id(1)])", "Arr(Int)");
             type("fn a { [a, 1] }", "Fn(Int) -> Arr(Int)");
             type("fn a { [1, a] }", "Fn(Int) -> Arr(Int)");
 
