@@ -8,9 +8,10 @@ let printLine = fn a { print(a) print('\n') }
 let id = fn a { a }
 
 let from = fn a {
-    return new {
+    new {
         var arr = a
         var position = 0 - 1
+        let reset = fn { position = 0 }
         let current = fn { at(arr, position) }
         let moveForward = fn {
             position = position + 1
@@ -20,7 +21,7 @@ let from = fn a {
 }
 
 let where = fn i, p {
-    return new {
+    new {
         var iterator = i
         var predicate = p
         let current = fn { i.current() }
@@ -45,6 +46,16 @@ let forEach = fn i, f {
     }
 }
 
+let calculateCount = fn i {
+    var c = 0
+    loop {
+        if not(i.moveForward()) then
+            break
+        c = c + 1
+    }
+    return c
+}
+
 let assert = fn condition {
     if not(condition) then
         throw "assert is false"
@@ -58,6 +69,5 @@ let for = fn from, to, do {
         if i == to then
             break
         i = i + 1
-   }
+    }
 }
-

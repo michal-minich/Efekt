@@ -116,21 +116,5 @@ namespace Efekt
             stack.Pop();
             stack.Push(item);
         }
-
-
-        public static T CopyInfoFrom<T, O>(this T @new, O old, bool skipParent = false)
-            where T: Element
-            where O: Element
-        {
-            @new.LineIndex = old.LineIndex;
-            @new.ColumnIndex = old.ColumnIndex;
-            @new.LineIndexEnd = old.LineIndexEnd;
-            @new.ColumnIndexEnd = old.ColumnIndexEnd;
-            @new.FilePath = old.FilePath;
-            @new.IsBraced = old.IsBraced;
-            if (!skipParent && old.Parent != null)
-                @new.Parent = old.Parent;
-            return @new;
-        }
     }
 }

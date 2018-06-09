@@ -25,6 +25,10 @@ refactor: prog runtime writter output (for throw)
 lib: more and thought out builtins
 lib: interators
 
+desing: infer ensures deterministic, ensures pure, ensures noio, ensures readonly/modifies this, a this.c, no/throw
+desing: copmile time evaluation (needs infer io operations)
+desing: static if (with compiles trait, to neable instrospection)?
+design: typestate
 design: how to reolve nested module names vs paths
 design: resolve imports based on lib folder?
 design: project config file? (instaed of cmd args)
@@ -36,8 +40,8 @@ design: ? label goto
 design: public attribute
 design: attributes in general?
 design: ? ref
-design: ? function overloading (introduces polymorphism and introspection)
-design: ? contracts: requires, ensures, assert, assume, invariant (scope, loop, fn body, object body)
+design: ? function overloading (introduces introspection)
+design: contracts: requires, ensures, assert, assume, invariant (scope, loop, fn body, object body) + debug release compilation
 design: allow only typed functions to be called as extensions
 design: builtins as extension methods (when typing for builtins is done)
 future: convert to JS, D, C#
