@@ -56,8 +56,8 @@
             // splitContainer1.Panel2
             // 
             this.splitContainer1.Panel2.Controls.Add(this.MainTabs);
-            this.splitContainer1.Size = new System.Drawing.Size(882, 694);
-            this.splitContainer1.SplitterDistance = 400;
+            this.splitContainer1.Size = new System.Drawing.Size(1108, 1144);
+            this.splitContainer1.SplitterDistance = 502;
             this.splitContainer1.SplitterWidth = 5;
             this.splitContainer1.TabIndex = 1;
             // 
@@ -70,7 +70,7 @@
             this.MainTree.Location = new System.Drawing.Point(0, 0);
             this.MainTree.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.MainTree.Name = "MainTree";
-            this.MainTree.Size = new System.Drawing.Size(397, 694);
+            this.MainTree.Size = new System.Drawing.Size(499, 1144);
             this.MainTree.TabIndex = 1;
             // 
             // MainTabs
@@ -81,40 +81,41 @@
             this.MainTabs.Controls.Add(this.PropertiesTab);
             this.MainTabs.Controls.Add(this.CodeTab);
             this.MainTabs.Controls.Add(this.RunTab);
-            this.MainTabs.Location = new System.Drawing.Point(0, 0);
+            this.MainTabs.Location = new System.Drawing.Point(0, -3);
             this.MainTabs.Margin = new System.Windows.Forms.Padding(0);
             this.MainTabs.Name = "MainTabs";
+            this.MainTabs.Padding = new System.Drawing.Point(8, 5);
             this.MainTabs.SelectedIndex = 0;
-            this.MainTabs.Size = new System.Drawing.Size(477, 694);
+            this.MainTabs.Size = new System.Drawing.Size(605, 1149);
             this.MainTabs.TabIndex = 0;
             // 
             // PropertiesTab
             // 
-            this.PropertiesTab.Location = new System.Drawing.Point(4, 29);
+            this.PropertiesTab.Location = new System.Drawing.Point(4, 33);
             this.PropertiesTab.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.PropertiesTab.Name = "PropertiesTab";
             this.PropertiesTab.Padding = new System.Windows.Forms.Padding(3, 4, 3, 4);
-            this.PropertiesTab.Size = new System.Drawing.Size(469, 661);
+            this.PropertiesTab.Size = new System.Drawing.Size(597, 1112);
             this.PropertiesTab.TabIndex = 0;
             this.PropertiesTab.Text = "Properties";
             this.PropertiesTab.UseVisualStyleBackColor = true;
             // 
             // CodeTab
             // 
-            this.CodeTab.Location = new System.Drawing.Point(4, 29);
+            this.CodeTab.Location = new System.Drawing.Point(4, 33);
             this.CodeTab.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.CodeTab.Name = "CodeTab";
             this.CodeTab.Padding = new System.Windows.Forms.Padding(3, 4, 3, 4);
-            this.CodeTab.Size = new System.Drawing.Size(469, 661);
+            this.CodeTab.Size = new System.Drawing.Size(473, 662);
             this.CodeTab.TabIndex = 1;
             this.CodeTab.Text = "Code";
             this.CodeTab.UseVisualStyleBackColor = true;
             // 
             // RunTab
             // 
-            this.RunTab.Location = new System.Drawing.Point(4, 29);
+            this.RunTab.Location = new System.Drawing.Point(4, 33);
             this.RunTab.Name = "RunTab";
-            this.RunTab.Size = new System.Drawing.Size(469, 661);
+            this.RunTab.Size = new System.Drawing.Size(473, 662);
             this.RunTab.TabIndex = 2;
             this.RunTab.Text = "Run";
             this.RunTab.UseVisualStyleBackColor = true;
@@ -124,12 +125,13 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.White;
-            this.ClientSize = new System.Drawing.Size(882, 694);
+            this.ClientSize = new System.Drawing.Size(1108, 1144);
             this.Controls.Add(this.splitContainer1);
             this.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.ForeColor = System.Drawing.Color.Black;
             this.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.Name = "MainForm";
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Elab";
             this.splitContainer1.Panel1.ResumeLayout(false);
             this.splitContainer1.Panel2.ResumeLayout(false);

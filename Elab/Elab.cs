@@ -12,6 +12,12 @@ namespace Elab
             var args = @"..\..\..\Efekt\lib\ ..\..\..\Efekt\test.ef".Split(' ');
             var cw = new ConsoleWriter();
             var prog = Prog.Load2(cw, cw, args, true);
+
+            var rootNode = MainTree.Nodes.Add("Program");
+
+            NodeFiller.fill(rootNode, prog.RootElement);
+
+            rootNode.ExpandAll();
         }
     }
 }
