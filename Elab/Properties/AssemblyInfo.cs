@@ -4,12 +4,12 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("Efekt")]
+[assembly: AssemblyTitle("Elab")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("Efekt")]
-[assembly: AssemblyCopyright("Copyright © Michal Minich 2017")]
+[assembly: AssemblyProduct("Elab")]
+[assembly: AssemblyCopyright("Copyright © Michal Minich 2018")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -19,7 +19,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("5efc0fd4-6fd1-4c18-bbc7-22dcf89e31ec")]
+[assembly: Guid("8944542f-83f7-4aaa-9891-a2ca6ff69369")]
 
 // Version information for an assembly consists of the following four values:
 //

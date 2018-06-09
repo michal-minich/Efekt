@@ -5,6 +5,8 @@ VisualStudioVersion = 15.0.27004.2005
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Efekt", "Efekt\Efekt.csproj", "{5EFC0FD4-6FD1-4C18-BBC7-22DCF89E31EC}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Elab", "Elab\Elab.csproj", "{8944542F-83F7-4AAA-9891-A2CA6FF69369}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Contracts|Any CPU = Contracts|Any CPU
@@ -18,6 +20,12 @@ Global
 		{5EFC0FD4-6FD1-4C18-BBC7-22DCF89E31EC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5EFC0FD4-6FD1-4C18-BBC7-22DCF89E31EC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5EFC0FD4-6FD1-4C18-BBC7-22DCF89E31EC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8944542F-83F7-4AAA-9891-A2CA6FF69369}.Contracts|Any CPU.ActiveCfg = Contracts|Any CPU
+		{8944542F-83F7-4AAA-9891-A2CA6FF69369}.Contracts|Any CPU.Build.0 = Contracts|Any CPU
+		{8944542F-83F7-4AAA-9891-A2CA6FF69369}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8944542F-83F7-4AAA-9891-A2CA6FF69369}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8944542F-83F7-4AAA-9891-A2CA6FF69369}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8944542F-83F7-4AAA-9891-A2CA6FF69369}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
