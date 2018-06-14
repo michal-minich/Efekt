@@ -115,6 +115,7 @@
     <Compile Include="NodeFiller.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="UiUtils.cs" />
     <EmbeddedResource Include="Elab.resx">
       <DependentUpon>Elab.cs</DependentUpon>
     </EmbeddedResource>
@@ -148,6 +149,9 @@
       <Project>{5efc0fd4-6fd1-4c18-bbc7-22dcf89e31ec}</Project>
       <Name>Efekt</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Images\ArrConstructor.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

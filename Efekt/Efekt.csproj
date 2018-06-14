@@ -131,6 +131,7 @@
   <ItemGroup>
     <Compile Include="EfektException.cs" />
     <Compile Include="Evaluating\ElementExtensions.cs" />
+    <Compile Include="Printing\Simpler.cs" />
     <Compile Include="Utils\C.cs" />
     <Compile Include="Validation\Specer.cs" />
     <Compile Include="Validation\RemarkList.cs" />

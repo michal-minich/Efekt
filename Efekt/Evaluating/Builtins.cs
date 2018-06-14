@@ -47,7 +47,7 @@ namespace Efekt
                         C.Assume(@params.Count == 2);
                         var a = @params[0].AsValue(fna.Arguments[0], prog);
                         var b = @params[1].AsValue(fna.Arguments[1], prog);
-                        return new Bool(a.ToDebugString() == b.ToDebugString());
+                        return new Bool(a.ToCodeString() == b.ToCodeString());
                     }),
 
                 new Builtin("<",

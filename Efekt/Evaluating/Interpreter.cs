@@ -107,7 +107,7 @@ namespace Efekt
                     if (fna.Fn is Ident fnI && fnI.Name == "typeof")
                     {
                         var spec = fna.Arguments[0];
-                        var ofS = spec.ToDebugString();
+                        var ofS = spec.ToCodeString();
                         prog.OutputWriter.WriteLine(ofS);
                         return Void.Instance;
                     }

@@ -91,7 +91,7 @@ namespace Efekt
         private static bool areSame(Spec a, Spec b)
         {
             C.Nn(a, b);
-            return a.ToDebugString() == b.ToDebugString();
+            return a.ToCodeString() == b.ToCodeString();
         }
 
 

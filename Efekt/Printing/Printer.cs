@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Efekt
 {
@@ -47,7 +49,6 @@ namespace Efekt
                         break;
                     }
                     Write(fna.Fn);
-                    w.Space();
                     var c = 0;
                     w.Markup("(");
                     foreach (var a in fna.Arguments)
@@ -127,17 +128,15 @@ namespace Efekt
                     if (asCode)
                         w.Markup("\"");
                     break;
-                case Arr arr:
-                    w.Markup("[");
-                    var counter = 0;
-                    foreach (var i in arr.Values)
-                    {
-                        Write(i);
-                        if (++counter != arr.Values.Count)
-                            w.Markup(",").Space();
-                    }
-                    w.Markup("]");
+
+                case ArrConstructor arrC:
+                    printArr(arrC.Arguments);
                     break;
+
+                case Arr arr:
+                    printArr(arr.Values);
+                    break;
+
                 case MemberAccess ma:
                     Write(ma.Exp).Op(".");
                     Write(ma.Ident);
@@ -209,7 +208,7 @@ namespace Efekt
                             break;
                         case FnSpec fs:
                             w.Type("Fn").Markup("(");
-                            counter = 0;
+                            var counter = 0;
                             foreach (var p in fs.ParameterSpec)
                             {
                                 Write(p);
@@ -257,11 +256,28 @@ namespace Efekt
             return w;
         }
 
+
+        private void printArr(IReadOnlyCollection<Exp> values)
+        {
+            w.Markup("[");
+            var counter = 0;
+            foreach (var i in values)
+            {
+                Write(i);
+                if (++counter != values.Count)
+                    w.Markup(",").Space();
+            }
+
+            w.Markup("]");
+        }
+
+
         private void writeAssign(Exp to, Exp e)
         {
             Write(to).Space().Op("=").Space();
             Write(e);
         }
+
 
         private void writeDeclAssing(Exp to, Exp e)
         {

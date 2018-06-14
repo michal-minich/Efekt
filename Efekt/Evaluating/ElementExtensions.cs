@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
+
 namespace Efekt
 {
     public static class ElementExtensions
@@ -49,42 +50,50 @@ namespace Efekt
             throw prog.RemarkList.ExpectedDifferentType(subject, element, typeof(B).Name);
         }
 
+
         public static Int AsInt(this Exp exp, Exp subject, Prog prog)
         {
             return exp.As<Int>(subject, prog);
         }
+
 
         public static Arr AsArr(this Exp exp, Exp subject, Prog prog)
         {
             return exp.As<Arr>(subject, prog);
         }
 
+
         public static Value AsValue(this Exp exp, Exp subject, Prog prog)
         {
             return exp.As<Value>(subject, prog);
         }
+
 
         public static Bool AsBool(this Exp exp, Exp subject, Prog prog)
         {
             return exp.As<Bool>(subject, prog);
         }
 
+
         public static Fn AsFn(this Exp exp, Exp subject, Prog prog)
         {
             return exp.As<Fn>(subject, prog);
         }
+
 
         public static Obj AsObj(this Exp exp, Element subject, Prog prog)
         {
             return exp.As<Obj>(subject, prog);
         }
 
+
         public static FnApply AsFnApply(this Element exp, Exp subject, Prog prog)
         {
             return exp.As<FnApply>(subject, prog);
         }
 
-        public static string ToDebugString(this Element e)
+
+        public static string ToCodeString(this Element e)
         {
             var sw = new StringWriter();
             new Printer(new PlainTextCodeWriter(sw), false).Write(e);
@@ -105,6 +114,12 @@ namespace Efekt
             if (!skipParent && old.Parent != null)
                 @new.Parent = old.Parent;
             return @new;
+        }
+
+
+        public static bool IsSimple(this Element e)
+        {
+            return Simpler.IsSimple(e);
         }
     }
 }

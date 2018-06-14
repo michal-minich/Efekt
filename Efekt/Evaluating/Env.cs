@@ -186,7 +186,7 @@ namespace Efekt
             foreach (var i in imports)
             {
                 var x = i.Value.GetFromThisEnvOnlyOrNull(ident, forWrite);
-                if (x != null && !candidates.Any(c => c.Key.ToDebugString() == i.Key.ToDebugString()))
+                if (x != null && !candidates.Any(c => c.Key.ToCodeString() == i.Key.ToCodeString()))
                     candidates.Add(i.Key, x);
             }
             if (parent != null)

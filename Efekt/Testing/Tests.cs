@@ -307,7 +307,7 @@ namespace Efekt.Tests
             var errorWriter = new StringWriter();
             var prog = Prog.Init(outputWriter, errorWriter, "unittest.ef", code, checkTypes);
             var res = prog.Interpreter.Eval(prog);
-            var val = res.ToDebugString();
+            var val = res.ToCodeString();
             if (val != expectedResult)
                 throw new Exception();
             var actualOutput = outputWriter.GetAndReset();

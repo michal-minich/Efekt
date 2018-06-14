@@ -57,7 +57,7 @@ namespace Efekt
 
         public override string ToString()
         {
-            return GetType().Name + ": " + this.ToDebugString();
+            return GetType().Name + ": " + this.ToCodeString();
         }
     }
 
@@ -98,7 +98,7 @@ namespace Efekt
 
         public override string ToString()
         {
-            return GetType().Name + ": " + this.ToDebugString();
+            return GetType().Name + ": " + this.ToCodeString();
         }
     }
 

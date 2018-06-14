@@ -232,7 +232,7 @@ namespace Efekt
         {
             return fail(subject, "Expected element of type "
                                  + type.Name + ", but '"
-                                 + subject.ToDebugString() + "' is of type " + subject.GetType().Name + ".");
+                                 + subject.ToCodeString() + "' is of type " + subject.GetType().Name + ".");
         }
 
 
@@ -397,7 +397,7 @@ namespace Efekt
             return fail(ident, "Variable '" + ident.Name + "' can be found multiple times: " +
                                Environment.NewLine +
                                String.Join(Environment.NewLine, candidates.Select(
-                                   c => "    " + c.Key.ToDebugString() + "." + ident.Name + " : " + c.Value.Value.ToDebugString())));
+                                   c => "    " + c.Key.ToCodeString() + "." + ident.Name + " : " + c.Value.Value.ToCodeString())));
         }
 
 
@@ -420,8 +420,8 @@ namespace Efekt
         // TODO move to after-typing validation eventually
         public void ValueReturnedFromFunctionNotUsed(FnApply fna)
         {
-            w(fna, "Value returned from function '" + fna.Fn.ToDebugString()
-                                                    + "' is not used. In '" + fna.ToDebugString() + "'");
+            w(fna, "Value returned from function '" + fna.Fn.ToCodeString()
+                                                    + "' is not used. In '" + fna.ToCodeString() + "'");
         }
 
 
@@ -460,7 +460,7 @@ namespace Efekt
         public EfektProgramException ProgramException(Value tossed, Toss ts, List<StackItem> callStack)
         {
             var msg = Add(Remark.NewExceptionRemark(
-                tossed.ToDebugString(), ts, callStack, RemarkSeverity.ProgramException));
+                tossed.ToCodeString(), ts, callStack, RemarkSeverity.ProgramException));
             return new EfektProgramException(msg, tossed);
         }
 
@@ -571,7 +571,7 @@ namespace Efekt
         [Pure]
         public EfektException OnlyObjectsCanHaveMembers(MemberAccess ma, Spec spec)
         {
-            return fail(ma.Exp, "Only objects can have members. Expression is of type " + spec.ToDebugString() + ".");
+            return fail(ma.Exp, "Only objects can have members. Expression is of type " + spec.ToCodeString() + ".");
         }
 
 
@@ -584,16 +584,16 @@ namespace Efekt
         public void CannotConvertArgumentToParameter(Exp argument, Spec argumentSpec, Spec parameterSpec)
         {
             w(argument, "Cannot convert argument of type "
-                        + argumentSpec.ToDebugString()
-                        + " to parameter type " + parameterSpec.ToDebugString());
+                        + argumentSpec.ToCodeString()
+                        + " to parameter type " + parameterSpec.ToCodeString());
         }
 
 
         public void CannotConvertType(Spec s, Spec slot, Element e)
         {
             w(e, "Cannot assign expression of type "
-                             + s.ToDebugString()
-                             + " to variable of type " + slot.ToDebugString());
+                             + s.ToCodeString()
+                             + " to variable of type " + slot.ToCodeString());
         }
 
 
