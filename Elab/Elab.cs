@@ -7,17 +7,16 @@ namespace Elab
 {
     public partial class MainForm : Form
     {
+        private readonly Prog prog;
+
         public MainForm()
         {
             InitializeComponent();
 
             var args = @"..\..\..\Efekt\lib\ ..\..\..\Efekt\test.ef".Split(' ');
             var cw = new ConsoleWriter();
-            var prog = Prog.Load2(cw, cw, args, true);
-
-            //TreeViewImages.ImageStream = ((System.Windows.Forms.ImageListStreamer)(resources.GetObject("TreeViewImages.ImageStream")));
-
-            //TreeViewImages.TransparentColor = System.Drawing.Color.Transparent;
+            prog = Prog.Load2(cw, cw, args, true);
+            
             NodeFiller.TreeViewImages = new ImageList();
 
             addImage(@"..\..\Images\Empty.png");
@@ -31,6 +30,7 @@ namespace Elab
             MainTree.ImageList = NodeFiller.TreeViewImages;
 
             var rootNode = MainTree.Nodes.Add("Program");
+            rootNode.Tag = prog.RootElement;
 
             NodeFiller.fill(rootNode, prog.RootElement);
 
@@ -49,6 +49,56 @@ namespace Elab
         {
             var key = Path.GetFileNameWithoutExtension(filePath);
             NodeFiller.TreeViewImages.Images.Add(key, Image.FromFile(filePath));
+        }
+
+
+        private void MainTree_AfterSelect(object sender, TreeViewEventArgs e)
+        {
+            var el = (Element) e.Node.Tag;
+            
+            Spec type;
+            switch (el)
+            {
+                case Ident i:
+                    type = i.DeclareBy?.Spec;
+                    break;
+                case Declr d:
+                    type = d.Spec;
+                    break;
+                default:
+                    type = null;
+                    break;
+            }
+
+            if (type == null)
+            {
+                switch (el)
+                {
+                    case Exp exp:
+                        TypePicture.Image = null;
+                        TypeNameLabel.Text = "Expression";
+                        break;
+                    default:
+                        TypePicture.Visible = false;
+                        TypeNameLabel.Visible = false;
+                        TypeLabel.Visible = false;
+                        break;
+                }
+            }
+            else
+            {
+                TypePicture.Image = MainTree.ImageList.Images[type.GetType().Name];
+                TypeNameLabel.Text = type.ToCodeString();
+                TypePicture.Visible = true;
+                TypeNameLabel.Visible = true;
+                TypeLabel.Visible = true;
+            }
+
+            var expName  = el.GetType().Name;
+            ExpressionPicture.Image = MainTree.ImageList.Images[expName];
+            ExpressionNameLabel.Text = ElementNamer.Name(el);
+
+            CodeTextBox.Text = el.ToCodeString();
         }
     }
 }

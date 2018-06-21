@@ -20,8 +20,8 @@ namespace Efekt
 
 
         public SequenceItem RootElement { get; private set; }
+        public static Specer Specer { get; private set; }
 
-        
         internal Prog(TextWriter outputWriter, TextWriter errorWriter, bool checkTypes)
         {
             Interpreter = new Interpreter();
@@ -99,7 +99,11 @@ namespace Efekt
         {
             //new Namer(prog).Name();
             if (checkTypes)
-                new Specer().Spec(prog);
+            {
+                Specer = new Specer();
+                Specer.Spec(prog);
+            }
+
             new StructureValidator(prog).Validate();
         }
 

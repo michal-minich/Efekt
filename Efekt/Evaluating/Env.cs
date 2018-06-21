@@ -210,6 +210,9 @@ namespace Efekt
         {
             C.Nn(declr, value);
 
+            if (value is Spec s)
+                declr.Spec = s;
+
             if (Items.Any(kvp => kvp.Key.Ident.Name == declr.Ident.Name))
                 throw prog.RemarkList.VariableIsAlreadyDeclared(declr.Ident);
             Items.Add(declr, new EvnItem<T>(value, !(declr is Var)));
@@ -221,6 +224,9 @@ namespace Efekt
             C.Nn(ident, value);
 
             var old = Get(ident, true);
+
+            if (value is Spec s)
+                ident.DeclareBy.Spec = s;
            
             // todo move to specer
             /*if (old.Value != Void.Instance && (

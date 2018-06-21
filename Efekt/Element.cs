@@ -27,6 +27,7 @@ namespace Efekt
         List<Ident> AssignedFrom { get; }
         List<Ident> ReadBy { get; }
         List<Ident> WrittenBy { get; }
+        Spec Spec { get; set; }
     }
 
 
@@ -327,6 +328,7 @@ namespace Efekt
         public List<Ident> AssignedFrom { get; }
         public List<Ident> ReadBy { get; }
         public List<Ident> WrittenBy { get; }
+        public Spec Spec { get; set; }
     }
 
 
@@ -355,6 +357,7 @@ namespace Efekt
         public List<Ident> AssignedFrom { get; }
         public List<Ident> ReadBy { get; }
         public List<Ident> WrittenBy { get; }
+        public Spec Spec { get; set; }
     }
 
 
@@ -379,6 +382,7 @@ namespace Efekt
         public List<Ident> AssignedFrom { get; }
         public List<Ident> ReadBy { get; }
         public List<Ident> WrittenBy { get; }
+        public Spec Spec { get; set; }
 
 
     }
