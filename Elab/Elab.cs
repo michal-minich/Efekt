@@ -59,8 +59,8 @@ namespace Elab
             Spec type;
             switch (el)
             {
-                case Ident i:
-                    type = i.DeclareBy?.Spec;
+                case Exp exp:
+                    type = exp.Spec;
                     break;
                 case Declr d:
                     type = d.Spec;

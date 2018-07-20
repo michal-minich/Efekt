@@ -167,6 +167,7 @@ namespace Efekt
             C.ReturnsNn();
 
             var s = specExp2(exp, env, slot);
+            exp.Spec = s;
             if (!isAssignable(s, slot))
                 prog.RemarkList.CannotConvertType(s, slot, exp);
             return s;
@@ -412,6 +413,7 @@ namespace Efekt
                         env.Declare(d, specExp(d.Exp, env, AnySpec.Instance));
                         if (d.Exp is Ident fromIdent)
                             d.AssignedFrom.Add(fromIdent);
+                        d.Ident.Spec = d.Exp.Spec;
                     }
 
                     break;
@@ -553,6 +555,9 @@ namespace Efekt
                     item.Value.Value = VoidSpec.Instance;
                     prog.RemarkList.UnusedVariable(item.Key);
                 }
+
+                item.Key.Spec = item.Value.Value;
+                item.Key.Ident.Spec = item.Value.Value;
             }
         }
     }

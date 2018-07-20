@@ -101,12 +101,15 @@ namespace Efekt
         {
             return GetType().Name + ": " + this.ToCodeString();
         }
+
+        public Spec Spec { get; set; }
     }
 
 
 
     public interface Exp : SequenceItem
     {
+        Spec Spec { get; set; }
     }
 
 
