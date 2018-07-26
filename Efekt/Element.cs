@@ -170,6 +170,11 @@ namespace Efekt
 
         [NotNull]
         public T this[int index] => items[index];
+
+        public void Remove(T item)
+        {
+            items.Remove(item);
+        }
     }
 
 

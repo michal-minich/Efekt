@@ -55,7 +55,15 @@ namespace Elab
         private void MainTree_AfterSelect(object sender, TreeViewEventArgs e)
         {
             var el = (Element) e.Node.Tag;
-            
+
+            showTypeLabels(el);
+            showCodeText(el);
+            showActions(el);
+        }
+
+        
+        private void showTypeLabels(Element el)
+        {
             Spec type;
             switch (el)
             {
@@ -94,11 +102,21 @@ namespace Elab
                 TypeLabel.Visible = true;
             }
 
-            var expName  = el.GetType().Name;
+            var expName = el.GetType().Name;
             ExpressionPicture.Image = MainTree.ImageList.Images[expName];
             ExpressionNameLabel.Text = ElementNamer.Name(el);
+        }
 
+
+        private void showCodeText(Element el)
+        {
             CodeTextBox.Text = el.ToCodeString();
+        }
+
+
+        private void showActions(Element el)
+        {
+            var availableActions = ActionListProvider.GetAvailableActions(el);
         }
     }
 }
