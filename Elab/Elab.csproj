@@ -99,6 +99,9 @@
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -114,9 +117,11 @@
     </Compile>
     <Compile Include="ActionListProvider.cs" />
     <Compile Include="ElementNamer.cs" />
+    <Compile Include="Actions\IElabAction.cs" />
     <Compile Include="NodeFiller.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Actions\RemoveAction.cs" />
     <Compile Include="UiUtils.cs" />
     <EmbeddedResource Include="Elab.resx">
       <DependentUpon>Elab.cs</DependentUpon>
@@ -131,6 +136,7 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
+    <None Include="app.manifest" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>

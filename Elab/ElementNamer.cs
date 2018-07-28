@@ -79,8 +79,8 @@ namespace Elab
                     return "Void Value";
                 case VoidSpec voidSpec:
                     return "Void Type";
-                case When @when:
-                    return "If Statement";
+                case When wh:
+                    return wh.Then.IsSimple() && wh.Otherwise != null && wh.Otherwise.IsSimple() ? "If Expression" : "If Statement";
                 case Arr arr:
                     return "Array Value";
                 case ArrSpec arrSpec:

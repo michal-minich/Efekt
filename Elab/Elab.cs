@@ -58,7 +58,7 @@ namespace Elab
 
             showTypeLabels(el);
             showCodeText(el);
-            showActions(el);
+            showActions(el, e.Node);
         }
 
         
@@ -114,9 +114,24 @@ namespace Elab
         }
 
 
-        private void showActions(Element el)
+        private void showActions(Element el, TreeNode node)
         {
-            var availableActions = ActionListProvider.GetAvailableActions(el);
+            var availableActions = ActionListProvider.GetAvailableActions(el, node);
+            ActionsPanel.Controls.Clear();
+            foreach (var a in availableActions)
+            {
+                var b = new Button {Text = a.Name};
+                if (a.CanIvoke())
+                {
+                    b.Click += (sender, args) => a.Invoke();
+                }
+                else
+                {
+                    b.Enabled = false;
+                }
+
+                ActionsPanel.Controls.Add(b);
+            }
         }
     }
 }

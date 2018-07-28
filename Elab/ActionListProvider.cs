@@ -1,44 +1,19 @@
 using System;
 using System.Collections.Generic;
+using System.Windows.Forms;
 using Efekt;
+using Elab.Actions;
 using Char = Efekt.Char;
 using Void = Efekt.Void;
 
 namespace Elab
 {
-    public interface IElementAction
-    {
-        string Name { get; }
-        bool CanIvoke(Element element);
-        void Invoke(Element element);
-    }
-
-
-    public class RemoveAction : IElementAction
-    {
-        public string Name => "Remove";
-
-        public bool CanIvoke(Element element)
-        {
-            return element.Parent is Sequence;
-        }
-
-
-        public void Invoke(Element element)
-        {
-            var p = (Sequence)element.Parent;
-            var el = (SequenceItem)element;
-            p.Remove(el);
-        }
-    }
-
-
     public static class ActionListProvider
     {
-        public static IReadOnlyList<IElementAction> GetAvailableActions(Element el)
+        public static IReadOnlyList<IElabAction> GetAvailableActions(Element el, TreeNode node)
         {
-            var remove = new RemoveAction();
-            var noAction = new List<IElementAction>();
+            var remove = new RemoveAction(el, node);
+            var noAction = new List<IElabAction>();
 
             switch (el)
             {
