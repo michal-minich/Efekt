@@ -7,12 +7,13 @@ let > = fn a, b { not(a < b) and not(a == b) }
 let printLine = fn a { print(a) print('\n') }
 let id = fn a { a }
 
+
 let from = fn a {
     new {
         var arr = a
         var position = 0 - 1
         let reset = fn { position = 0 }
-        let current = fn { at(arr, position) }
+        let current = fn { return at(arr, position) }
         let moveForward = fn {
             position = position + 1
             return position < count(arr)
@@ -55,6 +56,35 @@ let calculateCount = fn i {
     }
     return c
 }
+
+let loopWhile = fn c, f {
+    loop {
+        if not(c()) then
+            break
+        f()
+    }
+}
+
+let loopWhileWithState = fn c, f, s {
+    var s2 = s
+    loop {
+        if not(c()) then
+            break
+        s2 = f(s2)
+    }
+    return s2
+}
+
+let calculateCount2 = fn i {
+    var c = 0
+    loopWhile (i.moveForward, fn { c = c + 1 })
+    return c
+}
+
+let calculateCount3 = fn i {
+    loopWhileWithState (i.moveForward, fn c { c + 1 }, 0)
+}
+
 
 let assert = fn condition {
     if not(condition) then

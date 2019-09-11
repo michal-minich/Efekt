@@ -5,5 +5,9 @@ let start = fn {
     var list = where(iter, fn i { i > 3 })
     printLine(calculateCount(list))
     iter.reset()
+    printLine(calculateCount2(list))
+    iter.reset()
+    printLine(calculateCount3(list))
+    iter.reset()
     forEach(list, fn i { print(i) } )
 }
